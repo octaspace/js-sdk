@@ -14,8 +14,6 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "rootDir": "."
-  },
-  "include": ["src", "tests", "scripts", "tsup.config.ts", "vitest.config.ts"]
+    "skipLibCheck": true
+  }
 }

@@ -1,8 +1,14 @@
 /** Quick inspect — dump actual API response shapes */
 import { OctaClient } from '../src/index.js'
 
+const apiKey = process.env.OCTA_API_KEY
+if (!apiKey) {
+  console.error('OCTA_API_KEY is not set')
+  process.exit(1)
+}
+
 const client = new OctaClient({
-  apiKey: process.env['OCTA_API_KEY']!,
+  apiKey,
   retries: 0,
 })
 

@@ -5,23 +5,28 @@
 
 import { OctaClient } from '../src/index.js'
 
-const API_KEY = process.env['OCTA_API_KEY']
+const API_KEY = process.env.OCTA_API_KEY
 if (!API_KEY) {
   console.error('OCTA_API_KEY is not set')
   process.exit(1)
 }
 
 const c = {
-  reset: '\x1b[0m', bold: '\x1b[1m', dim: '\x1b[2m',
-  green: '\x1b[32m', red: '\x1b[31m', yellow: '\x1b[33m',
-  cyan: '\x1b[36m', gray: '\x1b[90m',
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  dim: '\x1b[2m',
+  green: '\x1b[32m',
+  red: '\x1b[31m',
+  yellow: '\x1b[33m',
+  cyan: '\x1b[36m',
+  gray: '\x1b[90m',
 }
 
-const ok   = (m: string) => console.log(`  ${c.green}✓${c.reset} ${m}`)
+const ok = (m: string) => console.log(`  ${c.green}✓${c.reset} ${m}`)
 const fail = (m: string) => console.log(`  ${c.red}✗${c.reset} ${m}`)
 const info = (m: string) => console.log(`  ${c.gray}→${c.reset} ${c.dim}${m}${c.reset}`)
 const step = (m: string) => console.log(`\n${c.bold}${c.cyan}▸ ${m}${c.reset}`)
-const sep  = ()          => console.log(`\n${c.gray}${'─'.repeat(56)}${c.reset}`)
+const sep = () => console.log(`\n${c.gray}${'─'.repeat(56)}${c.reset}`)
 
 const client = new OctaClient({
   apiKey: API_KEY,
@@ -32,7 +37,19 @@ const client = new OctaClient({
 
 // Ready states from Rails polling_service
 const READY_STATES = new Set(['service configured', 'configured', 'running', 'ready'])
-const BLOCKED_STATES = ['prepar', 'config', 'start', 'deploy', 'queue', 'provision', 'pending', 'build', 'pull', 'create', 'init']
+const BLOCKED_STATES = [
+  'prepar',
+  'config',
+  'start',
+  'deploy',
+  'queue',
+  'provision',
+  'pending',
+  'build',
+  'pull',
+  'create',
+  'init',
+]
 
 function isReady(info: { is_ready?: boolean; progress?: string }): boolean {
   if (info.is_ready) return true
@@ -43,7 +60,7 @@ function isReady(info: { is_ready?: boolean; progress?: string }): boolean {
 function isBlocked(info: { progress?: string }): boolean {
   if (!info.progress) return false
   const p = info.progress.toLowerCase()
-  return BLOCKED_STATES.some(s => p.includes(s))
+  return BLOCKED_STATES.some((s) => p.includes(s))
 }
 
 async function pollUntilReady(uuid: string, maxWaitMs = 120_000): Promise<boolean> {
@@ -52,15 +69,18 @@ async function pollUntilReady(uuid: string, maxWaitMs = 120_000): Promise<boolea
   while (Date.now() < deadline) {
     const data = await client.services.session(uuid).info()
     if (isReady(data)) return true
-    if (data.progress) process.stdout.write(`\r  ${c.yellow}○${c.reset} ${c.dim}${data.progress}${c.reset} (${++attempt * 3}s)   `)
+    if (data.progress)
+      process.stdout.write(
+        `\r  ${c.yellow}○${c.reset} ${c.dim}${data.progress}${c.reset} (${++attempt * 3}s)   `,
+      )
     else process.stdout.write(`  ${c.yellow}○${c.reset} waiting... (${++attempt * 3}s)\r`)
-    await new Promise(r => setTimeout(r, 3_000))
+    await new Promise((r) => setTimeout(r, 3_000))
   }
   return false
 }
 
 let vpnPassed = false
-let mrPassed  = false
+let mrPassed = false
 
 // ─── TEST 1: VPN ─────────────────────────────────────────────
 console.log(`\n${c.bold}Live Session Tests${c.reset}`)
@@ -95,7 +115,9 @@ try {
   info(`Public IP:  ${sessionInfo.public_ip ?? '—'}`)
   info(`Country:    ${sessionInfo.country ?? '—'}, ${sessionInfo.city ?? '—'}`)
   info(`Duration:   ${sessionInfo.duration}s`)
-  info(`VPN config: ${sessionInfo.config ? `${sessionInfo.config.slice(0, 80).replace(/\n/g, ' ')}…` : '—'}`)
+  info(
+    `VPN config: ${sessionInfo.config ? `${sessionInfo.config.slice(0, 80).replace(/\n/g, ' ')}…` : '—'}`,
+  )
   if (sessionInfo.charge_amount) info(`Charged:    ${sessionInfo.charge_amount} Wei`)
 
   step('Session logs')
@@ -107,11 +129,12 @@ try {
   await client.services.session(uuid).stop({ score: 5 })
   ok('Session stopped')
   vpnPassed = true
-
 } catch (err) {
   process.stdout.write('\n')
   const body = (err as Record<string, unknown>)?.body
-  fail(`${err instanceof Error ? err.message : String(err)}${body ? `\n     ${JSON.stringify(body)}` : ''}`)
+  fail(
+    `${err instanceof Error ? err.message : String(err)}${body ? `\n     ${JSON.stringify(body)}` : ''}`,
+  )
 }
 
 // ─── TEST 2: MR ──────────────────────────────────────────────
@@ -127,22 +150,29 @@ try {
 
   // Sort by total_price_usd ascending; pick cheapest with enough resources
   const viable = [...machines]
-    .filter(m => typeof m.total_price_usd === 'number' && m.cpu_cores >= 2 && m.total_memory >= 2 * 1024 ** 3)
+    .filter(
+      (m) =>
+        typeof m.total_price_usd === 'number' &&
+        m.cpu_cores >= 2 &&
+        m.total_memory >= 2 * 1024 ** 3,
+    )
     .sort((a, b) => a.total_price_usd - b.total_price_usd)
 
   info(`${viable.length} viable (≥2 cores, ≥2 GB RAM)`)
 
   // Fallback: any machine with a price if no viable found
-  const cheapest = viable[0] ?? [...machines]
-    .filter(m => typeof m.total_price_usd === 'number')
-    .sort((a, b) => a.total_price_usd - b.total_price_usd)[0]
+  const cheapest =
+    viable[0] ??
+    [...machines]
+      .filter((m) => typeof m.total_price_usd === 'number')
+      .sort((a, b) => a.total_price_usd - b.total_price_usd)[0]
 
   if (!cheapest) throw new Error('No priced MR machines available')
 
   info(`Selected: node ${cheapest.node_id} — ${cheapest.city}, ${cheapest.country}`)
   info(`CPU: ${cheapest.cpu_model_name} (${cheapest.cpu_cores} cores)`)
   info(`RAM: ${(cheapest.total_memory / 1024 ** 3).toFixed(1)} GB`)
-  info(`GPU: ${cheapest.is_has_gpu ? cheapest.gpus.map(g => g.model).join(', ') : 'none'}`)
+  info(`GPU: ${cheapest.is_has_gpu ? cheapest.gpus.map((g) => g.model).join(', ') : 'none'}`)
   info(`Price: $${cheapest.total_price_usd.toFixed(6)}/hr`)
 
   // Try up to 10 cheapest nodes — some may return INTERNAL_ERROR if temporarily unavailable
@@ -163,7 +193,9 @@ try {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       const body = (e as Record<string, unknown>)?.body
-      fail(`Node ${candidate.node_id} rejected: ${msg}${body ? ` — ${JSON.stringify(body)}` : ''} — trying next`)
+      fail(
+        `Node ${candidate.node_id} rejected: ${msg}${body ? ` — ${JSON.stringify(body)}` : ''} — trying next`,
+      )
     }
   }
   if (!uuid) throw new Error('All candidate nodes returned errors')
@@ -187,7 +219,7 @@ try {
   if (sessionInfo.charge_amount) info(`Charged:    ${sessionInfo.charge_amount} Wei`)
   if (sessionInfo.node_hw) {
     info(`Node HW CPU: ${sessionInfo.node_hw.cpu}`)
-    info(`Node HW GPU: ${sessionInfo.node_hw.gpu.map(g => g.model).join(', ') || 'none'}`)
+    info(`Node HW GPU: ${sessionInfo.node_hw.gpu.map((g) => g.model).join(', ') || 'none'}`)
   }
 
   step('Session logs')
@@ -199,18 +231,23 @@ try {
   await client.services.session(uuid).stop({ score: 5 })
   ok('Session stopped')
   mrPassed = true
-
 } catch (err) {
   process.stdout.write('\n')
   const body = (err as Record<string, unknown>)?.body
-  fail(`${err instanceof Error ? err.message : String(err)}${body ? `\n     ${JSON.stringify(body)}` : ''}`)
+  fail(
+    `${err instanceof Error ? err.message : String(err)}${body ? `\n     ${JSON.stringify(body)}` : ''}`,
+  )
 }
 
 // ─── Summary ─────────────────────────────────────────────────
 sep()
 console.log(`${c.bold}Results:${c.reset}`)
-console.log(`  ${vpnPassed ? c.green + '✓' : c.red + '✗'}${c.reset} VPN session (create → ready → stop)`)
-console.log(`  ${mrPassed  ? c.green + '✓' : c.red + '✗'}${c.reset} MR  session (create → ready → stop)`)
+console.log(
+  `  ${vpnPassed ? `${c.green}✓` : `${c.red}✗`}${c.reset} VPN session (create → ready → stop)`,
+)
+console.log(
+  `  ${mrPassed ? `${c.green}✓` : `${c.red}✗`}${c.reset} MR  session (create → ready → stop)`,
+)
 console.log()
 
 if (!vpnPassed || !mrPassed) process.exit(1)

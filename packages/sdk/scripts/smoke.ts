@@ -9,20 +9,16 @@
  * No sessions are started, no data is mutated.
  */
 
-import {
-  OctaAuthenticationError,
-  OctaClient,
-  type OctaClientOptions,
-} from '../src/index.js'
+import { OctaAuthenticationError, OctaClient, type OctaClientOptions } from '../src/index.js'
 
 // ─── CLI args ────────────────────────────────────────────────────────────────
 
 const args = process.argv.slice(2)
 const suiteIdx = args.indexOf('--suite')
-const onlyFilter: Set<string> | null =
-  suiteIdx !== -1 && args[suiteIdx + 1]
-    ? new Set(args[suiteIdx + 1]!.split(',').map((s) => s.trim()))
-    : null
+const suiteArg = suiteIdx !== -1 ? args[suiteIdx + 1] : undefined
+const onlyFilter: Set<string> | null = suiteArg
+  ? new Set(suiteArg.split(',').map((s) => s.trim()))
+  : null
 
 // ─── Colour helpers ──────────────────────────────────────────────────────────
 
@@ -40,8 +36,7 @@ const c = {
 const ok = (msg: string) => console.log(`  ${c.green}✓${c.reset} ${msg}`)
 const fail = (msg: string) => console.log(`  ${c.red}✗${c.reset} ${msg}`)
 const info = (msg: string) => console.log(`  ${c.gray}→${c.reset} ${c.dim}${msg}${c.reset}`)
-const section = (name: string) =>
-  console.log(`\n${c.bold}${c.cyan}[ ${name} ]${c.reset}`)
+const section = (name: string) => console.log(`\n${c.bold}${c.cyan}[ ${name} ]${c.reset}`)
 
 // ─── Test runner ─────────────────────────────────────────────────────────────
 
@@ -80,7 +75,7 @@ function shouldRun(suite: string): boolean {
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
-const apiKey = process.env['OCTA_API_KEY']
+const apiKey = process.env.OCTA_API_KEY
 if (!apiKey) {
   console.error(`\n${c.red}Error:${c.reset} OCTA_API_KEY environment variable is not set.\n`)
   console.error(`  Run: ${c.cyan}OCTA_API_KEY=your_key npm run smoke${c.reset}\n`)
@@ -181,8 +176,9 @@ if (shouldRun('apps')) {
     const apps = await client.apps.list()
     if (!Array.isArray(apps)) throw new Error('Response is not an array')
     info(`${apps.length} apps available`)
-    if (apps.length > 0) {
-      info(`First: ${apps[0]!.name} — ${apps[0]!.image}`)
+    const [firstApp] = apps
+    if (firstApp) {
+      info(`First: ${firstApp.name} — ${firstApp.image}`)
     }
   })
 }
@@ -197,16 +193,17 @@ if (shouldRun('nodes')) {
     const nodes = await client.nodes.list()
     if (!Array.isArray(nodes)) throw new Error('Response is not an array')
     info(`${nodes.length} nodes in your account`)
-    if (nodes.length > 0) {
-      const n = nodes[0]!
+    const [firstNode] = nodes
+    if (firstNode) {
       // The list endpoint may return summary objects; extract an id if present
-      firstNodeId = n.id
+      firstNodeId = firstNode.id
     }
   })
 
   if (firstNodeId !== undefined) {
-    await test(`GET /nodes/${firstNodeId} returns node detail`, async () => {
-      const node = await client.nodes.get(firstNodeId!)
+    const nodeId = firstNodeId
+    await test(`GET /nodes/${nodeId} returns node detail`, async () => {
+      const node = await client.nodes.get(nodeId)
       info(`State: ${node.state}`)
       if (node.data.cpu_model_name) info(`CPU: ${node.data.cpu_model_name}`)
       if (node.location) info(`Location: ${node.location.city}, ${node.location.country}`)
@@ -224,10 +221,14 @@ if (shouldRun('services')) {
     const machines = await client.services.mr.available()
     if (!Array.isArray(machines)) throw new Error('Response is not an array')
     info(`${machines.length} MR machines available`)
-    if (machines.length > 0) {
-      const m = machines[0]!
-      info(`Cheapest: node ${m.node_id} @ $${m.total_price_usd.toFixed(2)}/hr (${m.country})`)
-      info(`GPU: ${m.is_has_gpu ? m.gpus.map((g) => g.model).join(', ') : 'none'}`)
+    const [firstMachine] = machines
+    if (firstMachine) {
+      info(
+        `Cheapest: node ${firstMachine.node_id} @ $${firstMachine.total_price_usd.toFixed(2)}/hr (${firstMachine.country})`,
+      )
+      info(
+        `GPU: ${firstMachine.is_has_gpu ? firstMachine.gpus.map((g) => g.model).join(', ') : 'none'}`,
+      )
     }
   })
 
@@ -235,9 +236,9 @@ if (shouldRun('services')) {
     const nodes = await client.services.render.available()
     if (!Array.isArray(nodes)) throw new Error('Response is not an array')
     info(`${nodes.length} render nodes available`)
-    if (nodes.length > 0) {
-      const n = nodes[0]!
-      info(`Top CUDA score: ${n.blender_score} (node ${n.node_id})`)
+    const [firstRender] = nodes
+    if (firstRender) {
+      info(`Top CUDA score: ${firstRender.blender_score} (node ${firstRender.node_id})`)
     }
   })
 
@@ -245,9 +246,9 @@ if (shouldRun('services')) {
     const nodes = await client.services.vpn.available()
     if (!Array.isArray(nodes)) throw new Error('Response is not an array')
     info(`${nodes.length} VPN nodes available`)
-    if (nodes.length > 0) {
-      const n = nodes[0]!
-      info(`First: ${n.city}, ${n.country} — $${n.traffic_price_usd}/GB`)
+    const [firstVpn] = nodes
+    if (firstVpn) {
+      info(`First: ${firstVpn.city}, ${firstVpn.country} — $${firstVpn.traffic_price_usd}/GB`)
     }
   })
 }
