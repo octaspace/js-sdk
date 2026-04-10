@@ -9,8 +9,8 @@ export const SDK_VERSION = typeof __SDK_VERSION__ !== 'undefined' ? __SDK_VERSIO
 export const DEFAULT_USER_AGENT = `@octaspace/sdk/${SDK_VERSION} (js)`
 
 export interface OctaClientOptions {
-  /** API key for authentication */
-  apiKey: string
+  /** API key for authenticated endpoints */
+  apiKey?: string
   /** API base URL (default: https://api.octa.computer) */
   baseUrl?: string
   /** Request timeout in milliseconds (default: 30000) */

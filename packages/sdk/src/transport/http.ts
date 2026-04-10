@@ -14,7 +14,7 @@ import type { ApiResponse, RequestContext, RequestOptions, ResponseContext } fro
 
 export interface HttpTransportOptions {
   baseUrl: string
-  apiKey: string
+  apiKey?: string
   timeoutMs: number
   retries: number
   userAgent: string
@@ -59,7 +59,30 @@ export class HttpTransport {
     await this.opts.onRequest?.(ctx)
 
     const timeoutSignal = AbortSignal.timeout(this.opts.timeoutMs)
-    const signal = options.signal ? AbortSignal.any([options.signal, timeoutSignal]) : timeoutSignal
+    let signal = timeoutSignal
+    let cleanupAbort: (() => void) | undefined
+
+    if (options.signal) {
+      if (typeof AbortSignal.any === 'function') {
+        signal = AbortSignal.any([options.signal, timeoutSignal])
+      } else {
+        const controller = new AbortController()
+        const abort = () => controller.abort()
+
+        if (options.signal.aborted || timeoutSignal.aborted) {
+          abort()
+        } else {
+          options.signal.addEventListener('abort', abort)
+          timeoutSignal.addEventListener('abort', abort)
+          cleanupAbort = () => {
+            options.signal?.removeEventListener('abort', abort)
+            timeoutSignal.removeEventListener('abort', abort)
+          }
+        }
+        signal = controller.signal
+      }
+    }
+
     const startMs = Date.now()
 
     let response: Response
@@ -78,6 +101,8 @@ export class HttpTransport {
         throw new OctaTimeoutError(`Request timed out after ${this.opts.timeoutMs}ms`)
       }
       throw new OctaNetworkError(err instanceof Error ? err.message : 'Network error')
+    } finally {
+      cleanupAbort?.()
     }
 
     const durationMs = Date.now() - startMs
@@ -138,6 +163,9 @@ export class HttpTransport {
     headers.set('Accept', 'application/json')
 
     if (!options.skipAuth) {
+      if (!this.opts.apiKey) {
+        throw new OctaAuthenticationError('apiKey is required for authenticated endpoints', 401)
+      }
       headers.set('Authorization', this.opts.apiKey)
     }
 

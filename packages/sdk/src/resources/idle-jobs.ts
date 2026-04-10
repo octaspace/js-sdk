@@ -19,8 +19,8 @@ async function decodeGzipBase64(encoded: string): Promise<string> {
   const writer = ds.writable.getWriter()
   const reader = ds.readable.getReader()
 
-  writer.write(bytes)
-  writer.close()
+  await writer.write(bytes)
+  await writer.close()
 
   const chunks: Uint8Array[] = []
   let done = false

@@ -44,4 +44,4 @@ export type {
   VpnProtocol,
   VpnSubkind,
 } from './services/vpn.js'
-export type { IdleJob, IdleJobLogs } from './idle-job.js'
+export type { IdleJob } from './idle-job.js'

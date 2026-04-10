@@ -18,6 +18,14 @@ const mockNetworkStats = {
 }
 
 describe('NetworkResource', () => {
+  it('get() works without apiKey', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(mockNetworkStats))
+    const client = makeClient(mockFetch, { apiKey: null })
+    const stats = await client.network.get()
+
+    expect(stats.market_price).toBe(1.25)
+  })
+
   it('get() returns network stats', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(mockNetworkStats))
     const client = makeClient(mockFetch)

@@ -9,7 +9,8 @@ This is a **pnpm workspace monorepo**.
 ```
 js-sdk/
 ├── packages/
-│   └── sdk/               # @octaspace/sdk — the published package
+│   ├── sdk/               # @octaspace/sdk — the core SDK
+│   └── sdk-query/         # @octaspace/sdk-query — TanStack Query integration
 ├── .changeset/            # Changesets for versioning and releases
 ├── .github/workflows/     # CI (ci.yml) and release (release.yml)
 ├── biome.json             # Linter/formatter config — covers packages/*
@@ -97,9 +98,9 @@ src/index.ts           — Public exports only (never export transport/auth/util
 
 ### Key design rules
 
-- **Zero runtime dependencies** — native `fetch` only (Node 18+).
+- **Zero runtime dependencies** — native `fetch` only (Node 18+). Uses a fallback for `AbortSignal.any` to ensure Node 18 backward compatibility.
 - **Injectable fetch** — pass `fetch` in `OctaClientOptions` for tests, proxies, or older runtimes.
-- **Auth** — `Authorization: <api_key>` header. Set `skipAuth: true` in `RequestOptions` for unauthenticated endpoints.
+- **Auth** — `apiKey` is optional at client construction time. `Authorization: <api_key>` is added only for authenticated endpoints; unauthenticated endpoints set `skipAuth: true`. Protected requests without `apiKey` fail before `fetch`.
 - **Retry** — only safe HTTP methods (`GET`) retry by default. Never auto-retry `POST`. Per-request override via `options.retries`.
 - **Binary responses** — `responseType: 'blob'` for ident/log downloads.
 - **Idle job logs** — gzip+base64 decoded inside `IdleJobsResource` using `DecompressionStream`; consumers receive a plain string.
@@ -130,6 +131,47 @@ Unit tests live in `packages/sdk/tests/unit/` and mock `fetch` via `OctaClientOp
 - **Build**: tsup — entry `src/index.ts`, outputs `dist/index.js` (ESM) and `dist/index.cjs` (CJS) with `.d.ts`.
 - **Package manager**: pnpm workspaces.
 
+## Architecture — `packages/sdk-query`
+
+TanStack Query v5 integration. Exports query key factories and `queryOptions`-wrapped query configs for all read operations. Zero-runtime-dep — only peer dep is `@octaspace/sdk`; `queryOptions` is implemented as a local identity helper compatible with any TanStack Query framework adapter (`@tanstack/react-query`, `@tanstack/vue-query`, etc.).
+
+### Structure
+
+```
+src/queries/
+├── accounts.ts    — accountKeys, accountQueries  (get, balance)
+├── apps.ts        — appKeys, appQueries           (list)
+├── idle-jobs.ts   — idleJobKeys, idleJobQueries   (detail, logs)
+├── network.ts     — networkKeys, networkQueries   (stats)
+├── nodes.ts       — nodeKeys, nodeQueries         (list, detail)
+├── services.ts    — mrKeys/Queries, renderKeys/Queries, vpnKeys/Queries,
+│                    serviceSessionKeys/Queries    (available; session info/logs)
+└── sessions.ts    — sessionKeys, sessionQueries   (list)
+```
+
+### Usage pattern
+
+```ts
+import { nodeQueries, sessionQueries } from '@octaspace/sdk-query'
+import { useQuery } from '@tanstack/react-query'  // or vue-query, solid-query, etc.
+
+// Works with any TanStack Query framework adapter
+const { data } = useQuery(nodeQueries.list(client))
+const { data } = useQuery(nodeQueries.detail(client, nodeId))
+const { data } = useQuery(sessionQueries.list(client, { recent: true }))
+```
+
+### Key design rules
+
+- **Query key factories** (`*Keys`) are exported separately — use them for manual cache invalidation.
+- **Mutations are not wrapped** — `start()`, `stop()`, `reboot()`, `generateWallet()` are intentionally excluded.
+- **Blob downloads are not wrapped** — `downloadIdent()`, `downloadLogs()` return `Blob` and don't fit the query pattern.
+- **`ListSessionsOptions`** is re-exported so callers don't need to import from `@octaspace/sdk` directly.
+
+### Testing
+
+Unit tests live in `packages/sdk-query/tests/unit/`. Each test verifies query keys are stable and `queryFn` calls the correct client method. Uses `callQueryFn` helper from `tests/unit/helpers.ts` to avoid passing a full `QueryFunctionContext`.
+
 ## Adding a new package (future)
 
 1. Create `packages/<name>/` with its own `package.json`, `tsconfig.json` extending `../../tsconfig.json`, `tsup.config.ts`, `vitest.config.ts`.
@@ -143,7 +185,8 @@ Releases are manual — published when the team decides.
 1. `pnpm changeset` — describe the change, pick bump type (patch/minor/major)
 2. Commit the generated `.md` file together with your changes
 3. When ready to release: `pnpm version` — bumps `package.json` versions and updates `CHANGELOG.md`
-4. `pnpm --filter @octaspace/sdk publish` — publish to npm
+4. `pnpm --filter @octaspace/sdk publish` — publish core SDK to npm
+5. `pnpm --filter @octaspace/sdk-query publish` — publish TanStack Query integration to npm
 
 ## API reference
 

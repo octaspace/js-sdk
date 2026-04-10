@@ -5,7 +5,6 @@ import {
   DEFAULT_USER_AGENT,
   type OctaClientOptions,
 } from './config.js'
-import { OctaError } from './errors/index.js'
 import {
   AccountsResource,
   AppsResource,
@@ -27,16 +26,12 @@ export class OctaClient {
   readonly idleJobs: IdleJobsResource
 
   constructor(options: OctaClientOptions) {
-    if (!options.apiKey) {
-      throw new OctaError('apiKey is required to initialize OctaClient')
-    }
-
     const transport = new HttpTransport({
       baseUrl: options.baseUrl ?? DEFAULT_BASE_URL,
-      apiKey: options.apiKey,
       timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
       retries: options.retries ?? DEFAULT_RETRIES,
       userAgent: options.userAgent ?? DEFAULT_USER_AGENT,
+      ...(options.apiKey !== undefined && { apiKey: options.apiKey }),
       ...(options.fetch !== undefined && { fetch: options.fetch }),
       ...(options.onRequest !== undefined && { onRequest: options.onRequest }),
       ...(options.onResponse !== undefined && { onResponse: options.onResponse }),

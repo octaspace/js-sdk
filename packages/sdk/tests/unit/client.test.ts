@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { OctaClient } from '../../src/client.js'
-import { OctaError } from '../../src/errors/index.js'
 
 describe('OctaClient', () => {
-  it('throws OctaError when apiKey is missing', () => {
-    expect(() => new OctaClient({ apiKey: '' })).toThrow(OctaError)
+  it('can be created without apiKey for public endpoints', () => {
+    expect(() => new OctaClient({})).not.toThrow()
   })
 
   it('exposes all resource groups', () => {

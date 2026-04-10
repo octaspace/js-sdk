@@ -9,6 +9,7 @@ This repository contains the official JavaScript/TypeScript SDK for the [OCTA AP
 | Package | Version | Description |
 |---|---|---|
 | [`@octaspace/sdk`](packages/sdk) | [![npm](https://img.shields.io/npm/v/@octaspace/sdk)](https://www.npmjs.com/package/@octaspace/sdk) | Core SDK — Node.js, browser, edge runtimes |
+| [`@octaspace/sdk-query`](packages/sdk-query) | [![npm](https://img.shields.io/npm/v/@octaspace/sdk-query)](https://www.npmjs.com/package/@octaspace/sdk-query) | TanStack Query v5 integration (framework-agnostic) |
 
 ## Quick start
 
@@ -26,6 +27,13 @@ const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })
 const account = await client.accounts.get()
 const nodes = await client.nodes.list()
 const stats = await client.network.get()
+```
+
+Public-only usage is also supported:
+
+```ts
+const publicClient = new OctaClient({})
+const stats = await publicClient.network.get()
 ```
 
 Full documentation: [`packages/sdk/README.md`](packages/sdk/README.md)

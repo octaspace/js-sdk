@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import { OctaNetworkError, OctaTimeoutError } from '../../src/errors/index.js'
+import {
+  OctaAuthenticationError,
+  OctaNetworkError,
+  OctaTimeoutError,
+} from '../../src/errors/index.js'
 import { makeClient, makeResponse } from './helpers.js'
 
 describe('HttpTransport', () => {
@@ -21,6 +25,14 @@ describe('HttpTransport', () => {
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit]
     const headers = init.headers as Headers
     expect(headers.get('User-Agent')).toMatch(/@octaspace\/sdk/)
+  })
+
+  it('throws before request when apiKey is missing for authenticated endpoint', async () => {
+    const mockFetch = vi.fn()
+    const client = makeClient(mockFetch, { apiKey: null })
+
+    await expect(client.accounts.balance()).rejects.toBeInstanceOf(OctaAuthenticationError)
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 
   it('builds correct URL with query params', async () => {

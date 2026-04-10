@@ -36,6 +36,21 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@25.6.0)
 
+  packages/sdk-query:
+    devDependencies:
+      '@octaspace/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      '@vitest/coverage-v8':
+        specifier: ^2.1.8
+        version: 2.1.9(vitest@2.1.9(@types/node@25.6.0))
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.9)(tsx@4.21.0)(typescript@5.9.3)
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@25.6.0)
+
 packages:
 
   '@ampproject/remapping@2.3.0':

@@ -97,12 +97,21 @@ await client.services.session(uuid).stop({ score: 5 })
 
 ## Authentication
 
-All API requests (except `network.get()`) require an API key passed in the `Authorization` header. The SDK handles this automatically.
+Authenticated API requests require an API key passed in the `Authorization` header.
+The public `network.get()` endpoint works without a key. The SDK adds the header
+automatically only for protected endpoints.
 
 ```ts
 const client = new OctaClient({
   apiKey: 'your_api_key_here',
 })
+```
+
+For public network stats only:
+
+```ts
+const client = new OctaClient({})
+const stats = await client.network.get()
 ```
 
 **Best practice:** load the key from an environment variable, never hardcode it.

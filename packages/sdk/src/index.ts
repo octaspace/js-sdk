@@ -23,7 +23,6 @@ export type {
   Balance,
   BlockchainInfo,
   IdleJob,
-  IdleJobLogs,
   MrGpu,
   MrGpuByVendor,
   MrMachine,
@@ -32,11 +31,16 @@ export type {
   NetworkPower,
   NetworkStats,
   Node,
+  NodeDetail,
+  NodeDetailData,
+  NodeDetailLocation,
+  NodeDetailMemory,
   NodeDisk,
   NodeGpu,
   NodeLocation,
   NodeMemory,
   NodePrices,
+  NodeReliability,
   NodeSystem,
   PortsMatrix,
   RenderMachine,
@@ -61,6 +65,9 @@ export type {
   VpnSubkind,
   Wallet,
 } from './types/index.js'
+
+// Resource option types
+export type { ListSessionsOptions } from './resources/sessions.js'
 
 // Transport context types (for hooks)
 export type { RequestContext, ResponseContext } from './transport/types.js'
