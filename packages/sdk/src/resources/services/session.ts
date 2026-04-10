@@ -1,5 +1,6 @@
 import type { ServiceInfo, SessionLogs } from '../../types/index.js'
 import { BaseResource } from '../base.js'
+import { type RequestOverrides, withRequestOverrides } from '../request-options.js'
 
 export interface StopSessionOptions {
   /** Session score (1-5) */
@@ -14,19 +15,17 @@ export class SessionResource extends BaseResource {
     super(transport)
   }
 
-  async info(): Promise<ServiceInfo> {
-    const res = await this.request<ServiceInfo>({
-      method: 'GET',
-      path: `/services/${this.uuid}/info`,
-    })
+  async info(request?: RequestOverrides): Promise<ServiceInfo> {
+    const res = await this.request<ServiceInfo>(
+      withRequestOverrides({ method: 'GET', path: `/services/${this.uuid}/info` }, request),
+    )
     return res.data
   }
 
-  async logs(): Promise<SessionLogs> {
-    const res = await this.request<SessionLogs>({
-      method: 'GET',
-      path: `/services/${this.uuid}/logs`,
-    })
+  async logs(request?: RequestOverrides): Promise<SessionLogs> {
+    const res = await this.request<SessionLogs>(
+      withRequestOverrides({ method: 'GET', path: `/services/${this.uuid}/logs` }, request),
+    )
     return res.data
   }
 

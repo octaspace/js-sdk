@@ -10,9 +10,10 @@ This is a **pnpm workspace monorepo**.
 js-sdk/
 ├── packages/
 │   ├── sdk/               # @octaspace/sdk — the core SDK
-│   └── sdk-query/         # @octaspace/sdk-query — TanStack Query integration
+│   ├── sdk-query/         # @octaspace/sdk-query — TanStack Query integration
+│   └── sdk-react/         # @octaspace/sdk-react — React context + hooks
 ├── .changeset/            # Changesets for versioning and releases
-├── .github/workflows/     # CI (ci.yml) and release (release.yml)
+├── .github/workflows/     # CI (ci.yml)
 ├── biome.json             # Linter/formatter config — covers packages/*
 ├── tsconfig.json          # Base TypeScript config — extended by each package
 ├── pnpm-workspace.yaml
@@ -98,9 +99,10 @@ src/index.ts           — Public exports only (never export transport/auth/util
 
 ### Key design rules
 
-- **Zero runtime dependencies** — native `fetch` only (Node 18+). Uses a fallback for `AbortSignal.any` to ensure Node 18 backward compatibility.
+- **Zero runtime dependencies** — native `fetch` only (Node 18+).
 - **Injectable fetch** — pass `fetch` in `OctaClientOptions` for tests, proxies, or older runtimes.
 - **Auth** — `apiKey` is optional at client construction time. `Authorization: <api_key>` is added only for authenticated endpoints; unauthenticated endpoints set `skipAuth: true`. Protected requests without `apiKey` fail before `fetch`.
+- **Request overrides** — read-only SDK methods accept optional request overrides (`signal`, `retries`) so UI wrappers like `sdk-react` can abort in-flight requests without using transport internals.
 - **Retry** — only safe HTTP methods (`GET`) retry by default. Never auto-retry `POST`. Per-request override via `options.retries`.
 - **Binary responses** — `responseType: 'blob'` for ident/log downloads.
 - **Idle job logs** — gzip+base64 decoded inside `IdleJobsResource` using `DecompressionStream`; consumers receive a plain string.
@@ -172,6 +174,20 @@ const { data } = useQuery(sessionQueries.list(client, { recent: true }))
 
 Unit tests live in `packages/sdk-query/tests/unit/`. Each test verifies query keys are stable and `queryFn` calls the correct client method. Uses `callQueryFn` helper from `tests/unit/helpers.ts` to avoid passing a full `QueryFunctionContext`.
 
+## Architecture — `packages/sdk-react`
+
+React-first wrapper for apps that don't want TanStack Query. Exports `OctaProvider`, `useOctaClient()`, and read-only hooks backed by the core SDK. Hooks cancel in-flight requests on unmount/dependency change via `AbortController`, so `@octaspace/sdk` read methods accept optional request overrides (`signal`, `retries`) where needed.
+
+Structure:
+
+```
+src/context.tsx        — React context provider + client accessor
+src/useOctaRequest.ts  — shared async hook state machine (loading/error/data/refetch)
+src/hooks.ts           — resource-specific hooks (`useNodes`, `useSessions`, etc.)
+```
+
+Testing uses `@testing-library/react` with `jsdom`; deprecated `react-test-renderer` is intentionally not used.
+
 ## Adding a new package (future)
 
 1. Create `packages/<name>/` with its own `package.json`, `tsconfig.json` extending `../../tsconfig.json`, `tsup.config.ts`, `vitest.config.ts`.
@@ -187,6 +203,7 @@ Releases are manual — published when the team decides.
 3. When ready to release: `pnpm version` — bumps `package.json` versions and updates `CHANGELOG.md`
 4. `pnpm --filter @octaspace/sdk publish` — publish core SDK to npm
 5. `pnpm --filter @octaspace/sdk-query publish` — publish TanStack Query integration to npm
+6. `pnpm --filter @octaspace/sdk-react publish` — publish React integration to npm
 
 ## API reference
 

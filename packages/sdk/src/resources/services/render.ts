@@ -1,9 +1,12 @@
 import type { RenderMachine, StartRenderOptions, StartRenderResult } from '../../types/index.js'
 import { BaseResource } from '../base.js'
+import { type RequestOverrides, withRequestOverrides } from '../request-options.js'
 
 export class RenderService extends BaseResource {
-  async available(): Promise<RenderMachine[]> {
-    const res = await this.request<RenderMachine[]>({ method: 'GET', path: '/services/render' })
+  async available(request?: RequestOverrides): Promise<RenderMachine[]> {
+    const res = await this.request<RenderMachine[]>({
+      ...withRequestOverrides({ method: 'GET', path: '/services/render' }, request),
+    })
     return res.data
   }
 

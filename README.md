@@ -10,6 +10,7 @@ This repository contains the official JavaScript/TypeScript SDK for the [OCTA AP
 |---|---|---|
 | [`@octaspace/sdk`](packages/sdk) | [![npm](https://img.shields.io/npm/v/@octaspace/sdk)](https://www.npmjs.com/package/@octaspace/sdk) | Core SDK — Node.js, browser, edge runtimes |
 | [`@octaspace/sdk-query`](packages/sdk-query) | [![npm](https://img.shields.io/npm/v/@octaspace/sdk-query)](https://www.npmjs.com/package/@octaspace/sdk-query) | TanStack Query v5 integration (framework-agnostic) |
+| [`@octaspace/sdk-react`](packages/sdk-react) | [![npm](https://img.shields.io/npm/v/@octaspace/sdk-react)](https://www.npmjs.com/package/@octaspace/sdk-react) | React context and hooks without TanStack Query |
 
 ## Quick start
 
@@ -36,7 +37,11 @@ const publicClient = new OctaClient({})
 const stats = await publicClient.network.get()
 ```
 
-Full documentation: [`packages/sdk/README.md`](packages/sdk/README.md)
+## Package docs
+
+- Core SDK: [`packages/sdk/README.md`](packages/sdk/README.md)
+- TanStack Query integration: [`packages/sdk-query/README.md`](packages/sdk-query/README.md)
+- React hooks/context: [`packages/sdk-react/README.md`](packages/sdk-react/README.md)
 
 ## Development
 

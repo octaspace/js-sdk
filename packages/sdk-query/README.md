@@ -43,6 +43,13 @@ const { data: sessions } = useQuery(sessionQueries.list(client))
 const { data: recent } = useQuery(sessionQueries.list(client, { recent: true }))
 ```
 
+Public-only clients also work for unauthenticated queries:
+
+```ts
+const publicClient = new OctaClient({})
+const { data: stats } = useQuery(networkQueries.stats(publicClient))
+```
+
 ---
 
 ## Query Key Factories
@@ -119,6 +126,8 @@ read-query pattern:
 ```ts
 import type { ListSessionsOptions } from '@octaspace/sdk-query'
 ```
+
+Read-only query functions transparently benefit from the core SDK request-overrides support.
 
 ---
 

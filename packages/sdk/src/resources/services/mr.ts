@@ -1,9 +1,12 @@
 import type { MrMachine, StartMrOptions, StartMrResult } from '../../types/index.js'
 import { BaseResource } from '../base.js'
+import { type RequestOverrides, withRequestOverrides } from '../request-options.js'
 
 export class MrService extends BaseResource {
-  async available(): Promise<MrMachine[]> {
-    const res = await this.request<MrMachine[]>({ method: 'GET', path: '/services/mr' })
+  async available(request?: RequestOverrides): Promise<MrMachine[]> {
+    const res = await this.request<MrMachine[]>(
+      withRequestOverrides({ method: 'GET', path: '/services/mr' }, request),
+    )
     return res.data
   }
 

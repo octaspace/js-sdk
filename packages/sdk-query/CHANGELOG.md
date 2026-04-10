@@ -9,6 +9,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed
+
+- Query examples and usage are aligned with the current core SDK behavior where public endpoints can be used with `new OctaClient({})`
+
 ---
 
 ## [0.1.0] - 2026-04-10

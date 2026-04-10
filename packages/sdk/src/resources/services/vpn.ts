@@ -1,9 +1,12 @@
 import type { StartVpnOptions, StartVpnResult, VpnNode } from '../../types/index.js'
 import { BaseResource } from '../base.js'
+import { type RequestOverrides, withRequestOverrides } from '../request-options.js'
 
 export class VpnService extends BaseResource {
-  async available(): Promise<VpnNode[]> {
-    const res = await this.request<VpnNode[]>({ method: 'GET', path: '/services/vpn' })
+  async available(request?: RequestOverrides): Promise<VpnNode[]> {
+    const res = await this.request<VpnNode[]>(
+      withRequestOverrides({ method: 'GET', path: '/services/vpn' }, request),
+    )
     return res.data
   }
 

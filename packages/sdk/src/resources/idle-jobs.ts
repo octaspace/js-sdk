@@ -1,5 +1,6 @@
 import type { IdleJob } from '../types/index.js'
 import { BaseResource } from './base.js'
+import { type RequestOverrides, withRequestOverrides } from './request-options.js'
 
 interface RawIdleJobLogs {
   /** GZIP compressed and Base64 encoded log */
@@ -44,19 +45,25 @@ async function decodeGzipBase64(encoded: string): Promise<string> {
 }
 
 export class IdleJobsResource extends BaseResource {
-  async get(nodeId: string | number, jobId: string | number): Promise<IdleJob> {
-    const res = await this.request<IdleJob>({
-      method: 'GET',
-      path: `/idle_jobs/${nodeId}/${jobId}`,
-    })
+  async get(
+    nodeId: string | number,
+    jobId: string | number,
+    request?: RequestOverrides,
+  ): Promise<IdleJob> {
+    const res = await this.request<IdleJob>(
+      withRequestOverrides({ method: 'GET', path: `/idle_jobs/${nodeId}/${jobId}` }, request),
+    )
     return res.data
   }
 
-  async logs(nodeId: string | number, jobId: string | number): Promise<string> {
-    const res = await this.request<RawIdleJobLogs>({
-      method: 'GET',
-      path: `/idle_jobs/${nodeId}/${jobId}/logs`,
-    })
+  async logs(
+    nodeId: string | number,
+    jobId: string | number,
+    request?: RequestOverrides,
+  ): Promise<string> {
+    const res = await this.request<RawIdleJobLogs>(
+      withRequestOverrides({ method: 'GET', path: `/idle_jobs/${nodeId}/${jobId}/logs` }, request),
+    )
     return decodeGzipBase64(res.data.data)
   }
 }

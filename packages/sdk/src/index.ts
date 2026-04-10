@@ -68,6 +68,7 @@ export type {
 
 // Resource option types
 export type { ListSessionsOptions } from './resources/sessions.js'
+export type { RequestOverrides } from './resources/request-options.js'
 
 // Transport context types (for hooks)
 export type { RequestContext, ResponseContext } from './transport/types.js'

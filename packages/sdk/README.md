@@ -114,6 +114,13 @@ const client = new OctaClient({})
 const stats = await client.network.get()
 ```
 
+Read-only methods also accept optional request overrides for UI integrations:
+
+```ts
+const controller = new AbortController()
+const nodes = await client.nodes.list({ signal: controller.signal, retries: 0 })
+```
+
 **Best practice:** load the key from an environment variable, never hardcode it.
 
 ```ts
