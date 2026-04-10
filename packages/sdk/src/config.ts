@@ -3,7 +3,10 @@ import type { RequestContext, ResponseContext } from './transport/types.js'
 export const DEFAULT_BASE_URL = 'https://api.octa.computer'
 export const DEFAULT_TIMEOUT_MS = 30_000
 export const DEFAULT_RETRIES = 2
-export const DEFAULT_USER_AGENT = '@octaspace/sdk/0.1.0 (js)'
+declare const __SDK_VERSION__: string | undefined
+/** SDK version — injected by tsup at build time, falls back to '0.0.0-dev' */
+export const SDK_VERSION = typeof __SDK_VERSION__ !== 'undefined' ? __SDK_VERSION__ : '0.0.0-dev'
+export const DEFAULT_USER_AGENT = `@octaspace/sdk/${SDK_VERSION} (js)`
 
 export interface OctaClientOptions {
   /** API key for authentication */

@@ -58,7 +58,8 @@ export class HttpTransport {
 
     await this.opts.onRequest?.(ctx)
 
-    const signal = options.signal ?? AbortSignal.timeout(this.opts.timeoutMs)
+    const timeoutSignal = AbortSignal.timeout(this.opts.timeoutMs)
+    const signal = options.signal ? AbortSignal.any([options.signal, timeoutSignal]) : timeoutSignal
     const startMs = Date.now()
 
     let response: Response
@@ -71,6 +72,9 @@ export class HttpTransport {
       })
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
+        if (options.signal?.aborted) {
+          throw new OctaNetworkError('Request was aborted')
+        }
         throw new OctaTimeoutError(`Request timed out after ${this.opts.timeoutMs}ms`)
       }
       throw new OctaNetworkError(err instanceof Error ? err.message : 'Network error')
