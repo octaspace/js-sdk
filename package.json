@@ -1,74 +1,34 @@
 {
-  "name": "@octaspace/sdk",
-  "version": "0.1.0",
-  "description": "Official JavaScript/TypeScript SDK for the OCTA API",
-  "keywords": [
-    "octa",
-    "octaspace",
-    "sdk",
-    "api",
-    "cloud",
-    "gpu",
-    "vpn",
-    "render"
-  ],
-  "homepage": "https://github.com/octaspace/js-sdk",
+  "name": "octaspace-js-sdk",
+  "private": true,
+  "description": "OctaSpace JavaScript/TypeScript SDK monorepo",
   "repository": {
     "type": "git",
     "url": "https://github.com/octaspace/js-sdk.git"
   },
   "license": "MIT",
-  "author": "OctaSpace",
-  "type": "module",
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
-    }
-  },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist",
-    "openapi.json",
-    "README.md",
-    "CHANGELOG.md"
-  ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit",
-    "lint": "biome check src tests",
-    "lint:fix": "biome check --write src tests",
-    "format": "biome format --write src tests",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "smoke": "tsx scripts/smoke.ts",
-    "prepublishOnly": "pnpm run build && pnpm run typecheck && pnpm run test"
+    "build": "pnpm --filter './packages/*' run build",
+    "dev": "pnpm --filter './packages/*' run dev",
+    "typecheck": "pnpm --filter './packages/*' run typecheck",
+    "lint": "biome check packages",
+    "lint:fix": "biome check --write packages",
+    "format": "biome format --write packages",
+    "test": "pnpm --filter './packages/*' run test",
+    "test:coverage": "pnpm --filter './packages/*' run test:coverage",
+    "check": "pnpm build && pnpm typecheck && pnpm lint && pnpm test",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "playground": "pnpm --filter octaspace-playground dev",
+    "playground:build": "pnpm --filter octaspace-playground build"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@types/node": "^25.6.0",
-    "@vitest/coverage-v8": "^2.1.8",
-    "tsup": "^8.3.5",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "@changesets/cli": "^2.27.0",
+    "typescript": "^5.7.2"
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
   },
   "packageManager": "pnpm@9.15.0"
 }

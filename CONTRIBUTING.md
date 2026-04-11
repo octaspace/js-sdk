@@ -1,7 +1,5 @@
 # Contributing to @octaspace/sdk
 
-Thank you for your interest in improving the OCTA SDK.
-
 ## Prerequisites
 
 - Node.js 18+
@@ -15,47 +13,48 @@ cd js-sdk
 pnpm install
 ```
 
+## Repository layout
+
+This is a pnpm workspace monorepo.
+
+```
+apps/
+  playground/        # Dummy application to test SDK and UI components
+packages/
+  sdk/               # @octaspace/sdk — the core SDK package
+    src/             # Source code
+    tests/unit/      # Unit tests (one file per resource)
+    scripts/         # Development scripts (smoke tests, inspection)
+  sdk-query/         # @octaspace/sdk-query — TanStack Query wrappers
+  sdk-react/         # @octaspace/sdk-react — React hooks & context
+.changeset/          # Changesets for versioning
+```
+
 ## Development workflow
 
+Run from the repo root:
+
 ```bash
-pnpm typecheck   # TypeScript — zero errors expected
-pnpm lint        # Biome — zero warnings expected
-pnpm test        # Vitest — all tests must pass
-pnpm build       # tsup — produces dist/
+pnpm build           # Compile all packages
+pnpm typecheck       # TypeScript — zero errors expected
+pnpm lint            # Biome — zero issues expected
+pnpm test            # Vitest — all tests must pass
 ```
 
 Run all checks at once before opening a PR:
 
 ```bash
-pnpm typecheck && pnpm lint && pnpm test && pnpm build
-```
-
-## Project layout
-
-```
-src/
-  client.ts          # OctaClient — public entry point
-  config.ts          # OctaClientOptions and defaults
-  index.ts           # Public exports only
-  auth/              # Authentication strategies
-  errors/            # Typed error classes
-  resources/         # One file per API resource group
-    services/        # MR, Render, VPN, Session
-  transport/         # HTTP transport layer
-  types/             # TypeScript types from the OpenAPI spec
-  utils/             # Retry logic
-tests/
-  unit/              # One test file per resource
+pnpm check
 ```
 
 ## Adding or updating a resource
 
-1. Update or add types in `src/types/`
-2. Implement the resource in `src/resources/`
-3. Register it in `OctaClient` (`src/client.ts`)
-4. Export public types and classes from `src/index.ts`
-5. Add or update unit tests in `tests/unit/`
-6. Update `README.md` if the public API changes
+1. Update or add types in `packages/sdk/src/types/`
+2. Implement the resource in `packages/sdk/src/resources/`
+3. Register it in `OctaClient` (`packages/sdk/src/client.ts`)
+4. Export public types and classes from `packages/sdk/src/index.ts`
+5. Add or update unit tests in `packages/sdk/tests/unit/`
+6. Update `packages/sdk/README.md` if the public API changes
 
 ## Writing tests
 
@@ -77,6 +76,42 @@ it('example', async () => {
 
 Never make real HTTP requests in unit tests.
 
+Run a single test file:
+
+```bash
+pnpm --filter @octaspace/sdk exec vitest run tests/unit/nodes.test.ts
+```
+
+## Testing in Playground (Dummy App)
+
+We have a dedicated playground app located in `apps/playground` to visually test SDK functions, hooks, and responses, isolated from the production bundle. 
+
+1. Start the playground app from the repository root:
+```bash
+pnpm --filter playground dev
+```
+2. Open `http://localhost:5173` (or the URL Vite provides).
+3. Set your API Key in the UI sidebar to test authenticated routes.
+You can freely inspect raw responses, simulate loading states, or mutate data.
+
+## Code style
+
+The codebase uses [Biome](https://biomejs.dev/) for formatting and linting.
+
+Key conventions:
+- Single quotes for strings
+- 2-space indentation
+- 100-character line width
+- No semicolons at end of statements
+- Trailing commas in multi-line structures
+- `import type` for type-only imports
+
+Auto-fix formatting before committing:
+
+```bash
+pnpm lint:fix
+```
+
 ## Versioning
 
 This project follows [Semantic Versioning](https://semver.org/):
@@ -87,32 +122,27 @@ This project follows [Semantic Versioning](https://semver.org/):
 | New method, new optional param | **minor** |
 | Removed/renamed public API | **major** |
 
-## Releasing
+## Creating a changeset
 
-Releases are managed via [Changesets](https://github.com/changesets/changesets).
+Every PR that changes published behavior must include a changeset:
 
 ```bash
-# 1. Describe your change
 pnpm changeset
-
-# 2. Pick the bump type (patch / minor / major) and write a short description
-
-# 3. Commit the generated changeset file along with your changes
 ```
 
-CI will automatically bump the version, update `CHANGELOG.md`, and publish to npm when a release PR is merged.
+Pick the affected packages, the bump type (patch/minor/major), and write a short description. Commit the generated `.md` file together with your changes.
 
-## Code style
+## Publishing a release
 
-The codebase uses [Biome](https://biomejs.dev/) for formatting and linting. Run `pnpm lint:fix` to auto-fix formatting issues before committing.
+Releases are published manually when the team agrees on a release.
 
-Key conventions:
-- Single quotes for strings
-- 2-space indentation
-- 100-character line width
-- No semicolons at end of statements
-- Trailing commas in multi-line structures
-- `import type` for type-only imports
+```bash
+# 1. Bump versions and generate CHANGELOG from accumulated changesets
+pnpm version
+
+# 2. Review the version changes, then publish all updated packages safely:
+pnpm publish -r --access public
+```
 
 ## Opening a pull request
 
@@ -122,4 +152,4 @@ Key conventions:
 4. Add a changeset: `pnpm changeset`
 5. Open a PR against `main` with a clear description of the change
 
-For bug fixes, please include a failing test that demonstrates the bug before your fix.
+For bug fixes, include a failing test that demonstrates the bug before your fix.
