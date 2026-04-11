@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: applies when an ancestor has class="dark" */
+@variant dark (&:where(.dark, .dark *));
+
+/* JSON syntax highlighting */
+.json-key    { color: #7dd3fc; } /* sky-300  */
+.json-string { color: #6ee7b7; } /* emerald-300 */
+.json-number { color: #fcd34d; } /* amber-300 */
+.json-bool   { color: #c4b5fd; } /* violet-300 */
+.json-null   { color: #64748b; } /* slate-500 */

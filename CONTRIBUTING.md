@@ -18,11 +18,15 @@ pnpm install
 This is a pnpm workspace monorepo.
 
 ```
+apps/
+  playground/        # Dummy application to test SDK and UI components
 packages/
   sdk/               # @octaspace/sdk — the core SDK package
     src/             # Source code
     tests/unit/      # Unit tests (one file per resource)
     scripts/         # Development scripts (smoke tests, inspection)
+  sdk-query/         # @octaspace/sdk-query — TanStack Query wrappers
+  sdk-react/         # @octaspace/sdk-react — React hooks & context
 .changeset/          # Changesets for versioning
 ```
 
@@ -78,6 +82,18 @@ Run a single test file:
 pnpm --filter @octaspace/sdk exec vitest run tests/unit/nodes.test.ts
 ```
 
+## Testing in Playground (Dummy App)
+
+We have a dedicated playground app located in `apps/playground` to visually test SDK functions, hooks, and responses, isolated from the production bundle. 
+
+1. Start the playground app from the repository root:
+```bash
+pnpm --filter playground dev
+```
+2. Open `http://localhost:5173` (or the URL Vite provides).
+3. Set your API Key in the UI sidebar to test authenticated routes.
+You can freely inspect raw responses, simulate loading states, or mutate data.
+
 ## Code style
 
 The codebase uses [Biome](https://biomejs.dev/) for formatting and linting.
@@ -124,8 +140,8 @@ Releases are published manually when the team agrees on a release.
 # 1. Bump versions and generate CHANGELOG from accumulated changesets
 pnpm version
 
-# 2. Review the version changes, then publish
-pnpm --filter @octaspace/sdk publish
+# 2. Review the version changes, then publish all updated packages safely:
+pnpm publish -r --access public
 ```
 
 ## Opening a pull request

@@ -8,17 +8,19 @@
   },
   "license": "MIT",
   "scripts": {
-    "build": "pnpm -r run build",
-    "dev": "pnpm -r run dev",
-    "typecheck": "pnpm -r run typecheck",
+    "build": "pnpm --filter './packages/*' run build",
+    "dev": "pnpm --filter './packages/*' run dev",
+    "typecheck": "pnpm --filter './packages/*' run typecheck",
     "lint": "biome check packages",
     "lint:fix": "biome check --write packages",
     "format": "biome format --write packages",
-    "test": "pnpm -r run test",
-    "test:coverage": "pnpm -r run test:coverage",
+    "test": "pnpm --filter './packages/*' run test",
+    "test:coverage": "pnpm --filter './packages/*' run test:coverage",
     "check": "pnpm build && pnpm typecheck && pnpm lint && pnpm test",
     "changeset": "changeset",
-    "version": "changeset version"
+    "version": "changeset version",
+    "playground": "pnpm --filter octaspace-playground dev",
+    "playground:build": "pnpm --filter octaspace-playground build"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

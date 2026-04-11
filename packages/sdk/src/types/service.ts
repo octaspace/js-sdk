@@ -43,6 +43,8 @@ export interface SessionNodeHw {
 export interface ServiceInfo {
   uuid: string
   service: ServiceKind
+  /** Service subtype as returned by marketplace sessions (e.g. wg, openvpn, v2ray) */
+  kind?: string
   app_name?: string
   app_logo?: string
   node_id: number
@@ -78,6 +80,8 @@ export interface ServiceInfo {
    * string-encoded integer for large values to avoid precision loss.
    */
   charge_amount?: number | string
+  /** Marketplace recent-session termination reason enum */
+  termination_reason?: number | string
   node_hw?: SessionNodeHw
   prices?: SessionPrices
 }

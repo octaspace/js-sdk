@@ -27,7 +27,7 @@ export class HttpTransport {
   private readonly fetchFn: typeof globalThis.fetch
 
   constructor(private readonly opts: HttpTransportOptions) {
-    this.fetchFn = opts.fetch ?? globalThis.fetch
+    this.fetchFn = opts.fetch ?? globalThis.fetch.bind(globalThis)
   }
 
   async request<T>(options: RequestOptions): Promise<ApiResponse<T>> {

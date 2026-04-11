@@ -42,6 +42,7 @@ export function useOctaRequest<TData>(
 
     setLoading(true)
     setError(undefined)
+    setData(undefined)
 
     void requestRef
       .current({ signal: controller.signal })
