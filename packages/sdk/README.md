@@ -335,6 +335,12 @@ const { uuid: uuid3 } = await client.services.vpn.start({
   subkind:  'v2ray',
   protocol: 'vmess',  // 'trojan' | 'vmess' | 'vless'
 })
+
+// Start an HTTP proxy session
+const { uuid: uuid4 } = await client.services.vpn.start({
+  node_id: vpnNodes[0].node_id,
+  subkind: 'http_proxy',
+})
 ```
 
 After starting, get the VPN config from session info:
@@ -343,6 +349,11 @@ After starting, get the VPN config from session info:
 const info = await client.services.session(uuid).info()
 console.log(info.config)  // WireGuard / OpenVPN config string
 // Note: Swagger spec names this field `vpn_config` but the real API returns `config`
+
+// For http_proxy sessions, `config` is an object instead of a string:
+if (typeof info.config === 'object') {
+  const { ip, port } = info.config  // ProxyConfig
+}
 ```
 
 ---
@@ -717,7 +728,7 @@ const options: OctaClientOptions = {
 ```ts
 import type { VpnSubkind, VpnProtocol } from '@octaspace/sdk'
 
-// VpnSubkind: 'wg' | 'openvpn' | 'ss' | 'v2ray'
+// VpnSubkind: 'wg' | 'openvpn' | 'ss' | 'v2ray' | 'http_proxy'
 // VpnProtocol: 'trojan' | 'vmess' | 'vless'  (V2Ray only)
 ```
 

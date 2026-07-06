@@ -8,6 +8,12 @@ export interface SshAccess {
 /** Maps host port → container port */
 export type PortsMatrix = Record<string, number>
 
+/** Proxy connection details — returned as `config` for `http_proxy` VPN sessions */
+export interface ProxyConfig {
+  ip: string
+  port: number
+}
+
 export interface SystemLogEntry {
   msg: string
   /** Timestamp in Unix **milliseconds** */
@@ -67,10 +73,11 @@ export interface ServiceInfo {
   ssh_proxy?: SshAccess
   ssh_web?: string
   /**
-   * VPN configuration string (WireGuard / OpenVPN / etc.) — from /info endpoint.
+   * VPN configuration — from /info endpoint. A config string for WireGuard /
+   * OpenVPN / etc., or a {@link ProxyConfig} object for `http_proxy` sessions.
    * Note: the Swagger spec names this field `vpn_config`, but the real API returns it as `config`.
    */
-  config?: string
+  config?: string | ProxyConfig
   /** Transmitted bytes — from /info endpoint */
   tx?: number
   /** Received bytes — from /info endpoint */

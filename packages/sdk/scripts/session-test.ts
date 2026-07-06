@@ -115,9 +115,9 @@ try {
   info(`Public IP:  ${sessionInfo.public_ip ?? '—'}`)
   info(`Country:    ${sessionInfo.country ?? '—'}, ${sessionInfo.city ?? '—'}`)
   info(`Duration:   ${sessionInfo.duration}s`)
-  info(
-    `VPN config: ${sessionInfo.config ? `${sessionInfo.config.slice(0, 80).replace(/\n/g, ' ')}…` : '—'}`,
-  )
+  const configPreview =
+    typeof sessionInfo.config === 'string' ? sessionInfo.config : JSON.stringify(sessionInfo.config)
+  info(`VPN config: ${configPreview ? `${configPreview.slice(0, 80).replace(/\n/g, ' ')}…` : '—'}`)
   if (sessionInfo.charge_amount) info(`Charged:    ${sessionInfo.charge_amount} Wei`)
 
   step('Session logs')

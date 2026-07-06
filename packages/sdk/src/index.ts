@@ -43,6 +43,7 @@ export type {
   NodeReliability,
   NodeSystem,
   PortsMatrix,
+  ProxyConfig,
   RenderMachine,
   ServiceInfo,
   ServiceKind,

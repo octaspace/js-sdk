@@ -1,4 +1,4 @@
-export type VpnSubkind = 'wg' | 'openvpn' | 'ss' | 'v2ray'
+export type VpnSubkind = 'wg' | 'openvpn' | 'ss' | 'v2ray' | 'http_proxy'
 export type VpnProtocol = 'trojan' | 'vmess' | 'vless'
 
 export interface VpnNode {

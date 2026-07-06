@@ -18,6 +18,7 @@ export type {
 } from './node.js'
 export type {
   PortsMatrix,
+  ProxyConfig,
   ServiceInfo,
   ServiceKind,
   Session,
