@@ -17,3 +17,4 @@ coverage/
 *.bak
 *.tmp
 *.claude
+package-lock.json
