@@ -40,7 +40,7 @@
     "prepublishOnly": "pnpm run build && pnpm run typecheck && pnpm run test"
   },
   "peerDependencies": {
-    "@octaspace/sdk": ">=0.1.0",
+    "@octaspace/sdk": ">=0.1.1",
     "react": ">=18.0.0"
   },
   "devDependencies": {

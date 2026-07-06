@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+### Patch Changes
+
+- 245e71e: Add `http_proxy` to `VpnSubkind` and type `ServiceInfo.config` as `string | ProxyConfig` — for `http_proxy` sessions the API returns a `{ ip, port }` object instead of a config string. New exported type: `ProxyConfig`.
+
 All notable changes to `@octaspace/sdk` are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
