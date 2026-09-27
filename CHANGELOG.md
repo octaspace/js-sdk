@@ -11,6 +11,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [0.1.1] — 2026-07-06
+
+### Added
+
+- `http_proxy` VPN session support: new `'http_proxy'` `VpnSubkind`, new `ProxyConfig` (`{ ip, port }`) interface, and `SessionInfo.config` widened to `string | ProxyConfig`
+
+---
+
 ## [0.1.0] — 2026-04-10
 
 ### Added
@@ -35,5 +43,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Dual ESM + CJS build with TypeScript declarations
 - Zero runtime dependencies
 
-[Unreleased]: https://github.com/octaspace/js-sdk/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/octaspace/js-sdk/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/octaspace/js-sdk/releases/tag/v0.1.1
 [0.1.0]: https://github.com/octaspace/js-sdk/releases/tag/v0.1.0
