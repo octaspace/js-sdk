@@ -60,8 +60,8 @@ export function App() {
 - `useNetworkStats()`
 - `useNodes()`
 - `useNode(id)`
-- `useMrAvailable()`
-- `useRenderAvailable()`
+- `useComputeMachines()`
+- `useRenderMachines()`
 - `useVpnAvailable()`
 - `useServiceSessionInfo(uuid)`
 - `useServiceSessionLogs(uuid)`

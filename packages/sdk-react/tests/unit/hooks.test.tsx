@@ -1,7 +1,14 @@
 import type { Node, OctaClient, RequestOverrides, Session } from '@octaspace/sdk'
 import { act, render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { OctaProvider, useNetworkStats, useNode, useNodes, useSessions } from '../../src/index.js'
+import {
+  OctaProvider,
+  useComputeMachines,
+  useNetworkStats,
+  useNode,
+  useNodes,
+  useSessions,
+} from '../../src/index.js'
 
 function deferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void
@@ -152,5 +159,25 @@ describe('sdk-react hooks', () => {
         loading: false,
       })
     })
+  })
+
+  it('loads compute machines and passes the abort signal', async () => {
+    const list = vi.fn().mockResolvedValue([{ node_number: 'M95S-WZG8-7' }])
+    const client = { compute: { list } } as unknown as OctaClient
+    let data: unknown
+
+    function Probe() {
+      data = useComputeMachines().data
+      return null
+    }
+
+    render(
+      <OctaProvider client={client}>
+        <Probe />
+      </OctaProvider>,
+    )
+
+    await waitFor(() => expect(data).toEqual([{ node_number: 'M95S-WZG8-7' }]))
+    expect(list.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
   })
 })

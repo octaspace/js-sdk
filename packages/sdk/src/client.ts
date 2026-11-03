@@ -9,9 +9,11 @@ import type { RateLimit } from './errors/index.js'
 import {
   AccountsResource,
   AppsResource,
+  ComputeResource,
   IdleJobsResource,
   NetworkResource,
   NodesResource,
+  RenderResource,
   ServicesResource,
   SessionsResource,
 } from './resources/index.js'
@@ -20,8 +22,12 @@ import { HttpTransport } from './transport/http.js'
 export class OctaClient {
   readonly accounts: AccountsResource
   readonly apps: AppsResource
+  /** Compute machines: list, start, startBatch, restart */
+  readonly compute: ComputeResource
   readonly network: NetworkResource
   readonly nodes: NodesResource
+  /** Render nodes: list, start, startBatch */
+  readonly render: RenderResource
   readonly services: ServicesResource
   readonly sessions: SessionsResource
   readonly idleJobs: IdleJobsResource
@@ -43,8 +49,10 @@ export class OctaClient {
     this.transport = transport
     this.accounts = new AccountsResource(transport)
     this.apps = new AppsResource(transport)
+    this.compute = new ComputeResource(transport)
     this.network = new NetworkResource(transport)
     this.nodes = new NodesResource(transport)
+    this.render = new RenderResource(transport)
     this.services = new ServicesResource(transport)
     this.sessions = new SessionsResource(transport)
     this.idleJobs = new IdleJobsResource(transport)

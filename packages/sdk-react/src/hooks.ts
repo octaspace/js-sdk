@@ -71,22 +71,24 @@ export function useNode(
   )
 }
 
-export function useMrAvailable(
+/** Compute machines available for rent (`client.compute.list()`). */
+export function useComputeMachines(
   options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['services']['mr']['available']>>
+    Awaited<ReturnType<ReturnType<typeof useOctaClient>['compute']['list']>>
   >,
 ) {
   const client = useOctaClient()
-  return useOctaRequest((request) => client.services.mr.available(request), [client], options)
+  return useOctaRequest((request) => client.compute.list(request), [client], options)
 }
 
-export function useRenderAvailable(
+/** Render nodes available for rent (`client.render.list()`). */
+export function useRenderMachines(
   options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['services']['render']['available']>>
+    Awaited<ReturnType<ReturnType<typeof useOctaClient>['render']['list']>>
   >,
 ) {
   const client = useOctaClient()
-  return useOctaRequest((request) => client.services.render.available(request), [client], options)
+  return useOctaRequest((request) => client.render.list(request), [client], options)
 }
 
 export function useVpnAvailable(

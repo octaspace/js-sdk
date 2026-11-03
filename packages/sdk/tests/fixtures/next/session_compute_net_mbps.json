@@ -1,0 +1,57 @@
+{
+  "ports": {},
+  "status": "ready",
+  "progress": "Service configured",
+  "service": "compute",
+  "started_at": 1793640731705,
+  "ssh": {
+    "proxy": null,
+    "web": null,
+    "direct": null
+  },
+  "duration": 2,
+  "city": "Mukachevo",
+  "country": "Ukraine",
+  "tx": 0,
+  "rx": 0,
+  "uuid": "4c6d8e2f-1a3b-4c5d-9e7f-8a9b0c1d2e3f",
+  "traffic_price": 100,
+  "storage_price": 100,
+  "node_number": "WJFM-MYWR-9",
+  "min_rent_minutes": 0,
+  "base_price": 100,
+  "fm": null,
+  "envs": {
+    "SDK_FIXTURE": "1"
+  },
+  "urls": {},
+  "pull_percent": null,
+  "public_ip": "203.0.113.11",
+  "node_hw": {
+    "cpu": "AMD Ryzen 7 7700 8-Core Processor",
+    "net_up_mbps": 465,
+    "net_down_mbps": 257,
+    "memory_type": "DDR5",
+    "memory_speed": 5600,
+    "gpus": [
+      {
+        "model": "Arc B580",
+        "mem_total_mb": 12288
+      },
+      {
+        "model": "Arc B580",
+        "mem_total_mb": 12288
+      }
+    ],
+    "gpu_vendor": "intel",
+    "disk_type": "nvme",
+    "disk_speed_mbs": 6580,
+    "disk": 1,
+    "cpu_cores": 16,
+    "total_memory": 97915236352
+  },
+  "country_iso": "UA",
+  "charge_amount": 0,
+  "app_name": "alpine:3.20",
+  "app_logo": "https://files.octa.space/apps-logo/docker.svg"
+}

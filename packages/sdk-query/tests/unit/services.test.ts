@@ -1,10 +1,6 @@
 import type { OctaClient } from '@octaspace/sdk'
 import { describe, expect, it, vi } from 'vitest'
 import {
-  mrKeys,
-  mrQueries,
-  renderKeys,
-  renderQueries,
   serviceSessionKeys,
   serviceSessionQueries,
   vpnKeys,
@@ -21,54 +17,12 @@ const makeClient = () => {
   const sessionResource = makeSessionResource()
   return {
     services: {
-      mr: { available: vi.fn().mockResolvedValue([]) },
-      render: { available: vi.fn().mockResolvedValue([]) },
       vpn: { available: vi.fn().mockResolvedValue([]) },
       session: vi.fn().mockReturnValue(sessionResource),
     },
     _sessionResource: sessionResource,
   } as unknown as OctaClient & { _sessionResource: ReturnType<typeof makeSessionResource> }
 }
-
-describe('mrKeys', () => {
-  it('produces stable query keys', () => {
-    expect(mrKeys.all()).toEqual(['@octaspace', 'services', 'mr'])
-    expect(mrKeys.available()).toEqual(['@octaspace', 'services', 'mr', 'available'])
-  })
-})
-
-describe('mrQueries.available', () => {
-  it('sets the correct queryKey', () => {
-    const opts = mrQueries.available(makeClient())
-    expect(opts.queryKey).toEqual(mrKeys.available())
-  })
-
-  it('queryFn calls client.services.mr.available()', async () => {
-    const client = makeClient()
-    await callQueryFn(mrQueries.available(client))
-    expect(client.services.mr.available).toHaveBeenCalledOnce()
-  })
-})
-
-describe('renderKeys', () => {
-  it('produces stable query keys', () => {
-    expect(renderKeys.all()).toEqual(['@octaspace', 'services', 'render'])
-    expect(renderKeys.available()).toEqual(['@octaspace', 'services', 'render', 'available'])
-  })
-})
-
-describe('renderQueries.available', () => {
-  it('sets the correct queryKey', () => {
-    const opts = renderQueries.available(makeClient())
-    expect(opts.queryKey).toEqual(renderKeys.available())
-  })
-
-  it('queryFn calls client.services.render.available()', async () => {
-    const client = makeClient()
-    await callQueryFn(renderQueries.available(client))
-    expect(client.services.render.available).toHaveBeenCalledOnce()
-  })
-})
 
 describe('vpnKeys', () => {
   it('produces stable query keys', () => {

@@ -9,7 +9,12 @@
  * No sessions are started, no data is mutated.
  */
 
-import { OctaAuthenticationError, OctaClient, type OctaClientOptions } from '../src/index.js'
+import {
+  formatUsd,
+  OctaAuthenticationError,
+  OctaClient,
+  type OctaClientOptions,
+} from '../src/index.js'
 
 // ─── CLI args ────────────────────────────────────────────────────────────────
 
@@ -217,28 +222,26 @@ if (shouldRun('nodes')) {
 if (shouldRun('services')) {
   section('Services — available machines')
 
-  await test('GET /services/mr returns MR machine list', async () => {
-    const machines = await client.services.mr.available()
+  await test('GET /services/compute returns the compute machine list', async () => {
+    const machines = await client.compute.list()
     if (!Array.isArray(machines)) throw new Error('Response is not an array')
-    info(`${machines.length} MR machines available`)
+    info(`${machines.length} compute machines available`)
     const [firstMachine] = machines
     if (firstMachine) {
       info(
-        `Cheapest: node ${firstMachine.node_id} @ $${firstMachine.total_price_usd.toFixed(2)}/hr (${firstMachine.country})`,
+        `First: node ${firstMachine.node_number} @ ${formatUsd(firstMachine.base_price)}/hr (${firstMachine.country})`,
       )
-      info(
-        `GPU: ${firstMachine.is_has_gpu ? firstMachine.gpus.map((g) => g.model).join(', ') : 'none'}`,
-      )
+      info(`GPU: ${firstMachine.gpus.map((g) => g.model).join(', ') || 'none'}`)
     }
   })
 
   await test('GET /services/render returns render node list', async () => {
-    const nodes = await client.services.render.available()
+    const nodes = await client.render.list()
     if (!Array.isArray(nodes)) throw new Error('Response is not an array')
     info(`${nodes.length} render nodes available`)
     const [firstRender] = nodes
     if (firstRender) {
-      info(`Top CUDA score: ${firstRender.blender_score} (node ${firstRender.node_id})`)
+      info(`Blender score: ${firstRender.blender_score} (node ${firstRender.node_number})`)
     }
   })
 
