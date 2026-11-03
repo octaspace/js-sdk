@@ -1,8 +1,6 @@
 import type { OctaClient, SessionLogsOptions } from '@octaspace/sdk'
+import { type QueryContext, requestFrom } from '../queryContext.js'
 import { queryOptions } from '../queryOptions.js'
-
-type QueryContext = { signal?: AbortSignal }
-const overrides = ({ signal }: QueryContext) => (signal ? { signal } : undefined)
 
 export const sessionKeys = {
   all: () => ['@octaspace', 'sessions'] as const,
@@ -21,18 +19,18 @@ export const sessionQueries = {
   list: (client: OctaClient) =>
     queryOptions({
       queryKey: sessionKeys.list(),
-      queryFn: (ctx: QueryContext) => client.sessions.list(overrides(ctx)),
+      queryFn: (ctx: QueryContext) => client.sessions.list(requestFrom(ctx)),
     }),
 
   detail: (client: OctaClient, uuid: string) =>
     queryOptions({
       queryKey: sessionKeys.detail(uuid),
-      queryFn: (ctx: QueryContext) => client.sessions.get(uuid, overrides(ctx)),
+      queryFn: (ctx: QueryContext) => client.sessions.get(uuid, requestFrom(ctx)),
     }),
 
   logs: (client: OctaClient, uuid: string, options: SessionLogsOptions = {}) =>
     queryOptions({
       queryKey: sessionKeys.logs(uuid, options),
-      queryFn: (ctx: QueryContext) => client.sessions.logs(uuid, options, overrides(ctx)),
+      queryFn: (ctx: QueryContext) => client.sessions.logs(uuid, options, requestFrom(ctx)),
     }),
 }

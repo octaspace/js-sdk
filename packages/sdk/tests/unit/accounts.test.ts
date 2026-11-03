@@ -1,46 +1,27 @@
 import { describe, expect, it, vi } from 'vitest'
-import { makeClient, makeResponse } from './helpers.js'
+import type { AccountBalance } from '../../src/types/index.js'
+import { loadFixture, makeClient, makeResponse, sentRequest } from './helpers.js'
 
-const mockAccount = {
-  account_uuid: 'uuid-1',
-  avatar: 'https://example.com/avatar.png',
-  balance: 1000000,
-  email: 'test@example.com',
-  ref_code: 'REF123',
-  uid: 42,
-  wallet: '0xabc123',
-}
-
-describe('AccountsResource', () => {
-  it('get() returns account details', async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(mockAccount))
+describe('accounts.balance', () => {
+  it('GETs /accounts/balance with the key and decodes micro-USD', async () => {
+    const fixture = loadFixture<AccountBalance>('account_balance.json')
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(fixture))
     const client = makeClient(mockFetch)
-    const account = await client.accounts.get()
 
-    expect(account.email).toBe('test@example.com')
-    expect(account.uid).toBe(42)
-
-    const [url] = mockFetch.mock.calls[0] as [string]
-    expect(url).toContain('/accounts')
+    const balance = await client.accounts.balance()
+    expect(balance).toEqual(fixture)
+    expect(balance.currency).toBe('USD')
+    expect(balance.decimals).toBe(6)
+    expect(sentRequest(mockFetch).url).toMatch(/\/accounts\/balance$/)
+    expect(sentRequest(mockFetch).headers.get('Authorization')).toBe('Bearer octa_ak_test')
   })
 
-  it('balance() returns balance', async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({ balance: 500 }))
+  it('accepts a negative balance', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(makeResponse({ balance: -1250000, currency: 'USD', decimals: 6 }))
     const client = makeClient(mockFetch)
-    const result = await client.accounts.balance()
 
-    expect(result.balance).toBe(500)
-    const [url] = mockFetch.mock.calls[0] as [string]
-    expect(url).toContain('/accounts/balance')
-  })
-
-  it('generateWallet() returns address via POST', async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({ address: '0xnew' }))
-    const client = makeClient(mockFetch)
-    const wallet = await client.accounts.generateWallet()
-
-    expect(wallet.address).toBe('0xnew')
-    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit]
-    expect(init.method).toBe('POST')
+    await expect(client.accounts.balance()).resolves.toMatchObject({ balance: -1250000 })
   })
 })

@@ -1,4 +1,5 @@
 import type { OctaClient } from '@octaspace/sdk'
+import { type QueryContext, requestFrom } from '../queryContext.js'
 import { queryOptions } from '../queryOptions.js'
 
 export const renderKeys = {
@@ -11,7 +12,6 @@ export const renderQueries = {
   list: (client: OctaClient) =>
     queryOptions({
       queryKey: renderKeys.list(),
-      queryFn: ({ signal }: { signal?: AbortSignal }) =>
-        client.render.list(signal ? { signal } : undefined),
+      queryFn: (ctx: QueryContext) => client.render.list(requestFrom(ctx)),
     }),
 }

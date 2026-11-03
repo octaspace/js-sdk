@@ -1,22 +1,29 @@
 /**
- * Smoke test — runs against the real OCTA API.
+ * Smoke test — runs against the real next API (default: the test stand https://api-dev.octa.space).
  *
  * Usage:
- *   OCTA_API_KEY=your_key pnpm smoke
- *   OCTA_API_KEY=your_key pnpm smoke --only network,account
+ *   pnpm smoke                                    # public endpoints only
+ *   OCTA_API_KEY=octa_ak_… pnpm smoke             # all suites
+ *   OCTA_API_KEY=octa_ak_… pnpm smoke --suite network,stats
+ *   OCTA_API_URL=https://… pnpm smoke             # another host
  *
- * All tests are read-only (GET requests only).
- * No sessions are started, no data is mutated.
+ * Read-only: no session is started, no price is changed.
  */
 
 import {
+  BASE_URL_DEV,
   formatUsd,
-  OctaAuthenticationError,
+  gpuHistoryPoints,
+  isComputeSession,
   OctaClient,
   type OctaClientOptions,
 } from '../src/index.js'
 
 // ─── CLI args ────────────────────────────────────────────────────────────────
+
+const SUITES = ['network', 'stats', 'compute', 'render', 'account', 'sessions', 'hosting'] as const
+type Suite = (typeof SUITES)[number]
+const AUTH_SUITES = new Set<Suite>(['account', 'sessions', 'hosting'])
 
 const args = process.argv.slice(2)
 const suiteIdx = args.indexOf('--suite')
@@ -42,6 +49,8 @@ const ok = (msg: string) => console.log(`  ${c.green}✓${c.reset} ${msg}`)
 const fail = (msg: string) => console.log(`  ${c.red}✗${c.reset} ${msg}`)
 const info = (msg: string) => console.log(`  ${c.gray}→${c.reset} ${c.dim}${msg}${c.reset}`)
 const section = (name: string) => console.log(`\n${c.bold}${c.cyan}[ ${name} ]${c.reset}`)
+const skip = (reason: string) =>
+  console.log(`  ${c.yellow}○${c.reset} ${c.dim}skipped — ${reason}${c.reset}`)
 
 // ─── Test runner ─────────────────────────────────────────────────────────────
 
@@ -63,209 +72,136 @@ async function test(name: string, fn: () => Promise<void>): Promise<void> {
     ok(`${name} ${c.gray}(${ms}ms)${c.reset}`)
   } catch (err) {
     const ms = Date.now() - start
-    const message = err instanceof Error ? err.message : String(err)
+    const message = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
     results.push({ name, passed: false, durationMs: ms, error: message })
     fail(`${name} ${c.gray}(${ms}ms)${c.reset}`)
     console.log(`     ${c.red}${message}${c.reset}`)
   }
 }
 
-function skip(reason: string) {
-  console.log(`  ${c.yellow}○${c.reset} ${c.dim}skipped — ${reason}${c.reset}`)
-}
-
-function shouldRun(suite: string): boolean {
-  return onlyFilter === null || onlyFilter.has(suite)
+function assert(condition: unknown, message: string): asserts condition {
+  if (!condition) throw new Error(message)
 }
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
-const apiKey = process.env.OCTA_API_KEY
-if (!apiKey) {
-  console.error(`\n${c.red}Error:${c.reset} OCTA_API_KEY environment variable is not set.\n`)
-  console.error(`  Run: ${c.cyan}OCTA_API_KEY=your_key npm run smoke${c.reset}\n`)
-  process.exit(1)
-}
+const apiKey = process.env.OCTA_API_KEY?.trim() || undefined
+const baseUrl = process.env.OCTA_API_URL?.trim() || BASE_URL_DEV
 
 const clientOptions: OctaClientOptions = {
-  apiKey,
+  baseUrl,
   timeoutMs: 15_000,
   retries: 1,
-  onRequest(ctx) {
-    info(`${ctx.method} ${new URL(ctx.url).pathname}`)
-  },
+  ...(apiKey !== undefined && { apiKey }),
 }
-
 const client = new OctaClient(clientOptions)
 
-console.log(`\n${c.bold}OCTA SDK Smoke Tests${c.reset}`)
-console.log(`${c.gray}Base URL: https://api.octa.computer${c.reset}`)
-if (onlyFilter) {
-  console.log(`${c.gray}Running suites: ${[...onlyFilter].join(', ')}${c.reset}`)
-} else {
-  console.log(`${c.gray}Tip: run specific suites with --suite network,account${c.reset}`)
+function shouldRun(suite: Suite): boolean {
+  if (onlyFilter !== null && !onlyFilter.has(suite)) return false
+  if (AUTH_SUITES.has(suite) && !apiKey) {
+    section(suite)
+    skip('set OCTA_API_KEY (octa_ak_…) to run it')
+    return false
+  }
+  return true
 }
+
+console.log(`\n${c.bold}OctaSpace SDK smoke tests${c.reset}`)
+console.log(`${c.gray}Base URL: ${baseUrl}${apiKey ? '' : ' (anonymous)'}${c.reset}`)
+console.log(
+  `${c.gray}Suites: ${onlyFilter ? [...onlyFilter].join(', ') : SUITES.join(', ')}${c.reset}`,
+)
 
 // ─── Suites ──────────────────────────────────────────────────────────────────
 
-// 1. Network (public — validates connectivity without auth)
 if (shouldRun('network')) {
-  section('Network (public)')
-
-  await test('GET /network returns valid stats', async () => {
-    const stats = await client.network.get()
-
-    if (typeof stats.market_price !== 'number') throw new Error('market_price is not a number')
-    if (typeof stats.nodes.count !== 'number') throw new Error('nodes.count is not a number')
-    if (typeof stats.blockchain.height !== 'number')
-      throw new Error('blockchain.height is not a number')
-
-    info(`Market price: $${stats.market_price}`)
-    info(`Total nodes: ${stats.nodes.count} (VPN: ${stats.nodes.vpn})`)
-    info(`Block height: ${stats.blockchain.height}`)
-    if (stats.mmROI !== undefined) info(`Monthly staking ROI: ${stats.mmROI}%`)
+  section('network')
+  await test('GET /network', async () => {
+    const net = await client.network.info()
+    assert(typeof net.at === 'number', 'at is not a number')
+    info(
+      `${net.nodes.online} nodes online, ${net.power.gpus} GPUs, ${net.sessions.running} sessions running`,
+    )
   })
 }
 
-// 2. Authentication check
-if (shouldRun('auth')) {
-  section('Authentication')
-
-  await test('Valid API key is accepted', async () => {
-    const account = await client.accounts.get()
-    if (!account.email) throw new Error('No email in account response')
-    info(`Authenticated as: ${account.email}`)
-    info(`UID: ${account.uid}`)
+if (shouldRun('stats')) {
+  section('stats')
+  await test('GET /stats/gpu/current', async () => {
+    const current = await client.stats.gpuCurrent()
+    assert(Array.isArray(current.gpus), 'gpus is not an array')
+    const top = current.gpus[0]
+    if (top) info(`${top.model}: ${top.total} GPUs, ${top.rented} rented`)
   })
-
-  await test('Invalid API key throws OctaAuthenticationError', async () => {
-    const badClient = new OctaClient({ apiKey: 'invalid_key_12345', retries: 0 })
-    try {
-      await badClient.accounts.get()
-      throw new Error('Expected error was not thrown')
-    } catch (err) {
-      if (!(err instanceof OctaAuthenticationError)) {
-        throw new Error(`Expected OctaAuthenticationError, got: ${String(err)}`)
-      }
-      info(`Correctly received ${err.name} (status ${err.status})`)
-    }
+  await test('GET /stats/gpu/history', async () => {
+    const history = await client.stats.gpuHistory({ step: 3600 })
+    const [model, series] = Object.entries(history)[0] ?? []
+    if (model && series) info(`${model}: ${gpuHistoryPoints(series).length} points`)
+  })
+  await test('GET /stats/gpu/locations', async () => {
+    const locations = await client.stats.gpuLocations()
+    assert(Array.isArray(locations), 'locations is not an array')
+    info(`${locations.length} city/model rows`)
   })
 }
 
-// 3. Account
-if (shouldRun('account')) {
-  section('Account')
-
-  await test('GET /accounts returns account object', async () => {
-    const account = await client.accounts.get()
-    const required = ['account_uuid', 'email', 'uid', 'balance'] as const
-    for (const field of required) {
-      if (account[field] === undefined) throw new Error(`Missing field: ${field}`)
-    }
-    info(`Balance: ${account.balance} Wei`)
-    info(`Wallet: ${account.wallet || '(none)'}`)
-  })
-
-  await test('GET /accounts/balance returns balance', async () => {
-    const { balance } = await client.accounts.balance()
-    if (typeof balance !== 'number') throw new Error('balance is not a number')
-    info(`Balance: ${balance} Wei`)
-  })
-}
-
-// 4. Apps
-if (shouldRun('apps')) {
-  section('Apps')
-
-  await test('GET /apps returns array', async () => {
-    const apps = await client.apps.list()
-    if (!Array.isArray(apps)) throw new Error('Response is not an array')
-    info(`${apps.length} apps available`)
-    const [firstApp] = apps
-    if (firstApp) {
-      info(`First: ${firstApp.name} — ${firstApp.image}`)
-    }
-  })
-}
-
-// 5. Nodes
-if (shouldRun('nodes')) {
-  section('Nodes')
-
-  let firstNodeId: number | undefined
-
-  await test('GET /nodes returns array', async () => {
-    const nodes = await client.nodes.list()
-    if (!Array.isArray(nodes)) throw new Error('Response is not an array')
-    info(`${nodes.length} nodes in your account`)
-    const [firstNode] = nodes
-    if (firstNode) {
-      // The list endpoint may return summary objects; extract an id if present
-      firstNodeId = firstNode.id
-    }
-  })
-
-  if (firstNodeId !== undefined) {
-    const nodeId = firstNodeId
-    await test(`GET /nodes/${nodeId} returns node detail`, async () => {
-      const node = await client.nodes.get(nodeId)
-      info(`State: ${node.state}`)
-      if (node.data.cpu_model_name) info(`CPU: ${node.data.cpu_model_name}`)
-      if (node.location) info(`Location: ${node.location.city}, ${node.location.country}`)
-    })
-  } else {
-    skip('no nodes in account — GET /nodes/{id} skipped')
-  }
-}
-
-// 6. Services — available machines (read-only)
-if (shouldRun('services')) {
-  section('Services — available machines')
-
-  await test('GET /services/compute returns the compute machine list', async () => {
+if (shouldRun('compute')) {
+  section('compute')
+  await test('GET /services/compute', async () => {
     const machines = await client.compute.list()
-    if (!Array.isArray(machines)) throw new Error('Response is not an array')
-    info(`${machines.length} compute machines available`)
-    const [firstMachine] = machines
-    if (firstMachine) {
-      info(
-        `First: node ${firstMachine.node_number} @ ${formatUsd(firstMachine.base_price)}/hr (${firstMachine.country})`,
-      )
-      info(`GPU: ${firstMachine.gpus.map((g) => g.model).join(', ') || 'none'}`)
-    }
-  })
-
-  await test('GET /services/render returns render node list', async () => {
-    const nodes = await client.render.list()
-    if (!Array.isArray(nodes)) throw new Error('Response is not an array')
-    info(`${nodes.length} render nodes available`)
-    const [firstRender] = nodes
-    if (firstRender) {
-      info(`Blender score: ${firstRender.blender_score} (node ${firstRender.node_number})`)
-    }
-  })
-
-  await test('GET /services/vpn returns VPN node list', async () => {
-    const nodes = await client.services.vpn.available()
-    if (!Array.isArray(nodes)) throw new Error('Response is not an array')
-    info(`${nodes.length} VPN nodes available`)
-    const [firstVpn] = nodes
-    if (firstVpn) {
-      info(`First: ${firstVpn.city}, ${firstVpn.country} — $${firstVpn.traffic_price_usd}/GB`)
+    assert(Array.isArray(machines), 'response is not an array')
+    info(`${machines.length} machines${apiKey ? '' : ' (anonymous listing is cached up to 1 h)'}`)
+    for (const m of machines.slice(0, 3)) {
+      const gpus = m.gpus.map((g) => g.model).join(', ') || 'no GPU'
+      info(`  ${m.node_number} ${formatUsd(m.base_price)}/h, ${m.cpu_cores} cores, ${gpus}`)
     }
   })
 }
 
-// 7. Sessions (running only)
-if (shouldRun('sessions')) {
-  section('Sessions')
+if (shouldRun('render')) {
+  section('render')
+  await test('GET /services/render', async () => {
+    const nodes = await client.render.list()
+    assert(Array.isArray(nodes), 'response is not an array')
+    info(`${nodes.length} render nodes`)
+  })
+}
 
-  await test('GET /sessions returns active sessions', async () => {
+if (shouldRun('account')) {
+  section('account')
+  await test('GET /accounts/balance', async () => {
+    const balance = await client.accounts.balance()
+    assert(Number.isInteger(balance.balance), 'balance is not an integer')
+    const amount = (balance.balance / 10 ** balance.decimals).toFixed(balance.decimals)
+    info(`${amount} ${balance.currency}`)
+  })
+}
+
+if (shouldRun('sessions')) {
+  section('sessions')
+  await test('GET /sessions', async () => {
     const sessions = await client.sessions.list()
-    if (!Array.isArray(sessions)) throw new Error('Response is not an array')
-    info(`${sessions.length} active sessions`)
+    assert(Array.isArray(sessions), 'response is not an array')
+    info(`${sessions.length} running sessions`)
     for (const s of sessions.slice(0, 3)) {
-      info(`  ${s.uuid} — ${s.service} — node ${s.node_number ?? '?'} — ${s.status}`)
+      info(`  ${s.uuid} ${s.service} ${s.status} node ${s.node_number ?? '?'}`)
+    }
+    const compute = sessions.find(isComputeSession)
+    if (compute) {
+      const logs = await client.sessions.logs(compute.uuid, { tail: 1 })
+      info(`  logs of ${compute.uuid}: ${logs.system.length} system events`)
+    }
+  })
+}
+
+if (shouldRun('hosting')) {
+  section('hosting')
+  await test('GET /hosting/nodes', async () => {
+    const nodes = await client.hosting.nodes()
+    assert(Array.isArray(nodes), 'response is not an array')
+    info(`${nodes.length} online nodes`)
+    for (const n of nodes.slice(0, 3)) {
+      info(`  ${n.number} ${n.status}, base ${formatUsd(n.prices.base)}/h`)
     }
   })
 }
@@ -281,6 +217,9 @@ console.log(
   `${c.bold}Results: ${passed} passed, ${failed > 0 ? c.red : ''}${failed} failed${c.reset}  ` +
     `${c.gray}(${totalMs}ms total)${c.reset}`,
 )
+if (client.rateLimit) {
+  console.log(`${c.gray}Rate limit: ${JSON.stringify(client.rateLimit)}${c.reset}`)
+}
 
 if (failed > 0) {
   console.log(`\n${c.red}Failed tests:${c.reset}`)

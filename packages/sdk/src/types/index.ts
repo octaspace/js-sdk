@@ -1,4 +1,4 @@
-export type { Account, Balance, Wallet } from './account.js'
+export type { AccountBalance } from './account.js'
 export type { App } from './app.js'
 export type {
   BatchId,
@@ -16,23 +16,15 @@ export type {
   ComputeRestartParams,
   ComputeStartParams,
 } from './compute.js'
-export type { IdleJob } from './idle-job.js'
-export type { BlockchainInfo, NetworkNodes, NetworkPower, NetworkStats } from './network.js'
 export type {
-  Node,
-  NodeDetail,
-  NodeDetailData,
-  NodeDetailLocation,
-  NodeDetailMemory,
-  NodeDisk,
-  NodeGpu,
-  NodeLocation,
-  NodeMemory,
+  HostingNode,
+  HostingNodePrices,
+  HostingNodeStatus,
+  HostingNodeUsage,
   NodePrices,
-  NodeReliability,
-  NodeSystem,
-  UpdateNodePricesOptions,
-} from './node.js'
+} from './hosting.js'
+export type { IdleJob } from './idle-job.js'
+export type { NetworkInfo } from './network.js'
 export type { RenderBatchItem, RenderMachine, RenderStartParams } from './render.js'
 export type {
   StartVpnOptions,
@@ -56,3 +48,16 @@ export type {
   WaitOptions,
   WaitReadyOptions,
 } from './session.js'
+export type {
+  GpuCurrent,
+  GpuCurrentOptions,
+  GpuHistory,
+  GpuHistoryOptions,
+  GpuHistoryPoint,
+  GpuLocation,
+  GpuModelHistory,
+  GpuModelStats,
+  GpuPricePercentiles,
+  GpuPriceSeries,
+  GpuVerifiedFilter,
+} from './stats.js'
