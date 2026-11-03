@@ -5,7 +5,7 @@ import { type RequestOverrides, withRequestOverrides } from './request-options.j
 export class NetworkResource extends BaseResource {
   async get(request?: RequestOverrides): Promise<NetworkStats> {
     const res = await this.request<NetworkStats>(
-      withRequestOverrides({ method: 'GET', path: '/network', skipAuth: true }, request),
+      withRequestOverrides({ method: 'GET', path: '/network', auth: 'none' }, request),
     )
     return res.data
   }
