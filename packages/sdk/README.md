@@ -1,55 +1,17 @@
 # @octaspace/sdk
 
-Official JavaScript/TypeScript SDK for the [OCTA API](https://api.octa.space/api-docs).
+Typed JavaScript/TypeScript client for the next-generation [OctaSpace](https://octa.space) API:
+rent compute machines and render nodes, follow running sessions, manage the nodes you host and
+their prices, read the account balance and public network and GPU market statistics.
 
-[![npm version](https://img.shields.io/npm/v/@octaspace/sdk)](https://www.npmjs.com/package/@octaspace/sdk)
-[![npm downloads](https://img.shields.io/npm/dm/@octaspace/sdk)](https://www.npmjs.com/package/@octaspace/sdk)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/node/v/@octaspace/sdk)](https://nodejs.org)
+- Zero runtime dependencies, native `fetch` — Node.js 22+, browsers, Deno, Bun, edge runtimes.
+- ESM and CommonJS builds with full type definitions.
+- Typed errors, rate-limit awareness, retries for safe requests, abort signals, host failover.
 
----
-
-## Table of Contents
-
-- [@octaspace/sdk](#octaspacesdk)
-  - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-  - [Quick Start](#quick-start)
-  - [Authentication](#authentication)
-  - [Resources](#resources)
-    - [Accounts](#accounts)
-    - [Network](#network)
-    - [Apps](#apps)
-    - [Nodes](#nodes)
-    - [Services — Machine Rental](#services--machine-rental)
-    - [Services — Render](#services--render)
-    - [Services — VPN](#services--vpn)
-    - [Session Lifecycle](#session-lifecycle)
-    - [Sessions List](#sessions-list)
-    - [Idle Jobs](#idle-jobs)
-  - [Error Handling](#error-handling)
-    - [Error Hierarchy](#error-hierarchy)
-    - [Usage](#usage)
-    - [Error Properties](#error-properties)
-  - [Timeouts \& Cancellation](#timeouts--cancellation)
-    - [Global timeout](#global-timeout)
-    - [Per-request timeout](#per-request-timeout)
-  - [Retries](#retries)
-    - [Configuration](#configuration)
-  - [Request \& Response Hooks](#request--response-hooks)
-    - [OpenTelemetry example](#opentelemetry-example)
-  - [Binary Responses](#binary-responses)
-  - [Custom Fetch / Proxy](#custom-fetch--proxy)
-    - [Testing with mocks](#testing-with-mocks)
-    - [Server-side proxy (Next.js Route Handler)](#server-side-proxy-nextjs-route-handler)
-  - [TypeScript](#typescript)
-    - [VPN subkind and protocol types](#vpn-subkind-and-protocol-types)
-  - [Browser Usage](#browser-usage)
-  - [Requirements](#requirements)
-  - [All Constructor Options](#all-constructor-options)
-  - [License](#license)
-
----
+> **Branch `next`.** This version targets the new API, which runs on the test stand
+> `https://api-dev.octa.space` (the default base URL). The production hosts still serve the legacy
+> API used by the releases on `main`. Moving from the legacy SDK: see the
+> [migration guide](../../docs/migration-next.md).
 
 ## Installation
 
@@ -57,747 +19,274 @@ Official JavaScript/TypeScript SDK for the [OCTA API](https://api.octa.space/api
 npm install @octaspace/sdk
 # or
 pnpm add @octaspace/sdk
-# or
-yarn add @octaspace/sdk
 ```
 
----
-
-## Quick Start
+## Quick start
 
 ```ts
-import { OctaClient } from '@octaspace/sdk'
+import { OctaClient, formatUsd } from '@octaspace/sdk'
 
-const client = new OctaClient({
-  apiKey: process.env.OCTA_API_KEY,
+// Public endpoints need no key
+const publicClient = new OctaClient()
+const network = await publicClient.network.info()
+console.log(`${network.nodes.online} nodes online`)
+
+// Everything else needs an account key (octa_ak_…, Cube → Profile → Credentials)
+const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })
+
+const balance = await client.accounts.balance()
+console.log(formatUsd(balance.balance)) // "$2.147661"
+
+const [machine] = await client.compute.list()
+const { uuid } = await client.compute.start({
+  node_number: machine.node_number,
+  image: 'ubuntu:24.04',
+  disk_size: 20,
+  ssh: true,
 })
 
-// List available machines for rent
-const machines = await client.services.mr.available()
-console.log(`${machines.length} machines available`)
-
-// Start a session
-const { uuid } = await client.services.mr.start({
-  node_id: machines[0].node_id,
-  disk_size: 50,
-  image: 'ubuntu:22.04',
-  ports: [22],
+const session = await client.sessions.waitReady(uuid, {
+  onProgress: (s) => console.log(s.status, s.progress, s.pull_percent),
 })
-
-// Check session status
-const info = await client.services.session(uuid).info()
-console.log('Session ready:', info.is_ready)
-console.log('SSH:', info.ssh_direct ? `${info.ssh_direct.host}:${info.ssh_direct.port}` : '—')
-
-// Stop when done
-await client.services.session(uuid).stop({ score: 5 })
+// … use it …
+await client.sessions.stop(uuid)
+await client.sessions.waitStopped(uuid)
 ```
 
----
-
-## Authentication
-
-Authenticated API requests require an API key passed in the `Authorization` header.
-The public `network.get()` endpoint works without a key. The SDK adds the header
-automatically only for protected endpoints.
+## Client options
 
 ```ts
 const client = new OctaClient({
-  apiKey: 'your_api_key_here',
+  apiKey: process.env.OCTA_API_KEY, // optional; sent as "Authorization: Bearer <key>"
+  baseUrl: 'https://api-dev.octa.space', // default: BASE_URL_DEV
+  baseUrls: ['https://a.example', 'https://b.example'], // GET failover on network errors
+  timeoutMs: 30_000, // per request
+  retries: 2, // automatic retries of safe requests
+  userAgent: 'my-app/1.0',
+  fetch: customFetch, // tests, proxies
+  onRequest: (ctx) => {}, // method, url, headers, body, attempt
+  onResponse: (ctx) => {}, // request, status, headers, durationMs
 })
 ```
 
-For public network stats only:
-
-```ts
-const client = new OctaClient({})
-const stats = await client.network.get()
-```
-
-Read-only methods also accept optional request overrides for UI integrations:
-
-```ts
-const controller = new AbortController()
-const nodes = await client.nodes.list({ signal: controller.signal, retries: 0 })
-```
-
-**Best practice:** load the key from an environment variable, never hardcode it.
-
-```ts
-// Node.js / server-side
-const client = new OctaClient({
-  apiKey: process.env.OCTA_API_KEY,
-})
-```
-
-> **Browser warning:** Do not use your API key in client-side browser code — it will be visible to all users. Use a server-side proxy instead. See [Browser Usage](#browser-usage).
-
----
+Every method that reads data also takes request overrides as its last argument:
+`{ signal?: AbortSignal, retries?: number }`.
 
 ## Resources
 
-### Accounts
+| Resource | Methods | API |
+|---|---|---|
+| `client.compute` | `list()`, `start(params)`, `startBatch(items)`, `restart(uuid, params?)` | `/services/compute` |
+| `client.render` | `list()`, `start({ node_number })`, `startBatch(items)` | `/services/render` |
+| `client.sessions` | `list()`, `get(uuid)`, `logs(uuid, { tail })`, `stop(uuid)`, `waitReady(uuid)`, `waitStopped(uuid)` | `/sessions`, `/services/{uuid}/…` |
+| `client.hosting` | `nodes()`, `setPrices(number, prices)` | `/hosting/nodes` |
+| `client.accounts` | `balance()` | `/accounts/balance` |
+| `client.network` | `info()` (public) | `/network` |
+| `client.stats` | `gpuCurrent()`, `gpuHistory()`, `gpuLocations()` (public) | `/stats/gpu/*` |
+
+`compute.list()` and `render.list()` work without a key too, but the anonymous listing is cached
+for up to an hour; with a key it is at most 10 seconds old.
+
+### Compute
 
 ```ts
-// Full account details
-const account = await client.accounts.get()
-// account.email, account.uid, account.wallet, account.balance (Wei), account.ref_code
-
-// Balance only (lighter request)
-const { balance } = await client.accounts.balance()
-console.log(`Balance: ${balance} Wei`)
-
-// Generate a new deposit wallet address
-const { address } = await client.accounts.generateWallet()
-```
-
----
-
-### Network
-
-Public endpoint — no API key required.
-
-```ts
-const stats = await client.network.get()
-
-console.log(`Market price: $${stats.market_price}`)
-console.log(`Total nodes: ${stats.nodes.count}`)
-console.log(`Monthly staking ROI: ${stats.mmROI}%`)
-console.log(`Blockchain height: ${stats.blockchain.height}`)
-```
-
----
-
-### Apps
-
-```ts
-// List available pre-configured applications (Docker images)
-const apps = await client.apps.list()
-
-for (const app of apps) {
-  console.log(`${app.name} (${app.category}) — ${app.image}`)
-}
-
-// Find an app by name
-const stableApp = apps.find((a) => a.name === 'Stable Diffusion')
-```
-
----
-
-### Nodes
-
-> This resource is for **node operators** managing their own machines.
-
-```ts
-// List your nodes
-const nodes = await client.nodes.list()
-
-// Get full info for a specific node
-const node = await client.nodes.get('node_id')
-console.log(`State: ${node.state}`)           // 'idle' | 'busy'
-console.log(`CPU load: ${node.data.cpu_load_percent}%`)
-console.log(`Location: ${node.location.city}, ${node.location.country}`)
-console.log(`GPUs: ${node.data.gpus.map((g) => g.model).join(', ')}`)
-
-// Update pricing (amounts in Wei)
-await client.nodes.updatePrices('node_id', {
-  base:    50_000_000_000_000_000,  // ~$0.05/hr (depends on OCTA/USD rate)
-  storage:  5_000_000_000_000_000,
-  traffic:  2_000_000_000_000_000,
+// One session: an object → 201 { uuid }; errors throw (e.g. OctaValidationError "Insufficient balance")
+const { uuid } = await client.compute.start({
+  node_number: '7KQ4-M2XD-4', // case, dashes and spaces are ignored by the API
+  image: 'vllm/vllm-openai:latest',
+  disk_size: 50, // GB, default 1
+  envs: { HF_TOKEN: '…' },
+  ports: [9000], // TCP/UDP
+  http_ports: [8000], // public URLs in session.urls
+  entrypoint: 'python3 -m vllm.entrypoints.openai.api_server',
+  args: '--model meta-llama/Llama-3.1-8B-Instruct',
+  ssh: true, // web terminal + SSH; omitted = the app's setting
+  fm: false, // web file manager (no login!); omitted = the app's setting
+  startup_script: 'apt-get update && apt-get install -y htop',
 })
 
-// Reboot a node
-await client.nodes.reboot('node_id')
-
-// Download the node ident file (returns Blob)
-const identBlob = await client.nodes.downloadIdent('node_id')
-
-// Download node logs (returns Blob)
-const logsBlob = await client.nodes.downloadLogs('node_id')
-```
-
-**Saving blobs — Node.js:**
-
-```ts
-import { writeFile } from 'node:fs/promises'
-
-const identBlob = await client.nodes.downloadIdent('node_id')
-await writeFile('node.ident', Buffer.from(await identBlob.arrayBuffer()))
-```
-
-**Saving blobs — Browser:**
-
-```ts
-const logsBlob = await client.nodes.downloadLogs('node_id')
-const url = URL.createObjectURL(logsBlob)
-const a = document.createElement('a')
-a.href = url
-a.download = 'node.log'
-a.click()
-URL.revokeObjectURL(url)
-```
-
----
-
-### Services — Machine Rental
-
-Rent a machine to run any Docker container.
-
-```ts
-// Browse available machines
-const machines = await client.services.mr.available()
-
-// Filter by GPU availability
-const gpuMachines = machines.filter((m) => m.is_has_gpu)
-
-// Sort by price
-const cheapest = machines.sort((a, b) => a.total_price_usd - b.total_price_usd)
-
-console.log(`${machines[0].cpu_cores} cores, ${machines[0].gpus[0]?.model}`)
-console.log(`Price: $${machines[0].total_price_usd.toFixed(4)}/hr`)
-
-// Start a session with a public Docker image
-const { uuid } = await client.services.mr.start({
-  node_id:    machines[0].node_id,
-  disk_size:  50,           // GB
-  image:      'ubuntu:22.04',
-  ports:      [22, 3000],   // TCP/UDP ports to expose
-  http_ports: [8080],       // HTTP ports (get a public URL)
-  envs:       { MY_VAR: 'hello' },
-})
-
-// Start a session with a pre-configured OCTA app
-// image must match the app's own image field
-const { uuid: uuid2 } = await client.services.mr.start({
-  node_id:  machines[0].node_id,
-  disk_size: 100,
-  image:    'ubuntu:24.04',          // required — use the app's image value
-  app:      'app-uuid-from-apps-list',
-})
-```
-
----
-
-### Services — Render
-
-Run distributed Blender / rendering workloads.
-
-```ts
-// Browse available render nodes
-const renderNodes = await client.services.render.available()
-
-// Find the node with the best Blender score
-const best = renderNodes.sort((a, b) => b.blender_score - a.blender_score)[0]
-
-console.log(`Best Blender score: ${best.blender_score}`)
-console.log(`AI score: ${best.ai_score}`)
-
-// Start a render session
-const { uuid } = await client.services.render.start({
-  node_id:           best.node_id,
-  disk_size:         200,
-  'multi-gpu-worker': true,  // one worker per GPU
-  envs:              { PROJECT_ID: 'my-project' },
-})
-```
-
----
-
-### Services — VPN
-
-```ts
-// Browse available VPN nodes
-const vpnNodes = await client.services.vpn.available()
-
-// Filter residential IPs
-const residential = vpnNodes.filter((n) => n.residential)
-
-// Find by country
-const nlNode = vpnNodes.find((n) => n.country_iso === 'NL')
-
-console.log(`Price: $${nlNode?.traffic_price_usd}/GB`)
-
-// Start a WireGuard VPN session (default)
-const { uuid } = await client.services.vpn.start({
-  node_id: vpnNodes[0].node_id,
-  subkind: 'wg',
-})
-
-// Start an OpenVPN session
-const { uuid: uuid2 } = await client.services.vpn.start({
-  node_id: vpnNodes[0].node_id,
-  subkind: 'openvpn',
-})
-
-// Start a V2Ray session with vmess protocol
-const { uuid: uuid3 } = await client.services.vpn.start({
-  node_id:  vpnNodes[0].node_id,
-  subkind:  'v2ray',
-  protocol: 'vmess',  // 'trojan' | 'vmess' | 'vless'
-})
-
-// Start an HTTP proxy session
-const { uuid: uuid4 } = await client.services.vpn.start({
-  node_id: vpnNodes[0].node_id,
-  subkind: 'http_proxy',
-})
-```
-
-After starting, get the VPN config from session info:
-
-```ts
-const info = await client.services.session(uuid).info()
-console.log(info.config)  // WireGuard / OpenVPN config string
-// Note: Swagger spec names this field `vpn_config` but the real API returns `config`
-
-// For http_proxy sessions, `config` is an object instead of a string:
-if (typeof info.config === 'object') {
-  const { ip, port } = info.config  // ProxyConfig
+// Several sessions: an array → 200, one result per item, in order; a failed item does not fail the batch
+const results = await client.compute.startBatch([
+  { id: 'a', node_number: '7KQ4-M2XD-4', image: 'alpine' },
+  { node_number: 'M95S-WZG8-7', image: 'alpine' }, // id defaults to the position
+])
+for (const r of results) {
+  if (r.status === 0) console.log(r.id, 'started', r.uuid)
+  else console.log(r.id, 'failed:', r.reason)
 }
 ```
 
----
+Starts and restarts are never retried automatically: they cost money.
 
-### Session Lifecycle
-
-All service types (MR, Render, VPN) share the same session API.
+#### Restart
 
 ```ts
-const session = client.services.session('session-uuid')
-
-// Poll until the session is ready
-let info = await session.info()
-while (!info.is_ready) {
-  await new Promise((r) => setTimeout(r, 2000))
-  info = await session.info()
-}
-
-// Session details
-console.log('Public IP:', info.public_ip)
-console.log('SSH direct:', info.ssh_direct ? `${info.ssh_direct.host}:${info.ssh_direct.port}` : '—')
-console.log('SSH proxy:', info.ssh_proxy ? `${info.ssh_proxy.host}:${info.ssh_proxy.port}` : '—')
-console.log('Web SSH:', info.ssh_web)
-console.log('Web URLs:', info.urls)      // { '8080': 'https://...' }
-console.log('Port map:', info.ports_matrix)  // { '22': 10022 }
-console.log('Duration:', info.duration, 'seconds')
-console.log('Charged:', info.charge_amount, 'Wei')  // number or string-encoded integer for large values
-
-// Get container and system logs
-const logs = await session.logs()
-console.log(logs.container)
-for (const entry of logs.system) {
-  console.log(new Date(entry.ts).toISOString(), entry.msg)
-}
-
-// Stop the session (optionally rate it 1–5)
-await session.stop({ score: 5 })
+await client.compute.restart(uuid) // same container parameters
 ```
 
----
-
-### Sessions List
+`restart(uuid, params)` **replaces all parameters** of the session. Every field you leave out gets
+a fixed default, not the session's current value. In particular `disk_size` becomes **1 GB**, and
+`envs`, ports, `startup_script`, `ssh` and `fm` are dropped. The session info does not report
+`entrypoint`, `args`, `startup_script` or `disk_size`, so always pass the complete set:
 
 ```ts
-// Active sessions
-const active = await client.sessions.list()
-
-// Recent (finished) sessions
-const recent = await client.sessions.list({ recent: true })
-
-for (const session of active) {
-  console.log(`${session.uuid} — ${session.service} — ${session.node_id}`)
-}
+await client.compute.restart(uuid, {
+  disk_size: 50,
+  envs: { HF_TOKEN: '…' },
+  http_ports: [8000],
+  entrypoint: 'python3 -m vllm.entrypoints.openai.api_server',
+  args: '--model meta-llama/Llama-3.1-8B-Instruct --max-model-len 8192',
+  ssh: true,
+})
 ```
 
----
+A restart answers 202 and runs in the background; follow it with `sessions.get()`. While the
+session is still starting or restarting the API refuses with `OctaConflictError` (409); a session
+can be restarted once per 5 minutes and 6 times per hour, otherwise `OctaRateLimitError` (429)
+with `retryAfter` in seconds.
 
-### Idle Jobs
+### Sessions
+
+Only running sessions exist in the API. Once a session stops, `get`, `logs` and `stop` answer 404
+(`OctaNotFoundError`), and there is no session history.
 
 ```ts
-// Check status of a background idle job
-const job = await client.idleJobs.get('node_id', 'job_id')
-console.log('Running:', job.is_up)
-console.log('Uptime:', job.uptime, 'seconds')
-if (!job.is_up) {
-  console.error('Error:', job.error)
+import { isComputeSession } from '@octaspace/sdk'
+
+for (const s of await client.sessions.list()) {
+  if (isComputeSession(s)) {
+    console.log(s.uuid, s.status, s.node_number, s.urls, s.ssh?.proxy)
+  }
 }
 
-// Get job logs (SDK automatically decodes gzip+base64)
-const logs = await client.idleJobs.logs('node_id', 'job_id')
-console.log(logs)
+const logs = await client.sessions.logs(uuid, { tail: 100 }) // compute sessions only
+console.log(logs.system.map((e) => e.msg), logs.container)
+
+const ready = await client.sessions.waitReady(uuid, { intervalMs: 3000, timeoutMs: 300_000 })
 ```
 
----
+`waitReady` throws `OctaSessionStoppedError` (a subclass of `OctaNotFoundError`) when the session
+stops while starting, for example because its SSH setup failed.
 
-## Error Handling
+- `ssh.web` contains credentials in the URL — do not log it.
+- `ssh.*.user` comes from the image's `USER`: validate `user` and `host` and pass them as separate
+  arguments after `--` (`ssh -p PORT -l USER -- HOST`).
+- `stop()` is idempotent (repeating it is harmless). A session stopped before
+  `min_rent_minutes` is charged base and storage for that long.
 
-The SDK throws typed errors that are easy to catch specifically.
+### Render
 
-### Error Hierarchy
+```ts
+const nodes = await client.render.list()
+const { uuid } = await client.render.start({ node_number: nodes[0].node_number })
+```
 
-```text
+A render node is billed by the hour until stopped. When render is temporarily unavailable,
+`start` throws `OctaServiceUnavailableError` (503), while `startBatch` reports it per item
+(`status: 1`, `reason: "Service is temporarily unavailable"`).
+
+### Hosting
+
+```ts
+import { usdToMicroUsd } from '@octaspace/sdk'
+
+for (const node of await client.hosting.nodes()) {
+  console.log(node.number, node.status, node.prices, node.services)
+}
+
+await client.hosting.setPrices('7KQ4-M2XD-4', {
+  base: usdToMicroUsd(0.25), // per hour
+  min_rent_minutes: 15,
+})
+```
+
+`hosting.nodes()` lists online nodes only. `setPrices` sends only the fields you set; it answers
+204 once the prices are stored, and listings show them after replication, usually within seconds.
+
+### Statistics (public)
+
+```ts
+import { gpuHistoryPoints } from '@octaspace/sdk'
+
+const current = await publicClient.stats.gpuCurrent({ verified: 'yes' })
+const history = await publicClient.stats.gpuHistory({
+  gpuName: ['NVIDIA GeForce RTX 4090'],
+  start: new Date(Date.now() - 7 * 86_400_000),
+  step: 3600,
+})
+const points = gpuHistoryPoints(history['NVIDIA GeForce RTX 4090'])
+const locations = await publicClient.stats.gpuLocations()
+```
+
+## Data conventions
+
+- **Node numbers** (`node_number`, `HostingNode.number`) are strings like `7KQ4-M2XD-4`.
+- **Money** is integer **micro-USD** everywhere (`1` = $0.000001): prices, charges, the balance.
+  Use `formatUsd(amount)` (`"$0.000100"`), `microUsdToUsd()` and `usdToMicroUsd()`. The balance is
+  `balance / 10 ** decimals` — read `decimals` from the response — and can be negative.
+- **Prices**: `base_price` per hour, `storage_price` per GB of disk per hour, `traffic_price` per
+  GB of traffic; `min_rent_minutes` is the shortest billed rent (0 = none).
+- **Network speed** `net_down_mbps` / `net_up_mbps` is whole Mbit/s (0 = not measured).
+- **Time** keeps the API's units: `started_at` and log `ts` are Unix **milliseconds**;
+  `NetworkInfo.at`, stats timestamps and `activity.started_at` are Unix **seconds**;
+  `HostingNode.online_at` is an ISO 8601 string.
+- **Raw data.** Methods return the parsed JSON as is: fields the SDK does not type yet are still
+  there. The only change is that hosting, stats and listings turn the string `"null"` some nodes
+  report into `null`.
+
+## Errors
+
+```
 OctaError
-├── OctaNetworkError     — fetch failed (DNS, connection refused, etc.)
-│   └── OctaTimeoutError — request timed out
-└── OctaApiError         — server returned an error response
-    ├── OctaAuthenticationError  — 401 Invalid API key
-    ├── OctaPermissionError      — 403 Forbidden
-    ├── OctaNotFoundError        — 404 Not Found
-    ├── OctaValidationError      — 422 Unprocessable Entity
-    ├── OctaRateLimitError       — 429 Too Many Requests
-    └── OctaServerError          — 5xx Server Error
+├── OctaNetworkError                DNS, connection, aborted request
+│   └── OctaTimeoutError            request timeout, or waitReady/waitStopped timeoutMs
+└── OctaApiError                    HTTP 4xx/5xx: status, message, retryAfter, rateLimit, requestId, body
+    ├── OctaValidationError         400, 422 — message says why
+    ├── OctaAuthenticationError     401 — missing or invalid key
+    ├── OctaPermissionError         403
+    ├── OctaNotFoundError           404 — e.g. a stopped session
+    │   └── OctaSessionStoppedError waitReady: the session stopped while starting
+    ├── OctaConflictError           409 — e.g. restart while restarting
+    ├── OctaRateLimitError          429 — wait retryAfter seconds
+    └── OctaServerError             5xx
+        └── OctaServiceUnavailableError 503 — retry later
 ```
 
-### Usage
-
 ```ts
-import {
-  OctaAuthenticationError,
-  OctaNotFoundError,
-  OctaRateLimitError,
-  OctaServerError,
-  OctaTimeoutError,
-} from '@octaspace/sdk'
+import { OctaRateLimitError, OctaValidationError } from '@octaspace/sdk'
 
 try {
-  const node = await client.nodes.get('unknown_node')
+  await client.compute.restart(uuid)
 } catch (err) {
-  if (err instanceof OctaAuthenticationError) {
-    console.error('Invalid API key')
-  } else if (err instanceof OctaNotFoundError) {
-    console.error('Node not found')
-  } else if (err instanceof OctaRateLimitError) {
-    console.warn(`Rate limited — retry after ${err.retryAfter}s`)
-  } else if (err instanceof OctaServerError) {
-    console.error(`Server error ${err.status}: ${err.message}`)
-  } else if (err instanceof OctaTimeoutError) {
-    console.error('Request timed out')
-  } else {
-    throw err  // re-throw unexpected errors
-  }
+  if (err instanceof OctaRateLimitError) console.log(`retry in ${err.retryAfter}s`)
+  else if (err instanceof OctaValidationError) console.log(err.message)
+  else throw err
 }
 ```
 
-### Error Properties
+A request that needs a key fails before it is sent when the client has none
+(`OctaAuthenticationError`). Legacy account tokens are refused by the API; the error message says
+so when the key does not start with `octa_ak_`.
 
-All `OctaApiError` subclasses include:
+## Rate limits and retries
 
-| Property    | Type                  | Description                                          |
-| ----------- | --------------------- | ---------------------------------------------------- |
-| `message`   | `string`              | Human-readable error message                         |
-| `status`    | `number`              | HTTP status code                                     |
-| `code`      | `string \| undefined` | Machine-readable error code from the API             |
-| `requestId` | `string \| undefined` | Request ID for support (from `x-request-id` header)  |
-| `body`      | `unknown`             | Raw response body                                    |
+The API allows 60 requests per minute per IP without a key, 300 per minute per account with one,
+and 10 per minute for starts and restarts. `client.rateLimit` holds the `RateLimit-Limit`,
+`-Remaining` and `-Reset` values of the last response.
 
-`OctaRateLimitError` additionally has:
+Only GET requests are retried (and `sessions.stop`, which is idempotent): on network errors and on
+429, 502, 503 and 504, with exponential backoff, honouring `Retry-After` up to 60 seconds. A longer
+wait (such as the restart cooldown) is returned to you at once.
 
-| Property     | Type                  | Description                      |
-| ------------ | --------------------- | -------------------------------- |
-| `retryAfter` | `number \| undefined` | Seconds to wait before retrying  |
+## Development
 
----
-
-## Timeouts & Cancellation
-
-### Global timeout
-
-```ts
-const client = new OctaClient({
-  apiKey: process.env.OCTA_API_KEY,
-  timeoutMs: 10_000,  // 10 seconds (default: 30 000)
-})
+```bash
+pnpm test                                  # unit tests (fetch is mocked)
+pnpm smoke                                 # live read-only checks, public endpoints
+OCTA_API_KEY=octa_ak_… pnpm smoke          # all suites
+OCTA_API_KEY=octa_ak_… pnpm smoke --suite compute,sessions
 ```
-
-### Per-request timeout
-
-Use a short `timeoutMs` when constructing the client, or create a separate client instance for time-sensitive calls:
-
-```ts
-import { OctaTimeoutError } from '@octaspace/sdk'
-
-const fastClient = new OctaClient({
-  apiKey: process.env.OCTA_API_KEY,
-  timeoutMs: 5_000,
-})
-
-try {
-  const machines = await fastClient.services.mr.available()
-} catch (err) {
-  if (err instanceof OctaTimeoutError) {
-    console.error('Timed out after 5s')
-  }
-}
-```
-
----
-
-## Retries
-
-The SDK automatically retries failed **GET** requests on transient errors:
-
-| Condition                | Retried?                      |
-| ------------------------ | ----------------------------- |
-| Network error            | Yes                           |
-| 429 Too Many Requests    | Yes (respects `Retry-After`)  |
-| 5xx Server Error         | Yes                           |
-| 4xx Client Error         | No                            |
-| POST / PATCH requests    | No                            |
-
-Default: **2 retries** with exponential backoff and full jitter.
-
-### Configuration
-
-```ts
-// Globally
-const client = new OctaClient({
-  apiKey: process.env.OCTA_API_KEY,
-  retries: 3,  // default: 2
-})
-
-// Disable retries globally for this client
-const noRetryClient = new OctaClient({ apiKey: process.env.OCTA_API_KEY, retries: 0 })
-```
-
----
-
-## Request & Response Hooks
-
-Use hooks for logging, tracing, and monitoring without coupling to a specific library.
-
-```ts
-const client = new OctaClient({
-  apiKey: process.env.OCTA_API_KEY,
-
-  onRequest(ctx) {
-    console.log(`→ ${ctx.method} ${ctx.url}  (attempt ${ctx.attempt + 1})`)
-  },
-
-  onResponse(ctx) {
-    console.log(`← ${ctx.status} in ${ctx.durationMs}ms`)
-  },
-})
-```
-
-### OpenTelemetry example
-
-```ts
-import { trace } from '@opentelemetry/api'
-
-const tracer = trace.getTracer('octa-sdk')
-const spans = new WeakMap<object, ReturnType<typeof tracer.startSpan>>()
-
-const client = new OctaClient({
-  apiKey: process.env.OCTA_API_KEY,
-
-  onRequest(ctx) {
-    const span = tracer.startSpan(`octa.${ctx.method} ${ctx.url}`)
-    spans.set(ctx, span)
-  },
-
-  onResponse(ctx) {
-    spans.get(ctx.request)?.setAttributes({ 'http.status_code': ctx.status }).end()
-  },
-})
-```
-
----
-
-## Binary Responses
-
-Some endpoints return binary files. The SDK returns native `Blob` objects.
-
-```ts
-// Download ident file
-const ident = await client.nodes.downloadIdent('node_id')
-// → Blob
-
-// Download node logs
-const logs = await client.nodes.downloadLogs('node_id')
-// → Blob
-```
-
-**Save to disk (Node.js):**
-
-```ts
-import { writeFile } from 'node:fs/promises'
-
-const blob = await client.nodes.downloadIdent('node_id')
-await writeFile('node.ident', Buffer.from(await blob.arrayBuffer()))
-```
-
-**Trigger browser download:**
-
-```ts
-const blob = await client.nodes.downloadLogs('node_id')
-const url = URL.createObjectURL(blob)
-Object.assign(document.createElement('a'), {
-  href: url,
-  download: 'node.log',
-}).click()
-URL.revokeObjectURL(url)
-```
-
----
-
-## Custom Fetch / Proxy
-
-Inject a custom `fetch` implementation for testing, proxying, or special environments.
-
-### Testing with mocks
-
-```ts
-import { describe, it, vi, expect } from 'vitest'
-import { OctaClient } from '@octaspace/sdk'
-
-it('returns account balance', async () => {
-  const mockFetch = vi.fn().mockResolvedValue(
-    new Response(JSON.stringify({ balance: 1000 }), { status: 200 }),
-  )
-
-  const client = new OctaClient({ apiKey: 'test', fetch: mockFetch })
-  const { balance } = await client.accounts.balance()
-  expect(balance).toBe(1000)
-})
-```
-
-### Server-side proxy (Next.js Route Handler)
-
-```ts
-// app/api/octa/[...path]/route.ts
-import { NextRequest } from 'next/server'
-
-const OCTA_BASE = 'https://api.octa.computer'
-
-export async function GET(req: NextRequest) {
-  const path = req.nextUrl.pathname.replace('/api/octa', '')
-  const upstream = await fetch(`${OCTA_BASE}${path}`, {
-    headers: { Authorization: process.env.OCTA_API_KEY! },
-  })
-  return upstream
-}
-```
-
-```ts
-// Client-side — points to your proxy, no API key exposed
-const client = new OctaClient({
-  apiKey: '',          // not used through proxy
-  baseUrl: '/api/octa',
-  fetch: (url, init) => fetch(url, { ...init, headers: {} }),
-})
-```
-
----
-
-## TypeScript
-
-The SDK is written in TypeScript and ships with full type definitions. All types are exported and available for import.
-
-```ts
-import type {
-  OctaClientOptions,
-  MrMachine,
-  ServiceInfo,
-  VpnNode,
-  VpnSubkind,
-  NodePrices,
-  RequestContext,
-  ResponseContext,
-} from '@octaspace/sdk'
-
-// Type your own functions
-function findCheapestGpu(machines: MrMachine[]): MrMachine | undefined {
-  return machines
-    .filter((m) => m.is_has_gpu)
-    .sort((a, b) => a.total_price_usd - b.total_price_usd)[0]
-}
-
-// Type-safe client options
-const options: OctaClientOptions = {
-  apiKey: process.env.OCTA_API_KEY!,
-  timeoutMs: 15_000,
-  retries: 3,
-  onRequest: (ctx: RequestContext) => {
-    console.log(ctx.method, ctx.url)
-  },
-}
-```
-
-### VPN subkind and protocol types
-
-```ts
-import type { VpnSubkind, VpnProtocol } from '@octaspace/sdk'
-
-// VpnSubkind: 'wg' | 'openvpn' | 'ss' | 'v2ray' | 'http_proxy'
-// VpnProtocol: 'trojan' | 'vmess' | 'vless'  (V2Ray only)
-```
-
----
-
-## Browser Usage
-
-The SDK works in modern browsers — it uses only the native `fetch` API.
-
-```html
-<script type="module">
-  import { OctaClient } from 'https://esm.sh/@octaspace/sdk'
-  // ...
-</script>
-```
-
-> **Security:** Never embed your API key in browser-side code — it will be visible to all users of your page. Use one of these patterns instead:
->
-> - Proxy all requests through your own server (recommended)
-> - Issue short-lived tokens scoped to specific operations
-> - Only use the public `network.get()` endpoint client-side (no auth required)
-
----
-
-## Requirements
-
-| Environment        | Minimum version                   |
-| ------------------ | --------------------------------- |
-| Node.js            | 18.0.0                            |
-| Browser            | Chrome 89, Firefox 90, Safari 15  |
-| Deno               | 1.28                              |
-| Bun                | 1.0                               |
-| Cloudflare Workers | Supported                         |
-
-Node.js 16 is supported by injecting a custom `fetch`:
-
-```ts
-import fetch from 'node-fetch'
-
-const client = new OctaClient({
-  apiKey: process.env.OCTA_API_KEY,
-  fetch: fetch as typeof globalThis.fetch,
-})
-```
-
----
-
-## All Constructor Options
-
-```ts
-const client = new OctaClient({
-  // Required
-  apiKey: string
-
-  // Optional
-  baseUrl?: string     // default: 'https://api.octa.computer'
-  timeoutMs?: number   // default: 30_000 (30 seconds)
-  retries?: number     // default: 2
-  fetch?: typeof globalThis.fetch  // custom fetch implementation
-  userAgent?: string   // custom User-Agent string
-
-  // Hooks
-  onRequest?: (ctx: RequestContext) => void | Promise<void>
-  onResponse?: (ctx: ResponseContext) => void | Promise<void>
-})
-```
-
----
 
 ## License
 
-MIT © OctaSpace
+MIT

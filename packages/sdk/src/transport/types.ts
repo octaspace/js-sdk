@@ -1,7 +1,6 @@
 import type { RateLimit } from '../errors/api.js'
 
 export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE'
-export type ResponseType = 'json' | 'blob' | 'text'
 
 /**
  * How a request authenticates:
@@ -16,7 +15,6 @@ export interface RequestOptions {
   path: string
   query?: Record<string, string | number | boolean | undefined>
   body?: unknown
-  responseType?: ResponseType
   signal?: AbortSignal
   /** Authentication mode (default: `required`) */
   auth?: AuthMode
