@@ -19,9 +19,8 @@ describe('OctaClient', () => {
     expect(client.idleJobs).toBeDefined()
   })
 
-  it('services has vpn and session sub-resources', () => {
+  it('services has the vpn sub-resource', () => {
     const client = new OctaClient({ apiKey: 'test_key' })
     expect(client.services.vpn).toBeDefined()
-    expect(typeof client.services.session).toBe('function')
   })
 })

@@ -15,13 +15,15 @@ export {
   OctaRateLimitError,
   OctaServerError,
   OctaServiceUnavailableError,
+  OctaSessionStoppedError,
   OctaTimeoutError,
   OctaValidationError,
   type RateLimit,
 } from './errors/index.js'
 // Resource option types
 export type { RequestOverrides } from './resources/request-options.js'
-export type { ListSessionsOptions } from './resources/sessions.js'
+// Helpers
+export { isComputeSession, isRenderSession } from './resources/sessions.js'
 // Transport context types (for hooks)
 export type { RequestContext, ResponseContext } from './transport/types.js'
 // Types
@@ -35,6 +37,8 @@ export type {
   ComputeBatchItem,
   ComputeMachine,
   ComputeRestartParams,
+  ComputeSession,
+  ComputeSessionNodeHw,
   ComputeStartParams,
   IdleJob,
   MachineGpu,
@@ -55,31 +59,29 @@ export type {
   NodePrices,
   NodeReliability,
   NodeSystem,
-  PortsMatrix,
-  ProxyConfig,
   Reliability,
   RenderBatchItem,
   RenderMachine,
+  RenderSession,
   RenderStartParams,
-  ServiceInfo,
-  ServiceKind,
   Session,
+  SessionBase,
   SessionLogs,
-  SessionNodeGpu,
-  SessionNodeHw,
-  SessionPrices,
-  SshAccess,
+  SessionLogsOptions,
+  SessionSsh,
+  SessionStatus,
+  SshEndpoint,
   StartResult,
   StartVpnOptions,
   StartVpnResult,
-  SystemLogEntry,
+  SystemLogEvent,
   UpdateNodePricesOptions,
   UserEnvs,
   VpnNode,
   VpnProtocol,
   VpnSubkind,
+  WaitOptions,
+  WaitReadyOptions,
   Wallet,
 } from './types/index.js'
-
-// Helpers
 export { formatUsd, MICRO_USD_PER_USD, microUsdToUsd, usdToMicroUsd } from './utils/money.js'

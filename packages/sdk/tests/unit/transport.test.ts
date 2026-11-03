@@ -80,18 +80,17 @@ describe('HttpTransport', () => {
   it('builds correct URL with query params', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse([]))
     const client = makeClient(mockFetch)
-    await client.sessions.list({ recent: true })
+    await client.sessions.logs('u-1', { tail: 50 })
 
-    expect(urlOf(mockFetch)).toContain('/sessions')
-    expect(urlOf(mockFetch)).toContain('recent=true')
+    expect(urlOf(mockFetch)).toMatch(/\/services\/u-1\/logs\?tail=50$/)
   })
 
   it('skips undefined query params', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse([]))
     const client = makeClient(mockFetch)
-    await client.sessions.list({})
+    await client.sessions.logs('u-1')
 
-    expect(urlOf(mockFetch)).not.toContain('recent')
+    expect(urlOf(mockFetch)).toMatch(/\/services\/u-1\/logs$/)
   })
 
   it('uses custom baseUrl and strips a trailing slash', async () => {
@@ -153,8 +152,8 @@ describe('HttpTransport', () => {
       .mockResolvedValueOnce(new Response('', { status: 202 }))
     const client = makeClient(mockFetch)
 
-    await expect(client.services.session('uuid-1').stop()).resolves.toBeUndefined()
-    await expect(client.services.session('uuid-1').stop()).resolves.toBeUndefined()
+    await expect(client.sessions.stop('uuid-1')).resolves.toEqual({ uuid: 'uuid-1' })
+    await expect(client.sessions.stop('uuid-1')).resolves.toEqual({ uuid: 'uuid-1' })
   })
 })
 

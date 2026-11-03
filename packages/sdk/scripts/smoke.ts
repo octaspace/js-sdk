@@ -256,7 +256,7 @@ if (shouldRun('services')) {
   })
 }
 
-// 7. Sessions (active and recent)
+// 7. Sessions (running only)
 if (shouldRun('sessions')) {
   section('Sessions')
 
@@ -265,14 +265,8 @@ if (shouldRun('sessions')) {
     if (!Array.isArray(sessions)) throw new Error('Response is not an array')
     info(`${sessions.length} active sessions`)
     for (const s of sessions.slice(0, 3)) {
-      info(`  ${s.uuid} — ${s.service} — node ${s.node_id} — ready: ${s.is_ready}`)
+      info(`  ${s.uuid} — ${s.service} — node ${s.node_number ?? '?'} — ${s.status}`)
     }
-  })
-
-  await test('GET /sessions?recent=true returns recent sessions', async () => {
-    const sessions = await client.sessions.list({ recent: true })
-    if (!Array.isArray(sessions)) throw new Error('Response is not an array')
-    info(`${sessions.length} recent sessions`)
   })
 }
 

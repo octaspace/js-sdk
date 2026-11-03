@@ -13,23 +13,3 @@ export const vpnQueries = {
       queryFn: () => client.services.vpn.available(),
     }),
 }
-
-export const serviceSessionKeys = {
-  all: (uuid: string) => ['@octaspace', 'services', 'session', uuid] as const,
-  info: (uuid: string) => [...serviceSessionKeys.all(uuid), 'info'] as const,
-  logs: (uuid: string) => [...serviceSessionKeys.all(uuid), 'logs'] as const,
-}
-
-export const serviceSessionQueries = {
-  info: (client: OctaClient, uuid: string) =>
-    queryOptions({
-      queryKey: serviceSessionKeys.info(uuid),
-      queryFn: () => client.services.session(uuid).info(),
-    }),
-
-  logs: (client: OctaClient, uuid: string) =>
-    queryOptions({
-      queryKey: serviceSessionKeys.logs(uuid),
-      queryFn: () => client.services.session(uuid).logs(),
-    }),
-}

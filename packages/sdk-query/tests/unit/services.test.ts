@@ -1,28 +1,12 @@
 import type { OctaClient } from '@octaspace/sdk'
 import { describe, expect, it, vi } from 'vitest'
-import {
-  serviceSessionKeys,
-  serviceSessionQueries,
-  vpnKeys,
-  vpnQueries,
-} from '../../src/queries/services.js'
+import { vpnKeys, vpnQueries } from '../../src/queries/services.js'
 import { callQueryFn } from './helpers.js'
 
-const makeSessionResource = () => ({
-  info: vi.fn().mockResolvedValue({ uuid: 'abc', kind: 'mr' }),
-  logs: vi.fn().mockResolvedValue({ entries: [] }),
-})
-
-const makeClient = () => {
-  const sessionResource = makeSessionResource()
-  return {
-    services: {
-      vpn: { available: vi.fn().mockResolvedValue([]) },
-      session: vi.fn().mockReturnValue(sessionResource),
-    },
-    _sessionResource: sessionResource,
-  } as unknown as OctaClient & { _sessionResource: ReturnType<typeof makeSessionResource> }
-}
+const makeClient = () =>
+  ({
+    services: { vpn: { available: vi.fn().mockResolvedValue([]) } },
+  }) as unknown as OctaClient
 
 describe('vpnKeys', () => {
   it('produces stable query keys', () => {
@@ -41,57 +25,5 @@ describe('vpnQueries.available', () => {
     const client = makeClient()
     await callQueryFn(vpnQueries.available(client))
     expect(client.services.vpn.available).toHaveBeenCalledOnce()
-  })
-})
-
-describe('serviceSessionKeys', () => {
-  it('produces stable query keys', () => {
-    expect(serviceSessionKeys.all('abc')).toEqual(['@octaspace', 'services', 'session', 'abc'])
-    expect(serviceSessionKeys.info('abc')).toEqual([
-      '@octaspace',
-      'services',
-      'session',
-      'abc',
-      'info',
-    ])
-    expect(serviceSessionKeys.logs('abc')).toEqual([
-      '@octaspace',
-      'services',
-      'session',
-      'abc',
-      'logs',
-    ])
-  })
-
-  it('keys differ by uuid', () => {
-    expect(serviceSessionKeys.info('abc')).not.toEqual(serviceSessionKeys.info('xyz'))
-  })
-})
-
-describe('serviceSessionQueries.info', () => {
-  it('sets the correct queryKey', () => {
-    const opts = serviceSessionQueries.info(makeClient(), 'abc')
-    expect(opts.queryKey).toEqual(serviceSessionKeys.info('abc'))
-  })
-
-  it('queryFn calls session(uuid).info()', async () => {
-    const client = makeClient()
-    await callQueryFn(serviceSessionQueries.info(client, 'abc'))
-    expect(client.services.session).toHaveBeenCalledWith('abc')
-    expect(client._sessionResource.info).toHaveBeenCalledOnce()
-  })
-})
-
-describe('serviceSessionQueries.logs', () => {
-  it('sets the correct queryKey', () => {
-    const opts = serviceSessionQueries.logs(makeClient(), 'abc')
-    expect(opts.queryKey).toEqual(serviceSessionKeys.logs('abc'))
-  })
-
-  it('queryFn calls session(uuid).logs()', async () => {
-    const client = makeClient()
-    await callQueryFn(serviceSessionQueries.logs(client, 'abc'))
-    expect(client.services.session).toHaveBeenCalledWith('abc')
-    expect(client._sessionResource.logs).toHaveBeenCalledOnce()
   })
 })

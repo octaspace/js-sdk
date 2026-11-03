@@ -105,3 +105,12 @@ export class OctaServerError extends OctaApiError {
 export class OctaServiceUnavailableError extends OctaServerError {
   override readonly name: string = 'OctaServiceUnavailableError'
 }
+
+/**
+ * Thrown by `sessions.waitReady()` when the session disappears (404) while being waited for: it
+ * stopped, for example because its configuration failed. Read its system log with
+ * `sessions.logs()` only while it runs; a stopped session's logs are no longer available.
+ */
+export class OctaSessionStoppedError extends OctaNotFoundError {
+  override readonly name: string = 'OctaSessionStoppedError'
+}

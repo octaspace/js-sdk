@@ -35,22 +35,24 @@ export type {
 } from './node.js'
 export type { RenderBatchItem, RenderMachine, RenderStartParams } from './render.js'
 export type {
-  PortsMatrix,
-  ProxyConfig,
-  ServiceInfo,
-  ServiceKind,
-  Session,
-  SessionLogs,
-  SessionNodeGpu,
-  SessionNodeHw,
-  SessionPrices,
-  SshAccess,
-  SystemLogEntry,
-} from './service.js'
-export type {
   StartVpnOptions,
   StartVpnResult,
   VpnNode,
   VpnProtocol,
   VpnSubkind,
 } from './services/vpn.js'
+export type {
+  ComputeSession,
+  ComputeSessionNodeHw,
+  RenderSession,
+  Session,
+  SessionBase,
+  SessionLogs,
+  SessionLogsOptions,
+  SessionSsh,
+  SessionStatus,
+  SshEndpoint,
+  SystemLogEvent,
+  WaitOptions,
+  WaitReadyOptions,
+} from './session.js'

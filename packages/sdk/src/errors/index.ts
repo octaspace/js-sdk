@@ -8,6 +8,7 @@ export {
   OctaRateLimitError,
   OctaServerError,
   OctaServiceUnavailableError,
+  OctaSessionStoppedError,
   OctaValidationError,
   type RateLimit,
 } from './api.js'

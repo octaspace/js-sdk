@@ -7,6 +7,8 @@ import {
   useNetworkStats,
   useNode,
   useNodes,
+  useSession,
+  useSessionLogs,
   useSessions,
 } from '../../src/index.js'
 
@@ -107,14 +109,14 @@ describe('sdk-react hooks', () => {
     expect(get).not.toHaveBeenCalled()
   })
 
-  it('forwards session filters to the SDK', async () => {
+  it('lists sessions with an abort signal', async () => {
     const list = vi.fn().mockResolvedValue([{ uuid: 'sess-1' }] satisfies Partial<Session>[])
     const client = {
       sessions: { list },
     } as unknown as OctaClient
 
     function Probe() {
-      useSessions({ recent: true })
+      useSessions()
       return null
     }
 
@@ -126,10 +128,59 @@ describe('sdk-react hooks', () => {
 
     await waitFor(() => {
       expect(list).toHaveBeenCalledWith(
-        { recent: true },
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       )
     })
+  })
+
+  it('polls a session with refetchIntervalMs and keeps data between polls', async () => {
+    const get = vi
+      .fn()
+      .mockResolvedValueOnce({ uuid: 'sess-1', status: 'starting' })
+      .mockResolvedValue({ uuid: 'sess-1', status: 'ready' })
+    const client = { sessions: { get } } as unknown as OctaClient
+    const snapshots: Array<{ status: unknown; loading: boolean }> = []
+
+    function Probe() {
+      const state = useSession('sess-1', { refetchIntervalMs: 5 })
+      snapshots.push({
+        status: (state.data as Session | undefined)?.status,
+        loading: state.loading,
+      })
+      return null
+    }
+
+    const mounted = render(
+      <OctaProvider client={client}>
+        <Probe />
+      </OctaProvider>,
+    )
+
+    await waitFor(() => expect(snapshots.at(-1)?.status).toBe('ready'))
+    expect(get).toHaveBeenCalledWith(
+      'sess-1',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    )
+    const afterFirstData = snapshots.slice(snapshots.findIndex((s) => s.status === 'starting'))
+    expect(afterFirstData.every((s) => s.status !== undefined && !s.loading)).toBe(true)
+    mounted.unmount()
+  })
+
+  it('does not request session logs without a uuid', () => {
+    const logs = vi.fn()
+    const client = { sessions: { logs } } as unknown as OctaClient
+
+    function Probe() {
+      useSessionLogs(null, { tail: 10 })
+      return null
+    }
+
+    render(
+      <OctaProvider client={client}>
+        <Probe />
+      </OctaProvider>,
+    )
+    expect(logs).not.toHaveBeenCalled()
   })
 
   it('exposes network stats without requiring an authenticated client', async () => {
