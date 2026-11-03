@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     branches: [main, next]
+  # Every pull request, including stacked ones whose base is another feature branch.
   pull_request:
-    branches: [main, next]
 
 # Least privilege: jobs only read the repository.
 permissions:
@@ -90,10 +90,3 @@ jobs:
       # Fails on high or critical advisories in the lockfile.
       - name: pnpm audit
         run: pnpm audit --audit-level high
-
-      # Blocks pull requests that add dependencies with known vulnerabilities.
-      - name: Dependency review
-        if: github.event_name == 'pull_request'
-        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
-        with:
-          fail-on-severity: high

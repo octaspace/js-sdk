@@ -85,7 +85,7 @@ git push --force-with-lease              # после rebase обычный push
 
 ## CI и релизы
 
-- CI (`.github/workflows/ci.yml`) запускается на push и PR в `main` и `next`.
+- CI (`.github/workflows/ci.yml`) запускается на push в `main` и `next` и на любой PR, включая PR в стеке.
 - Dependabot открывает PR обновлений в `next` (`target-branch` в `.github/dependabot.yml`).
   После слияния `next → main` вернуть `target-branch: main`.
 - Пакеты из `next` в npm не публикуются, пока новое API не выйдет в прод.
