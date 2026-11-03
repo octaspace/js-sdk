@@ -43,6 +43,7 @@ console.log(formatUsd(balance.balance), machines.length)
 - TanStack Query integration: [`packages/sdk-query/README.md`](packages/sdk-query/README.md)
 - React hooks/context: [`packages/sdk-react/README.md`](packages/sdk-react/README.md)
 - [Migrating from the legacy SDK](docs/migration-next.md)
+- [Testing the SDK from the console](docs/testing.md)
 - [Working with the `next` branch](docs/GIT_WORKFLOW_NEXT.md)
 
 ## Development

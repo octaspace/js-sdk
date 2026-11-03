@@ -280,6 +280,9 @@ wait (such as the restart cooldown) is returned to you at once.
 
 ## Development
 
+Trying the SDK by hand (smoke test, one-liners, REPL, a full session cycle):
+[docs/testing.md](../../docs/testing.md).
+
 ```bash
 pnpm test                                  # unit tests (fetch is mocked)
 pnpm smoke                                 # live read-only checks, public endpoints

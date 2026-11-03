@@ -86,7 +86,7 @@ Never make real HTTP requests in unit tests. Fixtures in `packages/sdk/tests/fix
 recorded responses of the next API with IP addresses replaced by documentation ranges; keep
 credentials (`ssh.web` URLs, keys) out of them.
 
-Live checks: `pnpm smoke` is read-only. Checks that spend money (starts, restarts, price changes)
+Live checks: see [docs/testing.md](docs/testing.md) for trying the SDK from the console. `pnpm smoke` is read-only. Checks that spend money (starts, restarts, price changes)
 are run by hand, only on sessions the check created, and their scripts are not committed.
 
 Run a single test file:
