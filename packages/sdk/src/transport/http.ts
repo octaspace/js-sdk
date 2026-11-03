@@ -161,15 +161,8 @@ export class HttpTransport {
         signal,
       })
     } catch (err) {
-      if (isAbortError(err)) {
-        if (options.signal?.aborted) {
-          throw new OctaNetworkError('Request was aborted')
-        }
-        throw new OctaTimeoutError(`Request timed out after ${this.opts.timeoutMs}ms`)
-      }
-      throw new OctaNetworkError(err instanceof Error ? err.message : 'Network error')
-    } finally {
       cleanupAbort?.()
+      throw this.toNetworkError(err, options)
     }
 
     const durationMs = Date.now() - startMs
@@ -186,13 +179,35 @@ export class HttpTransport {
       this.lastRateLimit = rateLimit
     }
 
-    if (!response.ok) {
-      await this.throwApiError(response, rateLimit)
+    let text: string
+    try {
+      if (!response.ok) {
+        await this.throwApiError(response, rateLimit)
+      }
+      // 202 and 204 responses may carry no body at all.
+      text = await response.text()
+    } catch (err) {
+      if (err instanceof OctaApiError) {
+        throw err
+      }
+      // The body is read while the timeout and the caller's signal are still armed.
+      throw this.toNetworkError(err, options)
+    } finally {
+      cleanupAbort?.()
     }
 
-    // 202 and 204 responses may carry no body at all.
-    const text = await response.text()
-    const data = (text ? JSON.parse(text) : undefined) as T
+    let data: T
+    try {
+      data = (text ? JSON.parse(text) : undefined) as T
+    } catch {
+      // E.g. a proxy or captive portal answering 200 with an HTML page.
+      const requestId = response.headers.get('x-request-id') ?? undefined
+      throw new OctaApiError(
+        `Response is not valid JSON (status ${response.status})`,
+        response.status,
+        { body: truncate(text), ...(requestId !== undefined && { requestId }) },
+      )
+    }
 
     const requestId = response.headers.get('x-request-id')
     return {
@@ -202,6 +217,20 @@ export class HttpTransport {
       ...(requestId !== null && { requestId }),
       ...(rateLimit !== undefined && { rateLimit }),
     }
+  }
+
+  /** Maps a failure of `fetch` or of reading the body to the SDK's network errors. */
+  private toNetworkError(err: unknown, options: RequestOptions): OctaNetworkError {
+    if (err instanceof OctaNetworkError) {
+      return err
+    }
+    if (isAbortError(err) || options.signal?.aborted) {
+      if (options.signal?.aborted) {
+        return new OctaNetworkError('Request was aborted')
+      }
+      return new OctaTimeoutError(`Request timed out after ${this.opts.timeoutMs}ms`)
+    }
+    return new OctaNetworkError(err instanceof Error ? err.message : 'Network error')
   }
 
   private buildUrl(
@@ -326,12 +355,17 @@ function truncate(message: string): string {
 
 /** Parses `Retry-After` as delta-seconds or an HTTP date; returns whole seconds. */
 export function parseRetryAfter(value: string | null): number | undefined {
-  if (value === null || value.trim() === '') {
+  const trimmed = value?.trim()
+  if (!trimmed) {
     return undefined
   }
-  const trimmed = value.trim()
-  if (/^\d+$/.test(trimmed)) {
-    return Number(trimmed)
+  // delta-seconds; tolerate a fractional value, which some proxies send
+  if (/^\d+(\.\d+)?$/.test(trimmed)) {
+    return Math.ceil(Number(trimmed))
+  }
+  // HTTP-date, e.g. "Wed, 21 Oct 2015 07:28:00 GMT"; never fall back to lenient date parsing
+  if (!/^[A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(trimmed)) {
+    return undefined
   }
   const date = Date.parse(trimmed)
   if (Number.isNaN(date)) {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { OctaValidationError } from '../../src/errors/index.js'
-import { gpuHistoryPoints } from '../../src/resources/stats.js'
+import { gpuHistoryPoints, normalizeGpuHistoryOptions } from '../../src/resources/stats.js'
 import type { GpuCurrent, GpuHistory, GpuLocation } from '../../src/types/index.js'
 import { loadFixture, makeClient, makeErrorResponse, makeResponse, sentRequest } from './helpers.js'
 
@@ -90,5 +90,19 @@ describe('stats.gpuLocations', () => {
     const locations = await client.stats.gpuLocations()
     expect(sentRequest(mockFetch).url).toMatch(/\/stats\/gpu\/locations$/)
     expect(locations).toEqual(fixture)
+  })
+})
+
+describe('normalizeGpuHistoryOptions', () => {
+  it('gives equal results for equivalent options', () => {
+    const a = normalizeGpuHistoryOptions({
+      gpuName: ['A', 'B'],
+      start: new Date(10_500),
+      step: 300,
+    })
+    const b = normalizeGpuHistoryOptions({ gpuName: 'A,B', start: 10, step: 300 })
+    expect(a).toEqual(b)
+    expect(a).toEqual({ gpuName: 'A,B', verified: undefined, start: 10, end: undefined, step: 300 })
+    expect(normalizeGpuHistoryOptions()).toEqual(normalizeGpuHistoryOptions({}))
   })
 })

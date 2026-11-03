@@ -25,7 +25,11 @@ export {
 export type { RequestOverrides } from './resources/request-options.js'
 // Helpers
 export { isComputeSession, isRenderSession } from './resources/sessions.js'
-export { gpuHistoryPoints } from './resources/stats.js'
+export {
+  gpuHistoryPoints,
+  type NormalizedGpuHistoryOptions,
+  normalizeGpuHistoryOptions,
+} from './resources/stats.js'
 export type { RequestContext, ResponseContext } from './transport/types.js'
 // API models and method options
 export type * from './types/index.js'

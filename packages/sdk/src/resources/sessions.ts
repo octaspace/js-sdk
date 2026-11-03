@@ -145,7 +145,15 @@ export class SessionsResource extends BaseResource {
 
     for (;;) {
       options.signal?.throwIfAborted()
-      const result = await check(request)
+      let result: T | undefined
+      try {
+        result = await check(request)
+      } catch (err) {
+        // An abort during the poll request surfaces as a network error: report the abort reason
+        // instead, as an abort between polls does.
+        options.signal?.throwIfAborted()
+        throw err
+      }
       if (result !== undefined) {
         return result
       }

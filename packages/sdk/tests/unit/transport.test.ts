@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { OctaClient } from '../../src/client.js'
 import { BASE_URL_DEV } from '../../src/config.js'
 import {
+  OctaApiError,
   OctaAuthenticationError,
   OctaNetworkError,
   OctaServerError,
@@ -237,6 +238,10 @@ describe('header helpers', () => {
     expect(parseRetryAfter(null)).toBeUndefined()
     expect(parseRetryAfter('288')).toBe(288)
     expect(parseRetryAfter('soon')).toBeUndefined()
+    expect(parseRetryAfter('1.5')).toBe(2)
+    expect(parseRetryAfter('2.0')).toBe(2)
+    expect(parseRetryAfter('1.5s')).toBeUndefined()
+    expect(parseRetryAfter('2026-11-03')).toBeUndefined()
     const inTenSeconds = new Date(Date.now() + 10_000).toUTCString()
     expect(parseRetryAfter(inTenSeconds)).toBeGreaterThanOrEqual(9)
     expect(parseRetryAfter(inTenSeconds)).toBeLessThanOrEqual(11)
@@ -247,5 +252,41 @@ describe('header helpers', () => {
     expect(parseRateLimit(new Headers())).toBeUndefined()
     expect(parseRateLimit(new Headers({ 'RateLimit-Limit': 'many' }))).toBeUndefined()
     expect(parseRateLimit(new Headers({ 'RateLimit-Remaining': '0' }))).toEqual({ remaining: 0 })
+  })
+})
+
+describe('response bodies', () => {
+  it('maps a 2xx body that is not JSON to OctaApiError', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('<html>captive portal</html>', { status: 200 }))
+    const client = makeClient(mockFetch)
+
+    const err = (await client.network.info().catch((e: unknown) => e)) as OctaApiError
+    expect(err).toBeInstanceOf(OctaApiError)
+    expect(err.status).toBe(200)
+    expect(err.message).toMatch(/not valid JSON/)
+    expect(err.body).toBe('<html>captive portal</html>')
+  })
+
+  it('maps a failure while reading the body to OctaNetworkError and retries the GET', async () => {
+    const broken = new Response('{}', { status: 200 })
+    vi.spyOn(broken, 'text').mockRejectedValueOnce(new TypeError('terminated'))
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(broken)
+      .mockResolvedValueOnce(makeResponse({ at: 1 }))
+    const client = makeClient(mockFetch, { retries: 1 })
+
+    await expect(client.network.info()).resolves.toEqual({ at: 1 })
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('maps a timeout while reading the body to OctaTimeoutError', async () => {
+    const slow = new Response('{}', { status: 200 })
+    vi.spyOn(slow, 'text').mockRejectedValueOnce(new DOMException('timeout', 'TimeoutError'))
+    const client = makeClient(vi.fn().mockResolvedValueOnce(slow))
+
+    await expect(client.network.info()).rejects.toBeInstanceOf(OctaTimeoutError)
   })
 })

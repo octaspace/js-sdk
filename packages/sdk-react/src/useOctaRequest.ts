@@ -35,11 +35,13 @@ export function useOctaRequest<TData>(
   const { enabled = true, initialData, refetchIntervalMs } = options
   const [data, setData] = useState<TData | undefined>(initialData)
   const [error, setError] = useState<Error>()
-  const [loading, setLoading] = useState(enabled)
+  const [loading, setLoading] = useState(enabled && initialData === undefined)
   const [fetching, setFetching] = useState(enabled)
   const [reloadToken, setReloadToken] = useState(0)
   const requestRef = useRef(request)
   const depsRef = useRef<readonly unknown[] | undefined>(undefined)
+  // Mirrors `data` for the effect, which must not depend on it.
+  const hasDataRef = useRef(initialData !== undefined)
 
   // Sync ref safely after render to prevent Concurrent Mode tearing
   useEffect(() => {
@@ -51,13 +53,23 @@ export function useOctaRequest<TData>(
     void reloadToken
 
     if (!enabled || !requestRef.current) {
+      // Disabled after showing other inputs (e.g. `useSession(null)` once a session was
+      // deselected): drop their data and error. Disabled from the start: keep `initialData`.
+      if (depsRef.current !== undefined) {
+        hasDataRef.current = false
+        setData(undefined)
+        setError(undefined)
+      }
+      depsRef.current = undefined
       setLoading(false)
       setFetching(false)
       return
     }
 
-    // New inputs start from scratch; a refetch for the same inputs keeps the data.
-    const inputsChanged = !sameDeps(depsRef.current, deps)
+    // New inputs start from scratch; a refetch for the same inputs keeps the data. The first run
+    // keeps `initialData`, if any, until the response replaces it.
+    const firstRun = depsRef.current === undefined
+    const inputsChanged = !firstRun && !sameDeps(depsRef.current, deps)
     depsRef.current = deps
 
     const controller = new AbortController()
@@ -65,15 +77,19 @@ export function useOctaRequest<TData>(
 
     setFetching(true)
     if (inputsChanged) {
-      setLoading(true)
+      hasDataRef.current = false
       setError(undefined)
       setData(undefined)
+    }
+    if (!hasDataRef.current) {
+      setLoading(true)
     }
 
     void requestRef
       .current({ signal: controller.signal })
       .then((nextData) => {
         if (!controller.signal.aborted) {
+          hasDataRef.current = true
           setData(nextData)
           setError(undefined)
         }

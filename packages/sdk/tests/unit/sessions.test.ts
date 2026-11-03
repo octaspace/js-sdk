@@ -179,6 +179,24 @@ describe('sessions.waitReady', () => {
     await expect(wait).rejects.toThrow('cancelled')
   })
 
+  it('rejects with the abort reason when aborted during a poll request', async () => {
+    const controller = new AbortController()
+    const reason = new Error('user cancelled')
+    const mockFetch = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        init.signal?.addEventListener('abort', () =>
+          reject(new DOMException('aborted', 'AbortError')),
+        )
+        setTimeout(() => controller.abort(reason), 5)
+      })
+    })
+    const client = makeClient(mockFetch)
+
+    await expect(
+      client.sessions.waitReady(UUID, { intervalMs: 1, signal: controller.signal }),
+    ).rejects.toBe(reason)
+  })
+
   it('passes other errors through', async () => {
     const mockFetch = vi.fn().mockResolvedValue(makeErrorResponse({ message: 'boom' }, 500))
     const client = makeClient(mockFetch)
