@@ -1,5 +1,15 @@
+import type { RateLimit } from '../errors/api.js'
+
 export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE'
 export type ResponseType = 'json' | 'blob' | 'text'
+
+/**
+ * How a request authenticates:
+ * - `required` (default): sends `Authorization: Bearer <apiKey>`; fails before `fetch` without a key.
+ * - `optional`: sends the key when the client has one (fresher data), otherwise goes anonymous.
+ * - `none`: never sends the key (public endpoints).
+ */
+export type AuthMode = 'required' | 'optional' | 'none'
 
 export interface RequestOptions {
   method: HttpMethod
@@ -8,10 +18,15 @@ export interface RequestOptions {
   body?: unknown
   responseType?: ResponseType
   signal?: AbortSignal
-  /** Skip Authorization header (e.g. for public endpoints) */
-  skipAuth?: boolean
+  /** Authentication mode (default: `required`) */
+  auth?: AuthMode
   /** Override per-request retry count */
   retries?: number
+  /**
+   * Allow retries for a non-GET request that the API documents as idempotent
+   * (e.g. `POST /services/{uuid}/stop`). Never set it for starts or restarts.
+   */
+  idempotent?: boolean
 }
 
 export interface ApiResponse<T> {
@@ -19,6 +34,7 @@ export interface ApiResponse<T> {
   status: number
   headers: Headers
   requestId?: string
+  rateLimit?: RateLimit
 }
 
 export interface RequestContext {

@@ -5,6 +5,7 @@ import {
   DEFAULT_USER_AGENT,
   type OctaClientOptions,
 } from './config.js'
+import type { RateLimit } from './errors/index.js'
 import {
   AccountsResource,
   AppsResource,
@@ -25,9 +26,11 @@ export class OctaClient {
   readonly sessions: SessionsResource
   readonly idleJobs: IdleJobsResource
 
-  constructor(options: OctaClientOptions) {
+  private readonly transport: HttpTransport
+
+  constructor(options: OctaClientOptions = {}) {
     const transport = new HttpTransport({
-      baseUrl: options.baseUrl ?? DEFAULT_BASE_URL,
+      baseUrls: options.baseUrls ?? [options.baseUrl ?? DEFAULT_BASE_URL],
       timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
       retries: options.retries ?? DEFAULT_RETRIES,
       userAgent: options.userAgent ?? DEFAULT_USER_AGENT,
@@ -37,6 +40,7 @@ export class OctaClient {
       ...(options.onResponse !== undefined && { onResponse: options.onResponse }),
     })
 
+    this.transport = transport
     this.accounts = new AccountsResource(transport)
     this.apps = new AppsResource(transport)
     this.network = new NetworkResource(transport)
@@ -44,5 +48,13 @@ export class OctaClient {
     this.services = new ServicesResource(transport)
     this.sessions = new SessionsResource(transport)
     this.idleJobs = new IdleJobsResource(transport)
+  }
+
+  /**
+   * Rate limit state (`RateLimit-*` headers) from the most recent response that carried it, or
+   * `undefined` before the first such response.
+   */
+  get rateLimit(): RateLimit | undefined {
+    return this.transport.rateLimit
   }
 }

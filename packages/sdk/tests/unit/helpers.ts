@@ -13,10 +13,14 @@ export function makeBlobResponse(blob: Blob, status = 200) {
   return new Response(blob, { status })
 }
 
-export function makeErrorResponse(body: { message: string; code?: string }, status: number) {
+export function makeErrorResponse(
+  body: { message: string; code?: string },
+  status: number,
+  headers: Record<string, string> = {},
+) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
   })
 }
 
@@ -29,7 +33,7 @@ export function makeClient(
   return new OctaClient({
     fetch: mockFetch,
     retries: 0, // disable retries in tests by default
-    ...(apiKey !== null ? { apiKey: apiKey ?? 'test_api_key' } : {}),
+    ...(apiKey !== null ? { apiKey: apiKey ?? 'octa_ak_test' } : {}),
     ...rest,
   })
 }

@@ -1,21 +1,32 @@
-import { OctaNetworkError, OctaRateLimitError, OctaServerError } from '../errors/index.js'
+import { OctaApiError, OctaNetworkError } from '../errors/index.js'
 import type { HttpMethod } from '../transport/types.js'
 
 const SAFE_METHODS = new Set<HttpMethod>(['GET'])
 
+/** HTTP statuses worth retrying: rate limit and transient gateway/backend failures. */
+const RETRYABLE_STATUSES = new Set([429, 502, 503, 504])
+
+/**
+ * Longest server-supplied `Retry-After` the SDK waits for on its own. A longer wait (for example
+ * the 5-minute per-session restart cooldown) is surfaced to the caller instead of blocking.
+ */
+export const MAX_RETRY_AFTER_SECONDS = 60
+
 export interface RetryOptions {
   maxRetries: number
   method: HttpMethod
+  /** Allow retries for a non-safe method the API documents as idempotent */
+  idempotent?: boolean
   initialDelayMs: number
   maxDelayMs: number
+  signal?: AbortSignal
 }
 
 function isRetryable(error: unknown): boolean {
-  return (
-    error instanceof OctaNetworkError ||
-    error instanceof OctaServerError ||
-    error instanceof OctaRateLimitError
-  )
+  if (error instanceof OctaNetworkError) {
+    return true
+  }
+  return error instanceof OctaApiError && RETRYABLE_STATUSES.has(error.status)
 }
 
 function jitteredDelay(attempt: number, opts: RetryOptions): number {
@@ -24,39 +35,36 @@ function jitteredDelay(attempt: number, opts: RetryOptions): number {
   return Math.random() * cap
 }
 
-function getRetryAfterMs(error: unknown): number | undefined {
-  if (error instanceof OctaRateLimitError && error.retryAfter !== undefined) {
-    return error.retryAfter * 1000
-  }
-  return undefined
+function retryAfterSeconds(error: unknown): number | undefined {
+  return error instanceof OctaApiError ? error.retryAfter : undefined
 }
 
 export async function withRetry<T>(
   fn: (attempt: number) => Promise<T>,
   opts: RetryOptions,
 ): Promise<T> {
-  const canRetryMethod = SAFE_METHODS.has(opts.method)
+  const canRetryMethod = SAFE_METHODS.has(opts.method) || opts.idempotent === true
 
-  let lastError: unknown
-
-  for (let attempt = 0; attempt <= opts.maxRetries; attempt++) {
+  for (let attempt = 0; ; attempt++) {
     try {
       return await fn(attempt)
     } catch (err) {
-      lastError = err
-
-      const shouldRetry = canRetryMethod && attempt < opts.maxRetries && isRetryable(err)
+      const retryAfter = retryAfterSeconds(err)
+      const shouldRetry =
+        canRetryMethod &&
+        attempt < opts.maxRetries &&
+        isRetryable(err) &&
+        !opts.signal?.aborted &&
+        (retryAfter === undefined || retryAfter <= MAX_RETRY_AFTER_SECONDS)
 
       if (!shouldRetry) {
         throw err
       }
 
-      const delayMs = getRetryAfterMs(err) ?? jitteredDelay(attempt, opts)
+      const delayMs = retryAfter !== undefined ? retryAfter * 1000 : jitteredDelay(attempt, opts)
       await sleep(delayMs)
     }
   }
-
-  throw lastError
 }
 
 function sleep(ms: number): Promise<void> {

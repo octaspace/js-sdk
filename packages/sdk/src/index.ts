@@ -1,19 +1,23 @@
 // Client
 export { OctaClient } from './client.js'
-export type { OctaClientOptions } from './config.js'
+export { BASE_URL_DEV, type OctaClientOptions } from './config.js'
 
 // Errors
 export {
   OctaApiError,
+  type OctaApiErrorDetails,
   OctaAuthenticationError,
+  OctaConflictError,
   OctaError,
   OctaNetworkError,
   OctaNotFoundError,
   OctaPermissionError,
   OctaRateLimitError,
   OctaServerError,
+  OctaServiceUnavailableError,
   OctaTimeoutError,
   OctaValidationError,
+  type RateLimit,
 } from './errors/index.js'
 // Resource option types
 export type { RequestOverrides } from './resources/request-options.js'

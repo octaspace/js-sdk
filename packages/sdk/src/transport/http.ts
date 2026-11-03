@@ -1,19 +1,24 @@
 import {
   OctaApiError,
+  type OctaApiErrorDetails,
   OctaAuthenticationError,
+  OctaConflictError,
   OctaNetworkError,
   OctaNotFoundError,
   OctaPermissionError,
   OctaRateLimitError,
   OctaServerError,
+  OctaServiceUnavailableError,
   OctaTimeoutError,
   OctaValidationError,
+  type RateLimit,
 } from '../errors/index.js'
 import { withRetry } from '../utils/retry.js'
 import type { ApiResponse, RequestContext, RequestOptions, ResponseContext } from './types.js'
 
 export interface HttpTransportOptions {
-  baseUrl: string
+  /** Base URLs tried in order; GET requests fail over to the next one on network errors */
+  baseUrls: string[]
   apiKey?: string
   timeoutMs: number
   retries: number
@@ -23,29 +28,91 @@ export interface HttpTransportOptions {
   onResponse?: (ctx: ResponseContext) => void | Promise<void>
 }
 
+/** Prefix of the account API keys the next API issues (Cube → Profile → Credentials). */
+export const API_KEY_PREFIX = 'octa_ak_'
+
+/** Longest error message kept from a response body (e.g. when the server returns an HTML page). */
+const MAX_ERROR_MESSAGE_LENGTH = 512
+
+/**
+ * Trims whitespace and a leading `Bearer ` scheme, so that a pasted header value is not sent as
+ * `Bearer Bearer …`. Returns `undefined` for an empty key.
+ */
+export function normalizeApiKey(key: string | undefined): string | undefined {
+  const trimmed = key?.trim().replace(/^bearer\s+/i, '')
+  return trimmed ? trimmed : undefined
+}
+
 export class HttpTransport {
   private readonly fetchFn: typeof globalThis.fetch
+  private readonly baseUrls: string[]
+  private readonly apiKey: string | undefined
+  private lastRateLimit: RateLimit | undefined
 
   constructor(private readonly opts: HttpTransportOptions) {
     this.fetchFn = opts.fetch ?? globalThis.fetch.bind(globalThis)
+    this.baseUrls = opts.baseUrls.map((url) => url.trim().replace(/\/+$/, '')).filter(Boolean)
+    if (this.baseUrls.length === 0) {
+      throw new TypeError('At least one base URL is required')
+    }
+    this.apiKey = normalizeApiKey(opts.apiKey)
+  }
+
+  /** Whether the client was created with an API key */
+  get hasApiKey(): boolean {
+    return this.apiKey !== undefined
+  }
+
+  /** Rate limit state from the most recent response that carried `RateLimit-*` headers */
+  get rateLimit(): RateLimit | undefined {
+    return this.lastRateLimit
   }
 
   async request<T>(options: RequestOptions): Promise<ApiResponse<T>> {
     const maxRetries = options.retries ?? this.opts.retries
 
-    return withRetry((attempt) => this.executeRequest<T>(options, attempt), {
+    return withRetry((attempt) => this.requestWithFailover<T>(options, attempt), {
       maxRetries,
       method: options.method,
+      ...(options.idempotent !== undefined && { idempotent: options.idempotent }),
+      ...(options.signal !== undefined && { signal: options.signal }),
       initialDelayMs: 500,
       maxDelayMs: 10_000,
     })
   }
 
-  private async executeRequest<T>(
+  /**
+   * Tries each base URL in order. Only GET requests fail over, and only on network-level errors:
+   * an HTTP error response is the API's answer and is returned as is, and a request that changes
+   * state is never sent twice to different hosts.
+   */
+  private async requestWithFailover<T>(
     options: RequestOptions,
     attempt: number,
   ): Promise<ApiResponse<T>> {
-    const url = this.buildUrl(options.path, options.query)
+    const urls = options.method === 'GET' ? this.baseUrls : this.baseUrls.slice(0, 1)
+    let lastError: unknown
+
+    for (const baseUrl of urls) {
+      try {
+        return await this.executeRequest<T>(baseUrl, options, attempt)
+      } catch (err) {
+        if (!(err instanceof OctaNetworkError) || options.signal?.aborted) {
+          throw err
+        }
+        lastError = err
+      }
+    }
+
+    throw lastError
+  }
+
+  private async executeRequest<T>(
+    baseUrl: string,
+    options: RequestOptions,
+    attempt: number,
+  ): Promise<ApiResponse<T>> {
+    const url = this.buildUrl(baseUrl, options.path, options.query)
     const headers = this.buildHeaders(options)
 
     const ctx: RequestContext = {
@@ -94,7 +161,7 @@ export class HttpTransport {
         signal,
       })
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
+      if (isAbortError(err)) {
         if (options.signal?.aborted) {
           throw new OctaNetworkError('Request was aborted')
         }
@@ -114,8 +181,13 @@ export class HttpTransport {
     }
     await this.opts.onResponse?.(responseCtx)
 
+    const rateLimit = parseRateLimit(response.headers)
+    if (rateLimit) {
+      this.lastRateLimit = rateLimit
+    }
+
     if (!response.ok) {
-      await this.throwApiError(response)
+      await this.throwApiError(response, rateLimit)
     }
 
     const responseType = options.responseType ?? 'json'
@@ -126,6 +198,7 @@ export class HttpTransport {
     } else if (responseType === 'text') {
       data = (await response.text()) as T
     } else {
+      // 202 and 204 responses may carry no body at all.
       const text = await response.text()
       data = text ? (JSON.parse(text) as T) : (undefined as T)
     }
@@ -136,15 +209,16 @@ export class HttpTransport {
       status: response.status,
       headers: response.headers,
       ...(requestId !== null && { requestId }),
+      ...(rateLimit !== undefined && { rateLimit }),
     }
   }
 
   private buildUrl(
+    baseUrl: string,
     path: string,
     query?: Record<string, string | number | boolean | undefined>,
   ): string {
-    const base = this.opts.baseUrl.replace(/\/$/, '')
-    const url = new URL(`${base}${path}`)
+    const url = new URL(`${baseUrl}${path}`)
 
     if (query) {
       for (const [key, value] of Object.entries(query)) {
@@ -162,11 +236,16 @@ export class HttpTransport {
     headers.set('User-Agent', this.opts.userAgent)
     headers.set('Accept', 'application/json')
 
-    if (!options.skipAuth) {
-      if (!this.opts.apiKey) {
-        throw new OctaAuthenticationError('apiKey is required for authenticated endpoints', 401)
+    const auth = options.auth ?? 'required'
+    if (auth !== 'none') {
+      if (this.apiKey) {
+        headers.set('Authorization', `Bearer ${this.apiKey}`)
+      } else if (auth === 'required') {
+        throw new OctaAuthenticationError(
+          `apiKey is required for ${options.method} ${options.path}: pass an API key (${API_KEY_PREFIX}…) issued in Cube → Profile → Credentials`,
+          401,
+        )
       }
-      headers.set('Authorization', this.opts.apiKey)
     }
 
     if (options.body !== undefined) {
@@ -176,42 +255,121 @@ export class HttpTransport {
     return headers
   }
 
-  private async throwApiError(response: Response): Promise<never> {
+  private async throwApiError(response: Response, rateLimit?: RateLimit): Promise<never> {
     let body: unknown
-    const requestId = response.headers.get('x-request-id') ?? undefined
-    const retryAfterHeader = response.headers.get('retry-after')
-    const retryAfter = retryAfterHeader ? Number(retryAfterHeader) : undefined
+    let rawText = ''
 
     try {
-      const text = await response.text()
-      body = text ? JSON.parse(text) : undefined
+      rawText = await response.text()
+      body = rawText ? JSON.parse(rawText) : undefined
     } catch {
-      // ignore parse errors
+      body = undefined
     }
 
-    const message =
-      (body as Record<string, string> | undefined)?.message ??
-      (body as Record<string, string> | undefined)?.error ??
-      `Request failed with status ${response.status}`
+    const record = isRecord(body) ? body : undefined
+    const bodyMessage = [record?.message, record?.error, record?.detail].find(
+      (value): value is string => typeof value === 'string' && value !== '',
+    )
+    let message = truncate(
+      bodyMessage ?? (rawText.trim() || `Request failed with status ${response.status}`),
+    )
 
-    const code = (body as Record<string, string> | undefined)?.code
+    if (response.status === 401 && this.apiKey && !this.apiKey.startsWith(API_KEY_PREFIX)) {
+      message += ` (the next API expects a key starting with "${API_KEY_PREFIX}"; legacy account tokens are not accepted)`
+    }
 
-    switch (response.status) {
-      case 401:
-        throw new OctaAuthenticationError(message, response.status, code, requestId, body)
-      case 403:
-        throw new OctaPermissionError(message, response.status, code, requestId, body)
-      case 404:
-        throw new OctaNotFoundError(message, response.status, code, requestId, body)
+    const requestId = response.headers.get('x-request-id') ?? undefined
+    const retryAfter = parseRetryAfter(response.headers.get('retry-after'))
+    const code = typeof record?.code === 'string' ? record.code : undefined
+
+    const details: OctaApiErrorDetails = {
+      ...(code !== undefined && { code }),
+      ...(requestId !== undefined && { requestId }),
+      ...(body !== undefined && { body }),
+      ...(retryAfter !== undefined && { retryAfter }),
+      ...(rateLimit !== undefined && { rateLimit }),
+    }
+
+    const status = response.status
+    switch (status) {
+      case 400:
       case 422:
-        throw new OctaValidationError(message, response.status, code, requestId, body)
+        throw new OctaValidationError(message, status, details)
+      case 401:
+        throw new OctaAuthenticationError(message, status, details)
+      case 403:
+        throw new OctaPermissionError(message, status, details)
+      case 404:
+        throw new OctaNotFoundError(message, status, details)
+      case 409:
+        throw new OctaConflictError(message, status, details)
       case 429:
-        throw new OctaRateLimitError(message, response.status, retryAfter, code, requestId, body)
+        throw new OctaRateLimitError(message, status, details)
+      case 503:
+        throw new OctaServiceUnavailableError(message, status, details)
       default:
-        if (response.status >= 500) {
-          throw new OctaServerError(message, response.status, code, requestId, body)
+        if (status >= 500) {
+          throw new OctaServerError(message, status, details)
         }
-        throw new OctaApiError(message, response.status, code, requestId, body)
+        throw new OctaApiError(message, status, details)
     }
   }
+}
+
+function isAbortError(err: unknown): boolean {
+  return (
+    (err instanceof DOMException || err instanceof Error) &&
+    (err.name === 'AbortError' || err.name === 'TimeoutError')
+  )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function truncate(message: string): string {
+  return message.length > MAX_ERROR_MESSAGE_LENGTH
+    ? `${message.slice(0, MAX_ERROR_MESSAGE_LENGTH)}…`
+    : message
+}
+
+/** Parses `Retry-After` as delta-seconds or an HTTP date; returns whole seconds. */
+export function parseRetryAfter(value: string | null): number | undefined {
+  if (value === null || value.trim() === '') {
+    return undefined
+  }
+  const trimmed = value.trim()
+  if (/^\d+$/.test(trimmed)) {
+    return Number(trimmed)
+  }
+  const date = Date.parse(trimmed)
+  if (Number.isNaN(date)) {
+    return undefined
+  }
+  return Math.max(0, Math.ceil((date - Date.now()) / 1000))
+}
+
+/** Reads the `RateLimit-*` headers; `undefined` when none is present or one is not an integer. */
+export function parseRateLimit(headers: Headers): RateLimit | undefined {
+  const fields = [
+    ['limit', 'ratelimit-limit'],
+    ['remaining', 'ratelimit-remaining'],
+    ['reset', 'ratelimit-reset'],
+  ] as const
+  const result: RateLimit = {}
+  let found = false
+
+  for (const [key, header] of fields) {
+    const raw = headers.get(header)?.trim()
+    if (!raw) {
+      continue
+    }
+    if (!/^\d+$/.test(raw)) {
+      return undefined
+    }
+    result[key] = Number(raw)
+    found = true
+  }
+
+  return found ? result : undefined
 }

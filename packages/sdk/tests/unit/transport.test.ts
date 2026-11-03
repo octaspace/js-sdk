@@ -1,20 +1,47 @@
 import { describe, expect, it, vi } from 'vitest'
+import { OctaClient } from '../../src/client.js'
+import { BASE_URL_DEV } from '../../src/config.js'
 import {
   OctaAuthenticationError,
   OctaNetworkError,
+  OctaServerError,
   OctaTimeoutError,
 } from '../../src/errors/index.js'
-import { makeClient, makeResponse } from './helpers.js'
+import { normalizeApiKey, parseRateLimit, parseRetryAfter } from '../../src/transport/http.js'
+import { makeClient, makeErrorResponse, makeResponse } from './helpers.js'
+
+function headersOf(mockFetch: ReturnType<typeof vi.fn>, call = 0): Headers {
+  const [, init] = mockFetch.mock.calls[call] as [string, RequestInit]
+  return init.headers as Headers
+}
+
+function urlOf(mockFetch: ReturnType<typeof vi.fn>, call = 0): string {
+  return (mockFetch.mock.calls[call] as [string, RequestInit])[0]
+}
 
 describe('HttpTransport', () => {
-  it('sends Authorization header with api key', async () => {
+  it('sends the API key as a Bearer token', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({ balance: 100 }))
-    const client = makeClient(mockFetch, { apiKey: 'my_secret_key' })
+    const client = makeClient(mockFetch, { apiKey: 'octa_ak_secret' })
     await client.accounts.balance()
 
-    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit]
-    const headers = init.headers as Headers
-    expect(headers.get('Authorization')).toBe('my_secret_key')
+    expect(headersOf(mockFetch).get('Authorization')).toBe('Bearer octa_ak_secret')
+  })
+
+  it('does not double the Bearer prefix of a pasted header value', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({ balance: 100 }))
+    const client = makeClient(mockFetch, { apiKey: '  Bearer octa_ak_secret ' })
+    await client.accounts.balance()
+
+    expect(headersOf(mockFetch).get('Authorization')).toBe('Bearer octa_ak_secret')
+  })
+
+  it('never sends the key to a public endpoint', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({}))
+    const client = makeClient(mockFetch, { apiKey: 'octa_ak_secret' })
+    await client.network.get()
+
+    expect(headersOf(mockFetch).has('Authorization')).toBe(false)
   })
 
   it('includes User-Agent header', async () => {
@@ -22,9 +49,7 @@ describe('HttpTransport', () => {
     const client = makeClient(mockFetch)
     await client.accounts.balance()
 
-    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit]
-    const headers = init.headers as Headers
-    expect(headers.get('User-Agent')).toMatch(/@octaspace\/sdk/)
+    expect(headersOf(mockFetch).get('User-Agent')).toMatch(/@octaspace\/sdk/)
   })
 
   it('throws before request when apiKey is missing for authenticated endpoint', async () => {
@@ -35,14 +60,30 @@ describe('HttpTransport', () => {
     expect(mockFetch).not.toHaveBeenCalled()
   })
 
+  it('treats a blank apiKey as missing', async () => {
+    const mockFetch = vi.fn()
+    const client = makeClient(mockFetch, { apiKey: '   ' })
+
+    await expect(client.accounts.balance()).rejects.toBeInstanceOf(OctaAuthenticationError)
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('defaults to the next API test stand', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({}))
+    const client = new OctaClient({ fetch: mockFetch, retries: 0 })
+    await client.network.get()
+
+    expect(BASE_URL_DEV).toBe('https://api-dev.octa.space')
+    expect(urlOf(mockFetch)).toBe('https://api-dev.octa.space/network')
+  })
+
   it('builds correct URL with query params', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse([]))
     const client = makeClient(mockFetch)
     await client.sessions.list({ recent: true })
 
-    const [url] = mockFetch.mock.calls[0] as [string, RequestInit]
-    expect(url).toContain('/sessions')
-    expect(url).toContain('recent=true')
+    expect(urlOf(mockFetch)).toContain('/sessions')
+    expect(urlOf(mockFetch)).toContain('recent=true')
   })
 
   it('skips undefined query params', async () => {
@@ -50,17 +91,19 @@ describe('HttpTransport', () => {
     const client = makeClient(mockFetch)
     await client.sessions.list({})
 
-    const [url] = mockFetch.mock.calls[0] as [string, RequestInit]
-    expect(url).not.toContain('recent')
+    expect(urlOf(mockFetch)).not.toContain('recent')
   })
 
-  it('uses custom baseUrl', async () => {
+  it('uses custom baseUrl and strips a trailing slash', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({ balance: 0 }))
-    const client = makeClient(mockFetch, { baseUrl: 'https://staging.example.com' })
+    const client = makeClient(mockFetch, { baseUrl: 'https://staging.example.com/' })
     await client.accounts.balance()
 
-    const [url] = mockFetch.mock.calls[0] as [string, RequestInit]
-    expect(url).toMatch(/^https:\/\/staging\.example\.com/)
+    expect(urlOf(mockFetch)).toBe('https://staging.example.com/accounts/balance')
+  })
+
+  it('rejects an empty base URL list', () => {
+    expect(() => makeClient(vi.fn(), { baseUrls: [' '] })).toThrow(TypeError)
   })
 
   it('throws OctaNetworkError on fetch failure', async () => {
@@ -72,6 +115,12 @@ describe('HttpTransport', () => {
   it('throws OctaTimeoutError on AbortError', async () => {
     const abortErr = new DOMException('aborted', 'AbortError')
     const mockFetch = vi.fn().mockRejectedValueOnce(abortErr)
+    const client = makeClient(mockFetch)
+    await expect(client.accounts.balance()).rejects.toBeInstanceOf(OctaTimeoutError)
+  })
+
+  it('throws OctaTimeoutError on TimeoutError from AbortSignal.timeout', async () => {
+    const mockFetch = vi.fn().mockRejectedValueOnce(new DOMException('timeout', 'TimeoutError'))
     const client = makeClient(mockFetch)
     await expect(client.accounts.balance()).rejects.toBeInstanceOf(OctaTimeoutError)
   })
@@ -93,8 +142,111 @@ describe('HttpTransport', () => {
     await client.services.mr.start({ node_id: 1, disk_size: 50, image: 'ubuntu:22.04' })
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit]
-    const headers = init.headers as Headers
-    expect(headers.get('Content-Type')).toBe('application/json')
+    expect(headersOf(mockFetch).get('Content-Type')).toBe('application/json')
     expect(init.body).toContain('"node_id":1')
+  })
+
+  it('accepts 202 and 204 responses without a body', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response('', { status: 202 }))
+    const client = makeClient(mockFetch)
+
+    await expect(client.services.session('uuid-1').stop()).resolves.toBeUndefined()
+    await expect(client.services.session('uuid-1').stop()).resolves.toBeUndefined()
+  })
+})
+
+describe('failover', () => {
+  it('moves a GET to the next base URL on a network error', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('connect ECONNREFUSED'))
+      .mockResolvedValueOnce(makeResponse({}))
+    const client = makeClient(mockFetch, {
+      baseUrls: ['https://a.example.com', 'https://b.example.com'],
+    })
+
+    await client.network.get()
+    expect(urlOf(mockFetch, 0)).toBe('https://a.example.com/network')
+    expect(urlOf(mockFetch, 1)).toBe('https://b.example.com/network')
+  })
+
+  it('does not fail over on an HTTP error', async () => {
+    const mockFetch = vi.fn().mockResolvedValue(makeErrorResponse({ message: 'boom' }, 500))
+    const client = makeClient(mockFetch, {
+      baseUrls: ['https://a.example.com', 'https://b.example.com'],
+    })
+
+    await expect(client.network.get()).rejects.toBeInstanceOf(OctaServerError)
+    expect(mockFetch).toHaveBeenCalledOnce()
+  })
+
+  it('sends a POST to the first base URL only', async () => {
+    const mockFetch = vi.fn().mockRejectedValue(new TypeError('connect ECONNREFUSED'))
+    const client = makeClient(mockFetch, {
+      baseUrls: ['https://a.example.com', 'https://b.example.com'],
+    })
+
+    await expect(
+      client.services.mr.start({ node_id: 1, disk_size: 1, image: 'alpine' }),
+    ).rejects.toBeInstanceOf(OctaNetworkError)
+    expect(mockFetch).toHaveBeenCalledOnce()
+    expect(urlOf(mockFetch)).toMatch(/^https:\/\/a\.example\.com/)
+  })
+})
+
+describe('rate limit headers', () => {
+  it('exposes the last RateLimit-* state on the client', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(
+      makeResponse({}, 200, {
+        'RateLimit-Limit': '300',
+        'RateLimit-Remaining': '299',
+        'RateLimit-Reset': '42',
+      }),
+    )
+    const client = makeClient(mockFetch)
+
+    expect(client.rateLimit).toBeUndefined()
+    await client.network.get()
+    expect(client.rateLimit).toEqual({ limit: 300, remaining: 299, reset: 42 })
+  })
+
+  it('keeps the previous state when a response has no RateLimit-* headers', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(makeResponse({}, 200, { 'RateLimit-Limit': '60' }))
+      .mockResolvedValueOnce(makeResponse({}))
+    const client = makeClient(mockFetch)
+
+    await client.network.get()
+    await client.network.get()
+    expect(client.rateLimit).toEqual({ limit: 60 })
+  })
+})
+
+describe('header helpers', () => {
+  it('normalizeApiKey', () => {
+    expect(normalizeApiKey(undefined)).toBeUndefined()
+    expect(normalizeApiKey('  ')).toBeUndefined()
+    expect(normalizeApiKey('bearer octa_ak_x')).toBe('octa_ak_x')
+    expect(normalizeApiKey('octa_ak_x')).toBe('octa_ak_x')
+  })
+
+  it('parseRetryAfter reads seconds and HTTP dates', () => {
+    expect(parseRetryAfter(null)).toBeUndefined()
+    expect(parseRetryAfter('288')).toBe(288)
+    expect(parseRetryAfter('soon')).toBeUndefined()
+    const inTenSeconds = new Date(Date.now() + 10_000).toUTCString()
+    expect(parseRetryAfter(inTenSeconds)).toBeGreaterThanOrEqual(9)
+    expect(parseRetryAfter(inTenSeconds)).toBeLessThanOrEqual(11)
+    expect(parseRetryAfter(new Date(0).toUTCString())).toBe(0)
+  })
+
+  it('parseRateLimit ignores malformed values', () => {
+    expect(parseRateLimit(new Headers())).toBeUndefined()
+    expect(parseRateLimit(new Headers({ 'RateLimit-Limit': 'many' }))).toBeUndefined()
+    expect(parseRateLimit(new Headers({ 'RateLimit-Remaining': '0' }))).toEqual({ remaining: 0 })
   })
 })
