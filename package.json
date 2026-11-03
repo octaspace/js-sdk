@@ -19,16 +19,15 @@
     "check": "pnpm build && pnpm typecheck && pnpm lint && pnpm test",
     "changeset": "changeset",
     "version": "changeset version",
-    "playground": "pnpm --filter octaspace-playground dev",
-    "playground:build": "pnpm --filter octaspace-playground build"
+    "audit": "pnpm audit --audit-level high"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@changesets/cli": "^2.27.0",
-    "typescript": "^5.7.2"
+    "@biomejs/biome": "^2.6.4",
+    "@changesets/cli": "^3.0.3",
+    "typescript": "^6.0.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.18.0"
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@12.16.1"
 }

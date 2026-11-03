@@ -2,7 +2,16 @@
   "name": "@octaspace/sdk",
   "version": "0.1.1",
   "description": "Official JavaScript/TypeScript SDK for the OCTA API",
-  "keywords": ["octa", "octaspace", "sdk", "api", "cloud", "gpu", "vpn", "render"],
+  "keywords": [
+    "octa",
+    "octaspace",
+    "sdk",
+    "api",
+    "cloud",
+    "gpu",
+    "vpn",
+    "render"
+  ],
   "homepage": "https://github.com/octaspace/js-sdk",
   "repository": {
     "type": "git",
@@ -27,7 +36,11 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "README.md", "CHANGELOG.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -42,14 +55,14 @@
     "prepublishOnly": "pnpm run build && pnpm run typecheck && pnpm run test"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
-    "@vitest/coverage-v8": "^2.1.8",
-    "tsup": "^8.3.5",
-    "tsx": "^4.19.2",
-    "vitest": "^2.1.8"
+    "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "^5.0.5",
+    "tsup": "^9.0.0",
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.5"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22"
   },
   "publishConfig": {
     "access": "public"

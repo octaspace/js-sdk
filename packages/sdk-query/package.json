@@ -2,7 +2,14 @@
   "name": "@octaspace/sdk-query",
   "version": "0.1.0",
   "description": "TanStack Query integration for the OctaSpace SDK",
-  "keywords": ["octa", "octaspace", "sdk", "tanstack", "query", "framework-agnostic"],
+  "keywords": [
+    "octa",
+    "octaspace",
+    "sdk",
+    "tanstack",
+    "query",
+    "framework-agnostic"
+  ],
   "homepage": "https://github.com/octaspace/js-sdk",
   "repository": {
     "type": "git",
@@ -27,7 +34,11 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "README.md", "CHANGELOG.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -44,12 +55,12 @@
   },
   "devDependencies": {
     "@octaspace/sdk": "workspace:*",
-    "@vitest/coverage-v8": "^2.1.8",
-    "tsup": "^8.3.5",
-    "vitest": "^2.1.8"
+    "@vitest/coverage-v8": "^5.0.5",
+    "tsup": "^9.0.0",
+    "vitest": "^5.0.5"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22"
   },
   "publishConfig": {
     "access": "public"

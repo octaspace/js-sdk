@@ -53,4 +53,6 @@ pnpm lint
 pnpm test
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development guide.
+Requires Node.js 22.18+ and pnpm via Corepack (`corepack enable pnpm`).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development guide and
+[docs/GIT_WORKFLOW_NEXT.md](docs/GIT_WORKFLOW_NEXT.md) for the `next` branch workflow.

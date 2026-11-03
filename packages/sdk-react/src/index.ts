@@ -1,3 +1,4 @@
+export type { ListSessionsOptions } from '@octaspace/sdk'
 export { OctaProvider, useOctaClient } from './context.js'
 export {
   useAccount,
@@ -16,4 +17,3 @@ export {
   useVpnAvailable,
 } from './hooks.js'
 export type { UseOctaRequestOptions, UseOctaRequestResult } from './useOctaRequest.js'
-export type { ListSessionsOptions } from '@octaspace/sdk'

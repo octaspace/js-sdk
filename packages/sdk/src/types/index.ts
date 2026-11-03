@@ -1,5 +1,6 @@
 export type { Account, Balance, Wallet } from './account.js'
 export type { App } from './app.js'
+export type { IdleJob } from './idle-job.js'
 export type { BlockchainInfo, NetworkNodes, NetworkPower, NetworkStats } from './network.js'
 export type {
   Node,
@@ -45,4 +46,3 @@ export type {
   VpnProtocol,
   VpnSubkind,
 } from './services/vpn.js'
-export type { IdleJob } from './idle-job.js'

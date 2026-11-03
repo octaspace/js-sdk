@@ -1,3 +1,12 @@
 packages:
   - 'packages/*'
-  - 'apps/*'
+
+# Supply-chain hardening.
+# Install only versions published at least 3 days ago (minutes); compromised
+# releases are usually unpublished within hours.
+minimumReleaseAge: 4320
+# Fail instead of silently excluding a release that is too fresh.
+minimumReleaseAgeStrict: true
+# Only these dependencies may run install scripts.
+allowBuilds:
+  esbuild: true
