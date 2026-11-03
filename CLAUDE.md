@@ -204,7 +204,7 @@ src/hooks.ts           — resource hooks (useComputeMachines, useSession, useHo
 ## Adding a new package (future)
 
 1. Create `packages/<name>/` with its own `package.json`, `tsconfig.json` extending `../../tsconfig.json`, `tsup.config.ts`, `vitest.config.ts`.
-2. Declare `@octaspace/sdk` as `"@octaspace/sdk": "workspace:*"` in `devDependencies` and `peerDependencies`.
+2. Declare `@octaspace/sdk` as `"workspace:*"` in `devDependencies` and `"workspace:^"` in `peerDependencies`.
 3. Add a changeset before publishing: `pnpm changeset`.
 
 ## Release workflow
@@ -214,7 +214,7 @@ Releases are manual — published when the team decides.
 1. `pnpm changeset` — describe the change, pick bump type (patch/minor/major)
 2. Commit the generated `.md` file together with your changes
 3. When ready to release: `pnpm version` — bumps `package.json` versions and updates `CHANGELOG.md`
-   - First release of `next` (`@octaspace/sdk` 0.2.0): after `pnpm version`, raise the `@octaspace/sdk` peer range of `sdk-query` and `sdk-react` to `>=0.2.0` — they do not work with 0.1.x, and Changesets refuses a peer range that excludes the current version before the bump.
+   - `sdk-query` and `sdk-react` declare the peer as `"@octaspace/sdk": "workspace:^"`; `pnpm publish` replaces it with `^<current sdk version>` (e.g. `^0.2.0`), so the range always matches the SDK released with them. Publish with pnpm, never `npm publish`, or the `workspace:` range leaks into the registry.
    - Nothing from `next` is published until the next API is in production.
 4. `pnpm --filter @octaspace/sdk publish` — publish core SDK to npm
 5. `pnpm --filter @octaspace/sdk-query publish` — publish TanStack Query integration to npm
