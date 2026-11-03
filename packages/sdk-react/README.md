@@ -1,11 +1,13 @@
 # @octaspace/sdk-react
 
-React context and hooks for the [OctaSpace SDK](https://github.com/octaspace/js-sdk).
+React context and hooks for the [OctaSpace SDK](https://github.com/octaspace/js-sdk), for apps
+that do not use TanStack Query (with it, prefer [`@octaspace/sdk-query`](../sdk-query)).
 
 [![npm version](https://img.shields.io/npm/v/@octaspace/sdk-react)](https://www.npmjs.com/package/@octaspace/sdk-react)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
----
+> **Branch `next`.** This version targets the new OctaSpace API (see the core SDK
+> [README](../sdk/README.md) and the [migration guide](../../docs/migration-next.md)).
 
 ## Installation
 
@@ -17,100 +19,129 @@ pnpm add @octaspace/sdk @octaspace/sdk-react react
 
 Requires React 18+.
 
----
-
-## Quick Start
+## Quick start
 
 ```tsx
-import { OctaClient } from '@octaspace/sdk'
-import { OctaProvider, useNodes } from '@octaspace/sdk-react'
+import { OctaClient, formatUsd } from '@octaspace/sdk'
+import { OctaProvider, useComputeMachines } from '@octaspace/sdk-react'
 
-const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })
+const client = new OctaClient({ apiKey: import.meta.env.VITE_OCTA_API_KEY })
 
-function NodeList() {
-  const { data: nodes, loading, error, refetch } = useNodes()
+function Machines() {
+  const { data, loading, error, refetch } = useComputeMachines()
 
-  if (loading) return <p>Loading...</p>
+  if (loading) return <p>Loading…</p>
   if (error) return <p>{error.message}</p>
 
   return (
-    <div>
+    <>
       <button onClick={refetch}>Refresh</button>
-      <pre>{JSON.stringify(nodes, null, 2)}</pre>
-    </div>
+      <ul>
+        {data?.map((m) => (
+          <li key={m.node_number}>
+            {m.node_number} — {formatUsd(m.base_price)}/h
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }
 
 export function App() {
   return (
     <OctaProvider client={client}>
-      <NodeList />
+      <Machines />
     </OctaProvider>
   )
 }
 ```
 
----
+An API key in a browser bundle is visible to every user of the page. Ship it only in trusted
+internal tools; public apps should call the API from their backend.
 
-## Included Hooks
+## Hooks
 
-- `useAccount()`
-- `useBalance()`
-- `useApps()`
-- `useNetworkStats()`
-- `useNodes()`
-- `useNode(id)`
-- `useComputeMachines()`
-- `useRenderMachines()`
-- `useVpnAvailable()`
-- `useServiceSessionInfo(uuid)`
-- `useServiceSessionLogs(uuid)`
-- `useSessions(options?)`
-- `useIdleJob(nodeId, jobId)`
-- `useIdleJobLogs(nodeId, jobId)`
+| Hook | Calls |
+|---|---|
+| `useBalance()` | `client.accounts.balance()` |
+| `useComputeMachines()` | `client.compute.list()` |
+| `useRenderMachines()` | `client.render.list()` |
+| `useSessions()` | `client.sessions.list()` |
+| `useSession(uuid)` | `client.sessions.get(uuid)` — skipped while `uuid` is empty |
+| `useSessionLogs(uuid, { tail })` | `client.sessions.logs(uuid, { tail })` |
+| `useHostingNodes()` | `client.hosting.nodes()` |
+| `useNetworkInfo()` | `client.network.info()` (public) |
+| `useGpuCurrent({ verified })` | `client.stats.gpuCurrent()` (public) |
+| `useGpuHistory(options)` | `client.stats.gpuHistory()` (public) |
+| `useGpuLocations()` | `client.stats.gpuLocations()` (public) |
 
-All hooks return the same shape:
+Every hook takes options as its last argument and returns the same shape:
 
 ```ts
-{
-  data,
-  error,
-  loading,
-  refetch,
-}
+const { data, error, loading, fetching, refetch } = useSession(uuid, {
+  enabled: true, // false skips the request
+  initialData: undefined,
+  refetchIntervalMs: 3000, // poll: the next request starts 3 s after the previous one settles
+})
 ```
 
-`refetch()` triggers a new request. Requests are automatically cancelled on
-unmount or dependency change through `AbortController`.
+- `loading` is `true` while there is no data yet for the current inputs; `fetching` is `true`
+  while any request is in flight, including background refetches.
+- `refetch()` and polling keep the current data until the new response arrives; changing the
+  inputs (e.g. another `uuid`) starts from scratch.
+- Requests are cancelled through `AbortController` on unmount and when the inputs change.
+- A stopped session yields an `OctaNotFoundError` in `error`: the API only reports running
+  sessions.
 
-Public-only clients are supported too:
+### Following a starting session
 
 ```tsx
-const client = new OctaClient({})
+function SessionStatus({ uuid }: { uuid: string }) {
+  const [ready, setReady] = useState(false)
+  const { data, error } = useSession(uuid, { refetchIntervalMs: ready ? undefined : 3000 })
 
-function NetworkBadge() {
-  const { data } = useNetworkStats()
-  return <span>{data?.market_price}</span>
+  useEffect(() => setReady(data?.status === 'ready'), [data?.status])
+
+  if (error) return <p>{error.message}</p>
+  return <p>{data?.status} {data?.progress} {data?.pull_percent ?? ''}</p>
 }
 ```
 
----
+### Mutations
+
+Starting, restarting and stopping sessions and changing prices are plain SDK calls; call
+`refetch()` of the affected hooks afterwards:
+
+```tsx
+const client = useOctaClient()
+const sessions = useSessions()
+
+async function stop(uuid: string) {
+  await client.sessions.stop(uuid)
+  await client.sessions.waitStopped(uuid)
+  sessions.refetch()
+}
+```
+
+### Custom requests
+
+`useOctaRequest(request, deps, options)` is the hook all the others are built on:
+
+```tsx
+const client = useOctaClient()
+const logs = useOctaRequest((request) => client.sessions.logs(uuid, { tail: 1000 }, request), [
+  client,
+  uuid,
+])
+```
 
 ## Provider
 
 ```tsx
-import { OctaProvider } from '@octaspace/sdk-react'
-
 <OctaProvider client={client}>{children}</OctaProvider>
 ```
 
-Use `useOctaClient()` to access the raw `OctaClient` from React context.
-
-## Testing
-
-Package tests run with `@testing-library/react` and `jsdom`.
-
----
+`useOctaClient()` returns the `OctaClient` from context and throws outside a provider.
 
 ## License
 

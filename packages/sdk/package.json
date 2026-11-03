@@ -1,7 +1,7 @@
 {
   "name": "@octaspace/sdk",
   "version": "0.1.1",
-  "description": "Official JavaScript/TypeScript SDK for the OCTA API",
+  "description": "Official JavaScript/TypeScript SDK for the OctaSpace API",
   "keywords": [
     "octa",
     "octaspace",
@@ -9,7 +9,7 @@
     "api",
     "cloud",
     "gpu",
-    "vpn",
+    "compute",
     "render"
   ],
   "homepage": "https://github.com/octaspace/js-sdk",

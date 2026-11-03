@@ -8,22 +8,29 @@ import {
 import type { RateLimit } from './errors/index.js'
 import {
   AccountsResource,
-  AppsResource,
   ComputeResource,
   HostingResource,
-  IdleJobsResource,
   NetworkResource,
   RenderResource,
-  ServicesResource,
   SessionsResource,
   StatsResource,
 } from './resources/index.js'
 import { HttpTransport } from './transport/http.js'
 
+/**
+ * Client of the next-generation OctaSpace API.
+ *
+ * ```ts
+ * const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })
+ * const machines = await client.compute.list()
+ * ```
+ *
+ * Every option is optional: without `apiKey` only the public endpoints (network, stats, machine
+ * listings) work, and the base URL defaults to {@link BASE_URL_DEV}.
+ */
 export class OctaClient {
   /** Account: balance */
   readonly accounts: AccountsResource
-  readonly apps: AppsResource
   /** Compute machines: list, start, startBatch, restart */
   readonly compute: ComputeResource
   /** Account nodes and their prices: nodes, setPrices */
@@ -32,17 +39,15 @@ export class OctaClient {
   readonly network: NetworkResource
   /** Render nodes: list, start, startBatch */
   readonly render: RenderResource
-  readonly services: ServicesResource
   /** Running sessions: list, get, logs, stop, waitReady, waitStopped */
   readonly sessions: SessionsResource
-  readonly idleJobs: IdleJobsResource
   /** Public GPU market statistics: gpuCurrent, gpuHistory, gpuLocations */
   readonly stats: StatsResource
 
   private readonly transport: HttpTransport
 
   constructor(options: OctaClientOptions = {}) {
-    const transport = new HttpTransport({
+    this.transport = new HttpTransport({
       baseUrls: options.baseUrls ?? [options.baseUrl ?? DEFAULT_BASE_URL],
       timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
       retries: options.retries ?? DEFAULT_RETRIES,
@@ -53,17 +58,13 @@ export class OctaClient {
       ...(options.onResponse !== undefined && { onResponse: options.onResponse }),
     })
 
-    this.transport = transport
-    this.accounts = new AccountsResource(transport)
-    this.apps = new AppsResource(transport)
-    this.compute = new ComputeResource(transport)
-    this.hosting = new HostingResource(transport)
-    this.network = new NetworkResource(transport)
-    this.render = new RenderResource(transport)
-    this.services = new ServicesResource(transport)
-    this.sessions = new SessionsResource(transport)
-    this.idleJobs = new IdleJobsResource(transport)
-    this.stats = new StatsResource(transport)
+    this.accounts = new AccountsResource(this.transport)
+    this.compute = new ComputeResource(this.transport)
+    this.hosting = new HostingResource(this.transport)
+    this.network = new NetworkResource(this.transport)
+    this.render = new RenderResource(this.transport)
+    this.sessions = new SessionsResource(this.transport)
+    this.stats = new StatsResource(this.transport)
   }
 
   /**

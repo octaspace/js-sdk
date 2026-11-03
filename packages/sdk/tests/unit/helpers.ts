@@ -10,10 +10,6 @@ export function makeResponse(body: unknown, status = 200, headers: Record<string
   return new Response(JSON.stringify(body), init)
 }
 
-export function makeBlobResponse(blob: Blob, status = 200) {
-  return new Response(blob, { status })
-}
-
 export function makeErrorResponse(
   body: { message: string; code?: string },
   status: number,

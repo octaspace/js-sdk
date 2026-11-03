@@ -68,25 +68,31 @@ pnpm check
 Tests use `vitest` and mock `fetch` at the `OctaClient` constructor level.
 
 ```ts
-import { describe, it, vi, expect } from 'vitest'
-import { OctaClient } from '../../src/client.js'
+import { expect, it, vi } from 'vitest'
+import { loadFixture, makeClient, makeResponse, sentRequest } from './helpers.js'
 
 it('example', async () => {
-  const mockFetch = vi.fn().mockResolvedValueOnce(
-    new Response(JSON.stringify({ balance: 42 }), { status: 200 }),
-  )
-  const client = new OctaClient({ apiKey: 'test', fetch: mockFetch, retries: 0 })
-  const result = await client.accounts.balance()
-  expect(result.balance).toBe(42)
+  const fixture = loadFixture('account_balance.json') // recorded next API response
+  const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(fixture))
+  const client = makeClient(mockFetch) // key octa_ak_test, retries disabled
+
+  const balance = await client.accounts.balance()
+  expect(balance).toEqual(fixture)
+  expect(sentRequest(mockFetch).headers.get('Authorization')).toBe('Bearer octa_ak_test')
 })
 ```
 
-Never make real HTTP requests in unit tests.
+Never make real HTTP requests in unit tests. Fixtures in `packages/sdk/tests/fixtures/next/` are
+recorded responses of the next API with IP addresses replaced by documentation ranges; keep
+credentials (`ssh.web` URLs, keys) out of them.
+
+Live checks: `pnpm smoke` is read-only. Checks that spend money (starts, restarts, price changes)
+are run by hand, only on sessions the check created, and their scripts are not committed.
 
 Run a single test file:
 
 ```bash
-pnpm --filter @octaspace/sdk exec vitest run tests/unit/nodes.test.ts
+pnpm --filter @octaspace/sdk exec vitest run tests/unit/compute.test.ts
 ```
 
 ## Code style

@@ -30,15 +30,6 @@ export function useBalance(options?: UseOctaRequestOptions<AccountBalance>) {
   return useOctaRequest((request) => client.accounts.balance(request), [client], options)
 }
 
-export function useApps(
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['apps']['list']>>
-  >,
-) {
-  const client = useOctaClient()
-  return useOctaRequest((request) => client.apps.list(request), [client], options)
-}
-
 /** Public platform statistics (`client.network.info()`); no API key needed. */
 export function useNetworkInfo(options?: UseOctaRequestOptions<NetworkInfo>) {
   const client = useOctaClient()
@@ -108,15 +99,6 @@ export function useRenderMachines(
   return useOctaRequest((request) => client.render.list(request), [client], options)
 }
 
-export function useVpnAvailable(
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['services']['vpn']['available']>>
-  >,
-) {
-  const client = useOctaClient()
-  return useOctaRequest((request) => client.services.vpn.available(request), [client], options)
-}
-
 /** Running sessions of the account (`client.sessions.list()`). */
 export function useSessions(options?: UseOctaRequestOptions<Session[]>) {
   const client = useOctaClient()
@@ -152,37 +134,5 @@ export function useSessionLogs(
     uuid ? (request) => client.sessions.logs(uuid, { tail }, request) : null,
     [client, uuid, tail],
     whenReady(Boolean(uuid), options),
-  )
-}
-
-export function useIdleJob(
-  nodeId: string | number | null | undefined,
-  jobId: string | number | null | undefined,
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['idleJobs']['get']>>
-  >,
-) {
-  const client = useOctaClient()
-  const enabled = nodeId !== null && nodeId !== undefined && jobId !== null && jobId !== undefined
-
-  return useOctaRequest(
-    enabled ? (request) => client.idleJobs.get(nodeId, jobId, request) : null,
-    [client, nodeId, jobId],
-    whenReady(enabled, options),
-  )
-}
-
-export function useIdleJobLogs(
-  nodeId: string | number | null | undefined,
-  jobId: string | number | null | undefined,
-  options?: UseOctaRequestOptions<string>,
-) {
-  const client = useOctaClient()
-  const enabled = nodeId !== null && nodeId !== undefined && jobId !== null && jobId !== undefined
-
-  return useOctaRequest(
-    enabled ? (request) => client.idleJobs.logs(nodeId, jobId, request) : null,
-    [client, nodeId, jobId],
-    whenReady(enabled, options),
   )
 }

@@ -1,5 +1,4 @@
 export type { AccountBalance } from './account.js'
-export type { App } from './app.js'
 export type {
   BatchId,
   BatchResult,
@@ -23,16 +22,8 @@ export type {
   HostingNodeUsage,
   NodePrices,
 } from './hosting.js'
-export type { IdleJob } from './idle-job.js'
 export type { NetworkInfo } from './network.js'
 export type { RenderBatchItem, RenderMachine, RenderStartParams } from './render.js'
-export type {
-  StartVpnOptions,
-  StartVpnResult,
-  VpnNode,
-  VpnProtocol,
-  VpnSubkind,
-} from './services/vpn.js'
 export type {
   ComputeSession,
   ComputeSessionNodeHw,

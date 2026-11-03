@@ -190,18 +190,9 @@ export class HttpTransport {
       await this.throwApiError(response, rateLimit)
     }
 
-    const responseType = options.responseType ?? 'json'
-    let data: T
-
-    if (responseType === 'blob') {
-      data = (await response.blob()) as T
-    } else if (responseType === 'text') {
-      data = (await response.text()) as T
-    } else {
-      // 202 and 204 responses may carry no body at all.
-      const text = await response.text()
-      data = text ? (JSON.parse(text) as T) : (undefined as T)
-    }
+    // 202 and 204 responses may carry no body at all.
+    const text = await response.text()
+    const data = (text ? JSON.parse(text) : undefined) as T
 
     const requestId = response.headers.get('x-request-id')
     return {

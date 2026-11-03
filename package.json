@@ -16,6 +16,7 @@
     "format": "biome format --write packages",
     "test": "pnpm --filter './packages/*' run test",
     "test:coverage": "pnpm --filter './packages/*' run test:coverage",
+    "smoke": "pnpm --filter @octaspace/sdk smoke",
     "check": "pnpm build && pnpm typecheck && pnpm lint && pnpm test",
     "changeset": "changeset",
     "version": "changeset version",
