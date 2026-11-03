@@ -7,40 +7,56 @@ const makeClient = () =>
   ({
     sessions: {
       list: vi.fn().mockResolvedValue([]),
+      get: vi.fn().mockResolvedValue({ uuid: 'abc', status: 'ready' }),
+      logs: vi.fn().mockResolvedValue({ system: [], container: null, container_truncated: false }),
     },
-  }) as unknown as OctaClient
+  }) as unknown as OctaClient & {
+    sessions: Record<'list' | 'get' | 'logs', ReturnType<typeof vi.fn>>
+  }
 
 describe('sessionKeys', () => {
   it('produces stable query keys', () => {
     expect(sessionKeys.all()).toEqual(['@octaspace', 'sessions'])
-    expect(sessionKeys.list()).toEqual(['@octaspace', 'sessions', 'list', {}])
-    expect(sessionKeys.list({ recent: true })).toEqual([
+    expect(sessionKeys.list()).toEqual(['@octaspace', 'sessions', 'list'])
+    expect(sessionKeys.detail('abc')).toEqual(['@octaspace', 'sessions', 'detail', 'abc'])
+    expect(sessionKeys.logs('abc', { tail: 50 })).toEqual([
       '@octaspace',
       'sessions',
-      'list',
-      { recent: true },
+      'logs',
+      'abc',
+      { tail: 50 },
     ])
   })
 
-  it('list keys differ by recent option', () => {
-    expect(sessionKeys.list({ recent: true })).not.toEqual(sessionKeys.list({ recent: false }))
+  it('keys differ by uuid and tail', () => {
+    expect(sessionKeys.detail('abc')).not.toEqual(sessionKeys.detail('xyz'))
+    expect(sessionKeys.logs('abc', { tail: 1 })).not.toEqual(sessionKeys.logs('abc'))
   })
 })
 
-describe('sessionQueries.list', () => {
-  it('sets the correct queryKey without options', () => {
-    const opts = sessionQueries.list(makeClient())
-    expect(opts.queryKey).toEqual(sessionKeys.list(undefined))
-  })
-
-  it('sets the correct queryKey with options', () => {
-    const opts = sessionQueries.list(makeClient(), { recent: true })
-    expect(opts.queryKey).toEqual(sessionKeys.list({ recent: true }))
-  })
-
-  it('queryFn calls client.sessions.list() with options', async () => {
+describe('sessionQueries', () => {
+  it('list calls client.sessions.list() with the query signal', async () => {
     const client = makeClient()
-    await callQueryFn(sessionQueries.list(client, { recent: true }))
-    expect(client.sessions.list).toHaveBeenCalledWith({ recent: true })
+    const { signal } = new AbortController()
+    const opts = sessionQueries.list(client)
+    expect(opts.queryKey).toEqual(sessionKeys.list())
+    await callQueryFn(opts, { signal })
+    expect(client.sessions.list).toHaveBeenCalledWith({ signal })
+  })
+
+  it('detail calls client.sessions.get(uuid)', async () => {
+    const client = makeClient()
+    const opts = sessionQueries.detail(client, 'abc')
+    expect(opts.queryKey).toEqual(sessionKeys.detail('abc'))
+    await callQueryFn(opts)
+    expect(client.sessions.get).toHaveBeenCalledWith('abc', undefined)
+  })
+
+  it('logs calls client.sessions.logs(uuid, options)', async () => {
+    const client = makeClient()
+    const opts = sessionQueries.logs(client, 'abc', { tail: 20 })
+    expect(opts.queryKey).toEqual(sessionKeys.logs('abc', { tail: 20 }))
+    await callQueryFn(opts)
+    expect(client.sessions.logs).toHaveBeenCalledWith('abc', { tail: 20 }, undefined)
   })
 })

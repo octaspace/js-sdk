@@ -1,4 +1,3 @@
-export type { ListSessionsOptions } from '@octaspace/sdk'
 export { OctaProvider, useOctaClient } from './context.js'
 export {
   useAccount,
@@ -11,8 +10,8 @@ export {
   useNode,
   useNodes,
   useRenderMachines,
-  useServiceSessionInfo,
-  useServiceSessionLogs,
+  useSession,
+  useSessionLogs,
   useSessions,
   useVpnAvailable,
 } from './hooks.js'

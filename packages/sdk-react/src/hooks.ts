@@ -1,13 +1,16 @@
-import type {
-  ListSessionsOptions,
-  RequestOverrides,
-  ServiceInfo,
-  SessionLogs,
-} from '@octaspace/sdk'
+import type { Session, SessionLogs, SessionLogsOptions } from '@octaspace/sdk'
 import { useOctaClient } from './context.js'
 import { type UseOctaRequestOptions, useOctaRequest } from './useOctaRequest.js'
 
 export type { UseOctaRequestOptions, UseOctaRequestResult } from './useOctaRequest.js'
+
+/** Options of a hook whose request needs inputs: it only runs when they are present. */
+function whenReady<TData>(
+  ready: boolean,
+  options: UseOctaRequestOptions<TData> | undefined,
+): UseOctaRequestOptions<TData> {
+  return { ...options, enabled: ready && (options?.enabled ?? true) }
+}
 
 export function useAccount(
   options?: UseOctaRequestOptions<
@@ -64,10 +67,7 @@ export function useNode(
   return useOctaRequest(
     id === null || id === undefined ? null : (request) => client.nodes.get(id, request),
     [client, id],
-    {
-      enabled: id !== null && id !== undefined && (options?.enabled ?? true),
-      initialData: options?.initialData,
-    },
+    whenReady(id !== null && id !== undefined, options),
   )
 }
 
@@ -100,47 +100,41 @@ export function useVpnAvailable(
   return useOctaRequest((request) => client.services.vpn.available(request), [client], options)
 }
 
-export function useServiceSessionInfo(
+/** Running sessions of the account (`client.sessions.list()`). */
+export function useSessions(options?: UseOctaRequestOptions<Session[]>) {
+  const client = useOctaClient()
+  return useOctaRequest((request) => client.sessions.list(request), [client], options)
+}
+
+/**
+ * A running session (`client.sessions.get(uuid)`); skipped while `uuid` is empty. To follow a
+ * starting session, pass `refetchIntervalMs` and stop when `data.status === 'ready'`. A stopped
+ * session yields an `OctaNotFoundError` in `error`.
+ */
+export function useSession(
   uuid: string | null | undefined,
-  options?: UseOctaRequestOptions<ServiceInfo>,
+  options?: UseOctaRequestOptions<Session>,
 ) {
   const client = useOctaClient()
   return useOctaRequest(
-    uuid ? (request) => client.services.session(uuid).info(request) : null,
+    uuid ? (request) => client.sessions.get(uuid, request) : null,
     [client, uuid],
-    {
-      enabled: Boolean(uuid) && (options?.enabled ?? true),
-      initialData: options?.initialData,
-    },
+    whenReady(Boolean(uuid), options),
   )
 }
 
-export function useServiceSessionLogs(
+/** Logs of a running compute session (`client.sessions.logs(uuid, { tail })`). */
+export function useSessionLogs(
   uuid: string | null | undefined,
+  logsOptions?: SessionLogsOptions,
   options?: UseOctaRequestOptions<SessionLogs>,
 ) {
   const client = useOctaClient()
+  const tail = logsOptions?.tail
   return useOctaRequest(
-    uuid ? (request) => client.services.session(uuid).logs(request) : null,
-    [client, uuid],
-    {
-      enabled: Boolean(uuid) && (options?.enabled ?? true),
-      initialData: options?.initialData,
-    },
-  )
-}
-
-export function useSessions(
-  listOptions?: ListSessionsOptions,
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['sessions']['list']>>
-  >,
-) {
-  const client = useOctaClient()
-  return useOctaRequest(
-    (request: RequestOverrides) => client.sessions.list(listOptions ?? {}, request),
-    [client, listOptions?.recent],
-    options,
+    uuid ? (request) => client.sessions.logs(uuid, { tail }, request) : null,
+    [client, uuid, tail],
+    whenReady(Boolean(uuid), options),
   )
 }
 
@@ -157,10 +151,7 @@ export function useIdleJob(
   return useOctaRequest(
     enabled ? (request) => client.idleJobs.get(nodeId, jobId, request) : null,
     [client, nodeId, jobId],
-    {
-      enabled: enabled && (options?.enabled ?? true),
-      initialData: options?.initialData,
-    },
+    whenReady(enabled, options),
   )
 }
 
@@ -175,9 +166,6 @@ export function useIdleJobLogs(
   return useOctaRequest(
     enabled ? (request) => client.idleJobs.logs(nodeId, jobId, request) : null,
     [client, nodeId, jobId],
-    {
-      enabled: enabled && (options?.enabled ?? true),
-      initialData: options?.initialData,
-    },
+    whenReady(enabled, options),
   )
 }

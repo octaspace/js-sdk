@@ -29,6 +29,7 @@ export class OctaClient {
   /** Render nodes: list, start, startBatch */
   readonly render: RenderResource
   readonly services: ServicesResource
+  /** Running sessions: list, get, logs, stop, waitReady, waitStopped */
   readonly sessions: SessionsResource
   readonly idleJobs: IdleJobsResource
 
