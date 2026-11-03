@@ -1,14 +1,9 @@
 # OctaSpace JS SDK — monorepo
 
-Official JavaScript/TypeScript SDK for the next-generation [OctaSpace](https://octa.space) API.
+Official JavaScript/TypeScript SDK for the [OctaSpace](https://octa.space) API.
 
 [![CI](https://github.com/octaspace/js-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/octaspace/js-sdk/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
-> **Branch `next`.** This branch targets the new API, which runs on the test stand
-> `https://api-dev.octa.space` (the default base URL). The production hosts still serve the
-> legacy API, used by the releases on `main`. Moving from the legacy SDK: see the
-> [migration guide](docs/migration-next.md).
 
 ## Packages
 
@@ -42,18 +37,7 @@ console.log(formatUsd(balance.balance), machines.length)
 - Core SDK: [`packages/sdk/README.md`](packages/sdk/README.md)
 - TanStack Query integration: [`packages/sdk-query/README.md`](packages/sdk-query/README.md)
 - React hooks/context: [`packages/sdk-react/README.md`](packages/sdk-react/README.md)
-- [Migrating from the legacy SDK](docs/migration-next.md)
-- [Testing the SDK from the console](docs/testing.md)
-- [Working with the `next` branch](docs/GIT_WORKFLOW_NEXT.md)
 
-## Development
+## Contributing
 
-```bash
-corepack enable pnpm
-pnpm install
-pnpm check      # build + typecheck + lint + test
-pnpm audit
-```
-
-Requires Node.js 22.18+ and pnpm via Corepack. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
-full development guide.
+See [CONTRIBUTING.md](CONTRIBUTING.md).

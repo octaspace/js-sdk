@@ -4,7 +4,7 @@
 '@octaspace/sdk-react': minor
 ---
 
-Hosting, GPU statistics, balance and network on the next API.
+Hosting, GPU statistics, balance and network.
 
 - `@octaspace/sdk`:
   - `client.hosting.nodes()` (`GET /hosting/nodes`, online nodes of the account) and `client.hosting.setPrices(number, { base, storage, traffic, min_rent_minutes })` (`PATCH`, 204; integer micro-USD, only the fields that are set).

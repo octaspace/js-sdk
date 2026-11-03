@@ -1,10 +1,6 @@
 import type { RequestContext, ResponseContext } from './transport/types.js'
 
-/**
- * Test stand of the next-generation OctaSpace API. It is the default base URL until the
- * production host of the new API is announced: the production hosts (`api.octa.computer`,
- * `api.octa.space`) still serve the legacy API.
- */
+/** Base URL of the OctaSpace API (the default). */
 export const BASE_URL_DEV = 'https://api-dev.octa.space'
 export const DEFAULT_BASE_URL = BASE_URL_DEV
 export const DEFAULT_TIMEOUT_MS = 30_000

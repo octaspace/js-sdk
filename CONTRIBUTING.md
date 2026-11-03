@@ -83,11 +83,11 @@ it('example', async () => {
 ```
 
 Never make real HTTP requests in unit tests. Fixtures in `packages/sdk/tests/fixtures/next/` are
-recorded responses of the next API with IP addresses replaced by documentation ranges; keep
-credentials (`ssh.web` URLs, keys) out of them.
+recorded API responses with IP addresses replaced by documentation ranges; keep credentials
+(`ssh.web` URLs, keys) out of them.
 
-Live checks: see [docs/testing.md](docs/testing.md) for trying the SDK from the console. `pnpm smoke` is read-only. Checks that spend money (starts, restarts, price changes)
-are run by hand, only on sessions the check created, and their scripts are not committed.
+`pnpm smoke` runs read-only checks against the live API; set `OCTA_API_KEY` to include the
+authenticated ones.
 
 Run a single test file:
 
@@ -133,26 +133,11 @@ pnpm changeset
 
 Pick the affected packages, the bump type (patch/minor/major), and write a short description. Commit the generated `.md` file together with your changes.
 
-## Publishing a release
-
-Releases are published manually when the team agrees on a release.
-
-```bash
-# 1. Bump versions and generate CHANGELOG from accumulated changesets
-pnpm version
-
-# 2. Review the version changes, then publish all updated packages safely:
-pnpm publish -r --access public
-```
-
 ## Opening a pull request
 
-Work on the new API happens on the `next` branch; read
-[docs/GIT_WORKFLOW_NEXT.md](docs/GIT_WORKFLOW_NEXT.md) first.
-
-1. Create a branch from the right base: `git switch -c feat/my-feature origin/next`
-2. Make your changes and run `pnpm check`
+1. Create a branch and make your changes
+2. Run `pnpm check`
 3. Add a changeset: `pnpm changeset`
-4. Open a PR into that base: `gh pr create --base next`
+4. Open a pull request
 
 For bug fixes, include a failing test that demonstrates the bug before your fix.

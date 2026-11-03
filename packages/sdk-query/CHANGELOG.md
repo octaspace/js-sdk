@@ -7,14 +7,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-## [Unreleased]
-
-### Changed
-
-- Query examples and usage are aligned with the current core SDK behavior where public endpoints can be used with `new OctaClient({})`
-
----
-
 ## [0.1.0] - 2026-04-10
 
 ### Added
@@ -36,5 +28,4 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Re-exported `ListSessionsOptions` from `@octaspace/sdk`
 - Zero runtime dependencies beyond the host TanStack Query adapter
 
-[Unreleased]: https://github.com/octaspace/js-sdk/compare/sdk-query-v0.1.0...HEAD
 [0.1.0]: https://github.com/octaspace/js-sdk/releases/tag/sdk-query-v0.1.0

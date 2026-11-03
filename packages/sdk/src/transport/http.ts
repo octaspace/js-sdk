@@ -28,7 +28,7 @@ export interface HttpTransportOptions {
   onResponse?: (ctx: ResponseContext) => void | Promise<void>
 }
 
-/** Prefix of the account API keys the next API issues (Cube → Profile → Credentials). */
+/** Prefix of account API keys (Cube → Profile → Credentials). */
 export const API_KEY_PREFIX = 'octa_ak_'
 
 /** Longest error message kept from a response body (e.g. when the server returns an HTML page). */
@@ -295,7 +295,7 @@ export class HttpTransport {
     )
 
     if (response.status === 401 && this.apiKey && !this.apiKey.startsWith(API_KEY_PREFIX)) {
-      message += ` (the next API expects a key starting with "${API_KEY_PREFIX}"; legacy account tokens are not accepted)`
+      message += ` (API keys start with "${API_KEY_PREFIX}"; create one in Cube → Profile → Credentials)`
     }
 
     const requestId = response.headers.get('x-request-id') ?? undefined

@@ -23,7 +23,7 @@ export interface OctaApiErrorDetails {
   code?: string
   /** Value of the `X-Request-Id` response header, if present */
   requestId?: string
-  /** Parsed response body (`{ message }` on the next API) */
+  /** Parsed response body (`{ message }`) */
   body?: unknown
   /** Seconds to wait before retrying, from the `Retry-After` header */
   retryAfter?: number
@@ -55,8 +55,8 @@ export class OctaApiError extends OctaError {
 }
 
 /**
- * 401: the API key is missing or invalid. The next API requires `Authorization: Bearer <key>`
- * with a key `octa_ak_…` issued in Cube (Profile → Credentials); legacy account tokens are refused.
+ * 401: the API key is missing or invalid. The API requires `Authorization: Bearer <key>` with a
+ * key `octa_ak_…` issued in Cube (Profile → Credentials).
  */
 export class OctaAuthenticationError extends OctaApiError {
   override readonly name: string = 'OctaAuthenticationError'

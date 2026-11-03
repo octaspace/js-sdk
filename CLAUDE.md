@@ -14,7 +14,6 @@ js-sdk/
 │   └── sdk-react/         # @octaspace/sdk-react — React context + hooks
 ├── .changeset/            # Changesets for versioning and releases
 ├── .github/workflows/     # CI (ci.yml) — runs on main and next
-├── docs/                  # Docs in English: migration-next.md, testing.md, GIT_WORKFLOW_NEXT.md
 ├── biome.json             # Linter/formatter config — covers packages/*
 ├── tsconfig.json          # Base TypeScript config — extended by each package
 ├── pnpm-workspace.yaml
@@ -24,8 +23,7 @@ js-sdk/
 ## Branches
 
 Work on the new ("next") OctaSpace API happens on the `next` branch. Branch from
-`origin/next` and open PRs with `gh pr create --base next` — see
-`docs/GIT_WORKFLOW_NEXT.md` before creating a branch or a PR.
+`origin/next` and open PRs with `gh pr create --base next`.
 
 ## Documentation language
 
@@ -80,8 +78,7 @@ OCTA_API_URL=https://… pnpm smoke                   # another host (default: a
 
 Targets the **next** OctaSpace API (test stand `https://api-dev.octa.space`, the default
 `BASE_URL_DEV`). The source of truth for API differences is
-`../go-sdk/.tmp/Next/API-NEXT-DIFF.md` (spec: `https://api-dev.octa.space/openapi.json`);
-`docs/migration-next.md` is the user-facing summary. Unit-test fixtures in
+`../go-sdk/.tmp/Next/API-NEXT-DIFF.md` (spec: `https://api-dev.octa.space/openapi.json`). Unit-test fixtures in
 `tests/fixtures/next/` are recorded live responses (IPs redacted), shared with go-sdk.
 
 ### Layer overview

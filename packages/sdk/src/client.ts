@@ -18,7 +18,7 @@ import {
 import { HttpTransport } from './transport/http.js'
 
 /**
- * Client of the next-generation OctaSpace API.
+ * Client of the OctaSpace API.
  *
  * ```ts
  * const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })

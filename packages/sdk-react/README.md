@@ -6,9 +6,6 @@ that do not use TanStack Query (with it, prefer [`@octaspace/sdk-query`](../sdk-
 [![npm version](https://img.shields.io/npm/v/@octaspace/sdk-react)](https://www.npmjs.com/package/@octaspace/sdk-react)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Branch `next`.** This version targets the new OctaSpace API (see the core SDK
-> [README](../sdk/README.md) and the [migration guide](../../docs/migration-next.md)).
-
 ## Installation
 
 ```bash

@@ -1,17 +1,12 @@
 # @octaspace/sdk
 
-Typed JavaScript/TypeScript client for the next-generation [OctaSpace](https://octa.space) API:
+Typed JavaScript/TypeScript client for the [OctaSpace](https://octa.space) API:
 rent compute machines and render nodes, follow running sessions, manage the nodes you host and
 their prices, read the account balance and public network and GPU market statistics.
 
 - Zero runtime dependencies, native `fetch` — Node.js 22+, browsers, Deno, Bun, edge runtimes.
 - ESM and CommonJS builds with full type definitions.
 - Typed errors, rate-limit awareness, retries for safe requests, abort signals, host failover.
-
-> **Branch `next`.** This version targets the new API, which runs on the test stand
-> `https://api-dev.octa.space` (the default base URL). The production hosts still serve the legacy
-> API used by the releases on `main`. Moving from the legacy SDK: see the
-> [migration guide](../../docs/migration-next.md).
 
 ## Installation
 
@@ -35,7 +30,7 @@ console.log(`${network.nodes.online} nodes online`)
 const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })
 
 const balance = await client.accounts.balance()
-console.log(formatUsd(balance.balance)) // "$2.147661"
+console.log(formatUsd(balance.balance)) // "$12.500000"
 
 const [machine] = await client.compute.list()
 const { uuid } = await client.compute.start({
@@ -108,7 +103,7 @@ const { uuid } = await client.compute.start({
 // Several sessions: an array → 200, one result per item, in order; a failed item does not fail the batch
 const results = await client.compute.startBatch([
   { id: 'a', node_number: '7KQ4-M2XD-4', image: 'alpine' },
-  { node_number: 'M95S-WZG8-7', image: 'alpine' }, // id defaults to the position
+  { node_number: '9ZRT-3HKP-1', image: 'alpine' }, // id defaults to the position
 ])
 for (const r of results) {
   if (r.status === 0) console.log(r.id, 'started', r.uuid)
@@ -265,8 +260,8 @@ try {
 ```
 
 A request that needs a key fails before it is sent when the client has none
-(`OctaAuthenticationError`). Legacy account tokens are refused by the API; the error message says
-so when the key does not start with `octa_ak_`.
+(`OctaAuthenticationError`). When a key that does not start with `octa_ak_` is refused, the error
+message says so.
 
 ## Rate limits and retries
 
@@ -277,18 +272,6 @@ and 10 per minute for starts and restarts. `client.rateLimit` holds the `RateLim
 Only GET requests are retried (and `sessions.stop`, which is idempotent): on network errors and on
 429, 502, 503 and 504, with exponential backoff, honouring `Retry-After` up to 60 seconds. A longer
 wait (such as the restart cooldown) is returned to you at once.
-
-## Development
-
-Trying the SDK by hand (smoke test, one-liners, REPL, a full session cycle):
-[docs/testing.md](../../docs/testing.md).
-
-```bash
-pnpm test                                  # unit tests (fetch is mocked)
-pnpm smoke                                 # live read-only checks, public endpoints
-OCTA_API_KEY=octa_ak_… pnpm smoke          # all suites
-OCTA_API_KEY=octa_ak_… pnpm smoke --suite compute,sessions
-```
 
 ## License
 

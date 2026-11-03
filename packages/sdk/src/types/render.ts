@@ -29,8 +29,8 @@ export interface RenderMachine {
 
 /**
  * Parameters of `POST /services/render` (`RenderRequest`): the node runs a render node for the
- * account, billed by the hour until stopped. Legacy fields (`node_id`, `disk_size`, `subkind`,
- * `envs`) are refused by the API.
+ * account, billed by the hour until stopped. Other fields (`disk_size`, `envs`, …) are refused by the
+ * API.
  */
 export interface RenderStartParams {
   node_number: NodeNumber

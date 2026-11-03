@@ -6,9 +6,6 @@ query key factories and ready `queryOptions` for every read operation of `@octas
 [![npm version](https://img.shields.io/npm/v/@octaspace/sdk-query)](https://www.npmjs.com/package/@octaspace/sdk-query)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Branch `next`.** This version targets the new OctaSpace API (see the core SDK
-> [README](../sdk/README.md) and the [migration guide](../../docs/migration-next.md)).
-
 ## Installation
 
 ```bash

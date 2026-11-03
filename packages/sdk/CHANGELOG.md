@@ -1,11 +1,5 @@
 # Changelog
 
-## 0.1.1
-
-### Patch Changes
-
-- 245e71e: Add `http_proxy` to `VpnSubkind` and type `ServiceInfo.config` as `string | ProxyConfig` — for `http_proxy` sessions the API returns a `{ ip, port }` object instead of a config string. New exported type: `ProxyConfig`.
-
 All notable changes to `@octaspace/sdk` are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
@@ -13,19 +7,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-## [Unreleased]
+## 0.1.1
 
-### Changed
+### Patch Changes
 
-- `apiKey` is now optional at `OctaClient` construction time when using only public endpoints such as `network.get()`
-- Protected endpoints now fail lazily with `OctaAuthenticationError` if called without `apiKey`
-- Read-only resource methods accept optional request overrides (`signal`, `retries`) for UI integrations and request cancellation
-
-### Removed
-
-- Removed the unused `IdleJobLogs` public type export; `idleJobs.logs()` continues to return `string`
-
----
+- 245e71e: Add `http_proxy` to `VpnSubkind` and type `ServiceInfo.config` as `string | ProxyConfig` — for `http_proxy` sessions the API returns a `{ ip, port }` object instead of a config string. New exported type: `ProxyConfig`.
 
 ## [0.1.0] — 2026-04-10
 
@@ -51,5 +37,4 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Dual ESM + CJS build with TypeScript declarations
 - Zero runtime dependencies
 
-[Unreleased]: https://github.com/octaspace/js-sdk/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/octaspace/js-sdk/releases/tag/v0.1.0

@@ -4,7 +4,7 @@
 '@octaspace/sdk-react': patch
 ---
 
-Fixes from the review of the next API migration.
+Fixes.
 
 - `@octaspace/sdk`:
   - A 2xx response whose body is not JSON (e.g. a captive portal) throws `OctaApiError` with the raw `body`; a failure or timeout while reading a body throws `OctaNetworkError` / `OctaTimeoutError` and is retried like any network error.
