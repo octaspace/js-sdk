@@ -53,10 +53,21 @@ git push --force-with-lease              # после rebase обычный push
 ## Зависимые PR (стек)
 
 Если задача B строится на ещё не влитой задаче A, ветку B создают от A, а PR открывают
-с базой A: `gh pr create --base feat/a`. Тогда в PR видна только разница B. После
-слияния A (с удалением её ветки) GitHub сам перенацелит PR B на `next`. Если ветку A
-не удалили, перенацелить вручную: `gh pr edit <N> --base next`, затем
-`git rebase --onto origin/next feat/a feat/b` и `git push --force-with-lease`.
+с базой A: `gh pr create --base feat/a`. Тогда в PR видна только разница B.
+
+⚠️ **Не удаляйте ветку A при слиянии** (`gh pr merge --delete-branch` или кнопка
+«Delete branch»), пока на неё смотрит PR B: GitHub **закроет** PR B, а не перенацелит его.
+Сливать стек по одному PR, в таком порядке:
+
+```bash
+gh pr merge <A> --merge                 # без --delete-branch
+gh pr edit <B> --base next              # перенацелить следующий PR
+git push origin --delete feat/a         # теперь ветку A можно удалить
+```
+
+Если PR B всё же закрылся: восстановить ветку A на её последнем коммите
+(`git push origin <sha>:refs/heads/feat/a`), затем `gh pr reopen <B>` и
+`gh pr edit <B> --base next`.
 
 ## Ошибки, которые легко сделать
 
