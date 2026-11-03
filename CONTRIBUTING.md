@@ -2,8 +2,12 @@
 
 ## Prerequisites
 
-- Node.js 18+
-- pnpm 9+
+- Node.js 22.18+ (24 LTS recommended) — the dev toolchain (Vitest 5, tsup 9) needs it
+- pnpm, pinned in `package.json` (`packageManager`); enable it with Corepack:
+
+```bash
+corepack enable pnpm
+```
 
 ## Setup
 
@@ -13,18 +17,20 @@ cd js-sdk
 pnpm install
 ```
 
+`pnpm-workspace.yaml` hardens installs: only releases older than 3 days are installed
+(`minimumReleaseAge`), and only `esbuild` may run install scripts (`allowBuilds`). If a new
+dependency needs a build script, add it to `allowBuilds` deliberately.
+
 ## Repository layout
 
 This is a pnpm workspace monorepo.
 
 ```
-apps/
-  playground/        # Dummy application to test SDK and UI components
 packages/
   sdk/               # @octaspace/sdk — the core SDK package
     src/             # Source code
     tests/unit/      # Unit tests (one file per resource)
-    scripts/         # Development scripts (smoke tests, inspection)
+    scripts/         # Live smoke test against the real API
   sdk-query/         # @octaspace/sdk-query — TanStack Query wrappers
   sdk-react/         # @octaspace/sdk-react — React hooks & context
 .changeset/          # Changesets for versioning
@@ -39,6 +45,7 @@ pnpm build           # Compile all packages
 pnpm typecheck       # TypeScript — zero errors expected
 pnpm lint            # Biome — zero issues expected
 pnpm test            # Vitest — all tests must pass
+pnpm audit           # Fails on high/critical advisories
 ```
 
 Run all checks at once before opening a PR:
@@ -81,18 +88,6 @@ Run a single test file:
 ```bash
 pnpm --filter @octaspace/sdk exec vitest run tests/unit/nodes.test.ts
 ```
-
-## Testing in Playground (Dummy App)
-
-We have a dedicated playground app located in `apps/playground` to visually test SDK functions, hooks, and responses, isolated from the production bundle. 
-
-1. Start the playground app from the repository root:
-```bash
-pnpm --filter playground dev
-```
-2. Open `http://localhost:5173` (or the URL Vite provides).
-3. Set your API Key in the UI sidebar to test authenticated routes.
-You can freely inspect raw responses, simulate loading states, or mutate data.
 
 ## Code style
 
@@ -146,10 +141,12 @@ pnpm publish -r --access public
 
 ## Opening a pull request
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feat/my-feature`
-3. Make your changes and run the full check suite
-4. Add a changeset: `pnpm changeset`
-5. Open a PR against `main` with a clear description of the change
+Work on the new API happens on the `next` branch; read
+[docs/GIT_WORKFLOW_NEXT.md](docs/GIT_WORKFLOW_NEXT.md) first.
+
+1. Create a branch from the right base: `git switch -c feat/my-feature origin/next`
+2. Make your changes and run `pnpm check`
+3. Add a changeset: `pnpm changeset`
+4. Open a PR into that base: `gh pr create --base next`
 
 For bug fixes, include a failing test that demonstrates the bug before your fix.

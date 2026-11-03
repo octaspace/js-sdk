@@ -1,0 +1,25 @@
+version: 2
+
+# Development happens on `next` until the new API is released; switch
+# target-branch back to `main` when `next` is merged.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: next
+    schedule:
+      interval: weekly
+    # Same supply-chain delay as minimumReleaseAge in pnpm-workspace.yaml.
+    cooldown:
+      default-days: 3
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: next
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3

@@ -1,5 +1,3 @@
-export { OctaError } from './base.js'
-export { OctaNetworkError, OctaTimeoutError } from './network.js'
 export {
   OctaApiError,
   OctaAuthenticationError,
@@ -9,3 +7,5 @@ export {
   OctaServerError,
   OctaValidationError,
 } from './api.js'
+export { OctaError } from './base.js'
+export { OctaNetworkError, OctaTimeoutError } from './network.js'

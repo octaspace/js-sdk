@@ -13,12 +13,25 @@ js-sdk/
 │   ├── sdk-query/         # @octaspace/sdk-query — TanStack Query integration
 │   └── sdk-react/         # @octaspace/sdk-react — React context + hooks
 ├── .changeset/            # Changesets for versioning and releases
-├── .github/workflows/     # CI (ci.yml)
+├── .github/workflows/     # CI (ci.yml) — runs on main and next
+├── docs/                  # Contributor docs (GIT_WORKFLOW_NEXT.md)
 ├── biome.json             # Linter/formatter config — covers packages/*
 ├── tsconfig.json          # Base TypeScript config — extended by each package
 ├── pnpm-workspace.yaml
 └── package.json           # Private workspace root
 ```
+
+## Branches
+
+Work on the new ("next") OctaSpace API happens on the `next` branch. Branch from
+`origin/next` and open PRs with `gh pr create --base next` — see
+`docs/GIT_WORKFLOW_NEXT.md` before creating a branch or a PR.
+
+## Toolchain
+
+Node.js 22.18+ (24 LTS recommended) and pnpm via Corepack (`corepack enable pnpm`; version is
+pinned in `packageManager`). `pnpm-workspace.yaml` enforces `minimumReleaseAge` (3 days) and an
+`allowBuilds` allowlist for install scripts.
 
 ## Commands
 
@@ -32,6 +45,7 @@ pnpm lint:fix        # Biome auto-fix
 pnpm test            # Run all unit tests
 pnpm test:coverage   # Run with v8 coverage
 pnpm check           # build + typecheck + lint + test in sequence (pre-PR gate)
+pnpm audit           # Fail on high/critical advisories (also runs in CI)
 pnpm changeset       # Describe a change and pick bump type (creates a .md in .changeset/)
 pnpm version         # Assemble CHANGELOG and bump package.json versions (before publish)
 ```

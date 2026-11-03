@@ -4,13 +4,7 @@ import { createContext, useContext } from 'react'
 
 const OctaContext = createContext<OctaClient | null>(null)
 
-export function OctaProvider({
-  client,
-  children,
-}: {
-  client: OctaClient
-  children: ReactNode
-}) {
+export function OctaProvider({ client, children }: { client: OctaClient; children: ReactNode }) {
   return <OctaContext.Provider value={client}>{children}</OctaContext.Provider>
 }
 

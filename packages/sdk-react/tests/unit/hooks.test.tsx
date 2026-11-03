@@ -1,4 +1,4 @@
-import type { Node, NodeDetail, OctaClient, RequestOverrides, Session } from '@octaspace/sdk'
+import type { Node, OctaClient, RequestOverrides, Session } from '@octaspace/sdk'
 import { act, render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { OctaProvider, useNetworkStats, useNode, useNodes, useSessions } from '../../src/index.js'
