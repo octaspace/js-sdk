@@ -1,0 +1,55 @@
+{
+  "at": 1793566134,
+  "gpus": [
+    {
+      "total": 4,
+      "usage": 25.0,
+      "available": 3,
+      "ai_score": 36621,
+      "rented": 1,
+      "model": "NVIDIA GeForce RTX 3090",
+      "available_price": {
+        "p10": 33,
+        "p25": 33,
+        "p50": 33,
+        "p75": 33,
+        "p90": 33
+      },
+      "rented_price": {
+        "p10": 100000,
+        "p25": 100000,
+        "p50": 100000,
+        "p75": 100000,
+        "p90": 100000
+      },
+      "tflops": 35.6,
+      "tflops_per_dollar": 1078787.88,
+      "usage_30d": 11.9
+    },
+    {
+      "total": 2,
+      "usage": 0.0,
+      "available": 2,
+      "ai_score": 0,
+      "rented": 0,
+      "model": "Arc B580",
+      "available_price": {
+        "p10": 50,
+        "p25": 50,
+        "p50": 50,
+        "p75": 50,
+        "p90": 50
+      },
+      "rented_price": {
+        "p10": "null",
+        "p25": "null",
+        "p50": "null",
+        "p75": "null",
+        "p90": "null"
+      },
+      "tflops": "null",
+      "tflops_per_dollar": "null",
+      "usage_30d": 31.39
+    }
+  ]
+}

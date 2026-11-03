@@ -64,7 +64,7 @@ import {
   idleJobKeys,
   networkKeys,
   nodeKeys,
-  mrKeys,
+  computeKeys,
   renderKeys,
   vpnKeys,
   serviceSessionKeys,
@@ -99,8 +99,8 @@ query libraries sharing the same `QueryClient`.
 | `networkQueries.stats(client)` | `['@octaspace', 'network', 'stats']` | `client.network.get()` |
 | `nodeQueries.list(client)` | `['@octaspace', 'nodes', 'list']` | `client.nodes.list()` |
 | `nodeQueries.detail(client, id)` | `['@octaspace', 'nodes', 'detail', id]` | `client.nodes.get(id)` |
-| `mrQueries.available(client)` | `['@octaspace', 'services', 'mr', 'available']` | `client.services.mr.available()` |
-| `renderQueries.available(client)` | `['@octaspace', 'services', 'render', 'available']` | `client.services.render.available()` |
+| `computeQueries.list(client)` | `['@octaspace', 'compute', 'list']` | `client.compute.list()` |
+| `renderQueries.list(client)` | `['@octaspace', 'render', 'list']` | `client.render.list()` |
 | `vpnQueries.available(client)` | `['@octaspace', 'services', 'vpn', 'available']` | `client.services.vpn.available()` |
 | `serviceSessionQueries.info(client, uuid)` | `['@octaspace', 'services', 'session', uuid, 'info']` | `client.services.session(uuid).info()` |
 | `serviceSessionQueries.logs(client, uuid)` | `['@octaspace', 'services', 'session', uuid, 'logs']` | `client.services.session(uuid).logs()` |

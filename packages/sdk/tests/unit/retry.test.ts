@@ -79,7 +79,7 @@ describe('Retry behavior', () => {
 
     const client = makeClient(mockFetch, { retries: 2 })
     await expect(
-      client.services.mr.start({ node_id: 1, disk_size: 50, image: 'ubuntu:24.04' }),
+      client.compute.start({ node_number: 'M95S-WZG8-7', image: 'alpine' }),
     ).rejects.toBeInstanceOf(OctaServiceUnavailableError)
     expect(mockFetch).toHaveBeenCalledTimes(1) // no retries for POST
   })

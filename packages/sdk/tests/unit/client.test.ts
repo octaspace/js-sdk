@@ -10,6 +10,8 @@ describe('OctaClient', () => {
     const client = new OctaClient({ apiKey: 'test_key' })
     expect(client.accounts).toBeDefined()
     expect(client.apps).toBeDefined()
+    expect(client.compute).toBeDefined()
+    expect(client.render).toBeDefined()
     expect(client.network).toBeDefined()
     expect(client.nodes).toBeDefined()
     expect(client.services).toBeDefined()
@@ -17,10 +19,8 @@ describe('OctaClient', () => {
     expect(client.idleJobs).toBeDefined()
   })
 
-  it('services has mr, render, vpn sub-resources', () => {
+  it('services has vpn and session sub-resources', () => {
     const client = new OctaClient({ apiKey: 'test_key' })
-    expect(client.services.mr).toBeDefined()
-    expect(client.services.render).toBeDefined()
     expect(client.services.vpn).toBeDefined()
     expect(typeof client.services.session).toBe('function')
   })

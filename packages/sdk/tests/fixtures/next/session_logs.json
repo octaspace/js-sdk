@@ -1,0 +1,26 @@
+{
+  "system": [
+    {
+      "msg": "Pulling from library/alpine\nDigest: sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc\nStatus: Image is up to date for alpine:3.20\n",
+      "ts": 1793568008396
+    },
+    {
+      "msg": "start container, image: alpine:3.20",
+      "ts": 1793568010806
+    },
+    {
+      "msg": "restart with new parameters",
+      "ts": 1793568018510
+    },
+    {
+      "msg": "Pulling from library/alpine\nDigest: sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc\nStatus: Image is up to date for alpine:3.20\n",
+      "ts": 1793568019214
+    },
+    {
+      "msg": "start container, image: alpine:3.20",
+      "ts": 1793568020607
+    }
+  ],
+  "container_truncated": false,
+  "container": "restarted-ok\r\n"
+}
