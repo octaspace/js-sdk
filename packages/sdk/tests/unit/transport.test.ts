@@ -39,7 +39,7 @@ describe('HttpTransport', () => {
   it('never sends the key to a public endpoint', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({}))
     const client = makeClient(mockFetch, { apiKey: 'octa_ak_secret' })
-    await client.network.get()
+    await client.network.info()
 
     expect(headersOf(mockFetch).has('Authorization')).toBe(false)
   })
@@ -71,7 +71,7 @@ describe('HttpTransport', () => {
   it('defaults to the next API test stand', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({}))
     const client = new OctaClient({ fetch: mockFetch, retries: 0 })
-    await client.network.get()
+    await client.network.info()
 
     expect(BASE_URL_DEV).toBe('https://api-dev.octa.space')
     expect(urlOf(mockFetch)).toBe('https://api-dev.octa.space/network')
@@ -167,7 +167,7 @@ describe('failover', () => {
       baseUrls: ['https://a.example.com', 'https://b.example.com'],
     })
 
-    await client.network.get()
+    await client.network.info()
     expect(urlOf(mockFetch, 0)).toBe('https://a.example.com/network')
     expect(urlOf(mockFetch, 1)).toBe('https://b.example.com/network')
   })
@@ -178,7 +178,7 @@ describe('failover', () => {
       baseUrls: ['https://a.example.com', 'https://b.example.com'],
     })
 
-    await expect(client.network.get()).rejects.toBeInstanceOf(OctaServerError)
+    await expect(client.network.info()).rejects.toBeInstanceOf(OctaServerError)
     expect(mockFetch).toHaveBeenCalledOnce()
   })
 
@@ -208,7 +208,7 @@ describe('rate limit headers', () => {
     const client = makeClient(mockFetch)
 
     expect(client.rateLimit).toBeUndefined()
-    await client.network.get()
+    await client.network.info()
     expect(client.rateLimit).toEqual({ limit: 300, remaining: 299, reset: 42 })
   })
 
@@ -219,8 +219,8 @@ describe('rate limit headers', () => {
       .mockResolvedValueOnce(makeResponse({}))
     const client = makeClient(mockFetch)
 
-    await client.network.get()
-    await client.network.get()
+    await client.network.info()
+    await client.network.info()
     expect(client.rateLimit).toEqual({ limit: 60 })
   })
 })

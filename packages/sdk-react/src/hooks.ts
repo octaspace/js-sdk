@@ -1,4 +1,16 @@
-import type { Session, SessionLogs, SessionLogsOptions } from '@octaspace/sdk'
+import type {
+  AccountBalance,
+  GpuCurrent,
+  GpuCurrentOptions,
+  GpuHistory,
+  GpuHistoryOptions,
+  GpuLocation,
+  HostingNode,
+  NetworkInfo,
+  Session,
+  SessionLogs,
+  SessionLogsOptions,
+} from '@octaspace/sdk'
 import { useOctaClient } from './context.js'
 import { type UseOctaRequestOptions, useOctaRequest } from './useOctaRequest.js'
 
@@ -12,20 +24,8 @@ function whenReady<TData>(
   return { ...options, enabled: ready && (options?.enabled ?? true) }
 }
 
-export function useAccount(
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['accounts']['get']>>
-  >,
-) {
-  const client = useOctaClient()
-  return useOctaRequest((request) => client.accounts.get(request), [client], options)
-}
-
-export function useBalance(
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['accounts']['balance']>>
-  >,
-) {
+/** Account balance (`client.accounts.balance()`). */
+export function useBalance(options?: UseOctaRequestOptions<AccountBalance>) {
   const client = useOctaClient()
   return useOctaRequest((request) => client.accounts.balance(request), [client], options)
 }
@@ -39,36 +39,53 @@ export function useApps(
   return useOctaRequest((request) => client.apps.list(request), [client], options)
 }
 
-export function useNetworkStats(
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['network']['get']>>
-  >,
-) {
+/** Public platform statistics (`client.network.info()`); no API key needed. */
+export function useNetworkInfo(options?: UseOctaRequestOptions<NetworkInfo>) {
   const client = useOctaClient()
-  return useOctaRequest((request) => client.network.get(request), [client], options)
+  return useOctaRequest((request) => client.network.info(request), [client], options)
 }
 
-export function useNodes(
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['nodes']['list']>>
-  >,
-) {
+/** Online nodes the account hosts (`client.hosting.nodes()`). */
+export function useHostingNodes(options?: UseOctaRequestOptions<HostingNode[]>) {
   const client = useOctaClient()
-  return useOctaRequest((request) => client.nodes.list(request), [client], options)
+  return useOctaRequest((request) => client.hosting.nodes(request), [client], options)
 }
 
-export function useNode(
-  id: string | number | null | undefined,
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['nodes']['get']>>
-  >,
+/** GPU market now (`client.stats.gpuCurrent()`); no API key needed. */
+export function useGpuCurrent(
+  statsOptions?: GpuCurrentOptions,
+  options?: UseOctaRequestOptions<GpuCurrent>,
 ) {
   const client = useOctaClient()
+  const verified = statsOptions?.verified
   return useOctaRequest(
-    id === null || id === undefined ? null : (request) => client.nodes.get(id, request),
-    [client, id],
-    whenReady(id !== null && id !== undefined, options),
+    (request) => client.stats.gpuCurrent({ verified }, request),
+    [client, verified],
+    options,
   )
+}
+
+/** GPU market over time (`client.stats.gpuHistory()`); no API key needed. */
+export function useGpuHistory(
+  historyOptions?: GpuHistoryOptions,
+  options?: UseOctaRequestOptions<GpuHistory>,
+) {
+  const client = useOctaClient()
+  const { gpuName, verified, start, end, step } = historyOptions ?? {}
+  const gpuNameKey = Array.isArray(gpuName) ? gpuName.join(',') : gpuName
+  const startKey = start instanceof Date ? start.getTime() : start
+  const endKey = end instanceof Date ? end.getTime() : end
+  return useOctaRequest(
+    (request) => client.stats.gpuHistory({ gpuName, verified, start, end, step }, request),
+    [client, gpuNameKey, verified, startKey, endKey, step],
+    options,
+  )
+}
+
+/** GPUs by city and model (`client.stats.gpuLocations()`); no API key needed. */
+export function useGpuLocations(options?: UseOctaRequestOptions<GpuLocation[]>) {
+  const client = useOctaClient()
+  return useOctaRequest((request) => client.stats.gpuLocations(request), [client], options)
 }
 
 /** Compute machines available for rent (`client.compute.list()`). */

@@ -1,37 +1,39 @@
-export interface BlockchainInfo {
-  /** Current block height */
-  height: number
-  difficulty: number
-  hashrate: number
-  total_supply: number
-  era: number
-  blocktime: number
-}
-
-export interface NetworkNodes {
-  count: number
-  /** VPN node count */
-  vpn: number
-}
-
-export interface NetworkPower {
-  /** Total CPUs across all nodes */
-  cpus: number
-  /** Total GPUs across all nodes */
-  gpus: number
-  /** Total disk in bytes */
-  disk: number
-  /** Total memory in bytes */
-  mem: number
-}
-
-export interface NetworkStats {
-  blockchain: BlockchainInfo
-  market_price: number
-  /** Monthly staking ROI percentage */
-  mmROI: number
-  nodes: NetworkNodes
-  power: NetworkPower
-  /** Staked coins */
-  staked: number
+/** Public platform statistics (`GET /network`), a snapshot refreshed every few minutes. */
+export interface NetworkInfo {
+  /** Snapshot time, Unix **seconds** */
+  at: number
+  nodes: {
+    online: number
+    available: number
+    rented: number
+    countries: number
+  }
+  power: {
+    cpu_cores: number
+    /** Bytes */
+    disk: number
+    gpus: number
+    /** Bytes */
+    memory: number
+    tflops: number
+  }
+  render: {
+    frames_24h: number
+    frames_total: number
+    /** `week` is an ISO date (`YYYY-MM-DD`) */
+    frames_by_week: Array<{ week: string; frames: number }>
+  }
+  sessions: {
+    running: number
+    total: number
+    last_24h: number
+  }
+  users: {
+    total: number
+    last_24h: number
+  }
+  vpn: {
+    nodes: number
+    countries: number
+  }
 }

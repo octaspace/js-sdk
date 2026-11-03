@@ -1,24 +1,17 @@
-import type { Account, Balance, Wallet } from '../types/index.js'
+import type { AccountBalance } from '../types/account.js'
 import { BaseResource } from './base.js'
 import { type RequestOverrides, withRequestOverrides } from './request-options.js'
 
+/** The account the API key belongs to. */
 export class AccountsResource extends BaseResource {
-  async get(request?: RequestOverrides): Promise<Account> {
-    const res = await this.request<Account>(
-      withRequestOverrides({ method: 'GET', path: '/accounts' }, request),
-    )
-    return res.data
-  }
-
-  async balance(request?: RequestOverrides): Promise<Balance> {
-    const res = await this.request<Balance>(
+  /**
+   * Account balance (`GET /accounts/balance`). The API has no "who am I" endpoint, so this is
+   * also the way to check that an API key is valid.
+   */
+  async balance(request?: RequestOverrides): Promise<AccountBalance> {
+    const res = await this.request<AccountBalance>(
       withRequestOverrides({ method: 'GET', path: '/accounts/balance' }, request),
     )
-    return res.data
-  }
-
-  async generateWallet(): Promise<Wallet> {
-    const res = await this.request<Wallet>({ method: 'POST', path: '/accounts' })
     return res.data
   }
 }

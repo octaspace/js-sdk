@@ -1,12 +1,12 @@
-import type { Node, OctaClient, RequestOverrides, Session } from '@octaspace/sdk'
+import type { HostingNode, OctaClient, RequestOverrides, Session } from '@octaspace/sdk'
 import { act, render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import {
   OctaProvider,
   useComputeMachines,
-  useNetworkStats,
-  useNode,
-  useNodes,
+  useGpuHistory,
+  useHostingNodes,
+  useNetworkInfo,
   useSession,
   useSessionLogs,
   useSessions,
@@ -25,16 +25,18 @@ function deferred<T>() {
 }
 
 describe('sdk-react hooks', () => {
-  it('loads data for useNodes', async () => {
-    const list = vi.fn().mockResolvedValue([{ id: 1 }] satisfies Partial<Node>[])
+  it('loads data for useHostingNodes', async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValue([{ number: 'M95S-WZG8-7' }] satisfies Partial<HostingNode>[])
     const client = {
-      nodes: { list },
+      hosting: { nodes: list },
     } as unknown as OctaClient
 
     const snapshots: Array<{ data: unknown; loading: boolean }> = []
 
     function Probe() {
-      const state = useNodes()
+      const state = useHostingNodes()
       snapshots.push({ data: state.data, loading: state.loading })
       return null
     }
@@ -48,19 +50,19 @@ describe('sdk-react hooks', () => {
     await waitFor(() => {
       expect(list).toHaveBeenCalledOnce()
       expect(snapshots.at(-1)).toEqual({
-        data: [{ id: 1 }],
+        data: [{ number: 'M95S-WZG8-7' }],
         loading: false,
       })
     })
   })
 
   it('passes AbortSignal to the SDK and aborts on unmount', async () => {
-    const request = deferred<Node[]>()
+    const request = deferred<HostingNode[]>()
     let receivedSignal: AbortSignal | undefined
 
     const client = {
-      nodes: {
-        list: vi.fn().mockImplementation((overrides?: RequestOverrides) => {
+      hosting: {
+        nodes: vi.fn().mockImplementation((overrides?: RequestOverrides) => {
           receivedSignal = overrides?.signal
           return request.promise
         }),
@@ -68,7 +70,7 @@ describe('sdk-react hooks', () => {
     } as unknown as OctaClient
 
     function Probe() {
-      useNodes()
+      useHostingNodes()
       return null
     }
 
@@ -92,11 +94,11 @@ describe('sdk-react hooks', () => {
   it('does not run disabled parameterized hook without id', async () => {
     const get = vi.fn()
     const client = {
-      nodes: { get },
+      sessions: { get },
     } as unknown as OctaClient
 
     function Probe() {
-      useNode(undefined)
+      useSession(undefined)
       return null
     }
 
@@ -183,16 +185,16 @@ describe('sdk-react hooks', () => {
     expect(logs).not.toHaveBeenCalled()
   })
 
-  it('exposes network stats without requiring an authenticated client', async () => {
-    const get = vi.fn().mockResolvedValue({ market_price: 1.25 })
+  it('exposes network info without requiring an authenticated client', async () => {
+    const get = vi.fn().mockResolvedValue({ at: 1793555368 })
     const client = {
-      network: { get },
+      network: { info: get },
     } as unknown as OctaClient
 
     const snapshots: Array<{ data: unknown; loading: boolean }> = []
 
     function Probe() {
-      const state = useNetworkStats()
+      const state = useNetworkInfo()
       snapshots.push({ data: state.data, loading: state.loading })
       return null
     }
@@ -206,7 +208,7 @@ describe('sdk-react hooks', () => {
     await waitFor(() => {
       expect(get).toHaveBeenCalledOnce()
       expect(snapshots.at(-1)).toEqual({
-        data: { market_price: 1.25 },
+        data: { at: 1793555368 },
         loading: false,
       })
     })
@@ -230,5 +232,35 @@ describe('sdk-react hooks', () => {
 
     await waitFor(() => expect(data).toEqual([{ node_number: 'M95S-WZG8-7' }]))
     expect(list.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('refetches GPU history only when its options change', async () => {
+    const gpuHistory = vi.fn().mockResolvedValue({})
+    const client = { stats: { gpuHistory } } as unknown as OctaClient
+
+    function Probe({ start }: { start: Date }) {
+      useGpuHistory({ gpuName: ['A', 'B'], start, step: 3600 })
+      return null
+    }
+
+    const mounted = render(
+      <OctaProvider client={client}>
+        <Probe start={new Date(1_000_000)} />
+      </OctaProvider>,
+    )
+    await waitFor(() => expect(gpuHistory).toHaveBeenCalledTimes(1))
+
+    mounted.rerender(
+      <OctaProvider client={client}>
+        <Probe start={new Date(1_000_000)} />
+      </OctaProvider>,
+    )
+    mounted.rerender(
+      <OctaProvider client={client}>
+        <Probe start={new Date(2_000_000)} />
+      </OctaProvider>,
+    )
+    await waitFor(() => expect(gpuHistory).toHaveBeenCalledTimes(2))
+    expect(gpuHistory.mock.calls[1]?.[0]).toMatchObject({ gpuName: ['A', 'B'], step: 3600 })
   })
 })

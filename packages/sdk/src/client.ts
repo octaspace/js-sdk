@@ -10,28 +10,34 @@ import {
   AccountsResource,
   AppsResource,
   ComputeResource,
+  HostingResource,
   IdleJobsResource,
   NetworkResource,
-  NodesResource,
   RenderResource,
   ServicesResource,
   SessionsResource,
+  StatsResource,
 } from './resources/index.js'
 import { HttpTransport } from './transport/http.js'
 
 export class OctaClient {
+  /** Account: balance */
   readonly accounts: AccountsResource
   readonly apps: AppsResource
   /** Compute machines: list, start, startBatch, restart */
   readonly compute: ComputeResource
+  /** Account nodes and their prices: nodes, setPrices */
+  readonly hosting: HostingResource
+  /** Public platform statistics: info */
   readonly network: NetworkResource
-  readonly nodes: NodesResource
   /** Render nodes: list, start, startBatch */
   readonly render: RenderResource
   readonly services: ServicesResource
   /** Running sessions: list, get, logs, stop, waitReady, waitStopped */
   readonly sessions: SessionsResource
   readonly idleJobs: IdleJobsResource
+  /** Public GPU market statistics: gpuCurrent, gpuHistory, gpuLocations */
+  readonly stats: StatsResource
 
   private readonly transport: HttpTransport
 
@@ -51,12 +57,13 @@ export class OctaClient {
     this.accounts = new AccountsResource(transport)
     this.apps = new AppsResource(transport)
     this.compute = new ComputeResource(transport)
+    this.hosting = new HostingResource(transport)
     this.network = new NetworkResource(transport)
-    this.nodes = new NodesResource(transport)
     this.render = new RenderResource(transport)
     this.services = new ServicesResource(transport)
     this.sessions = new SessionsResource(transport)
     this.idleJobs = new IdleJobsResource(transport)
+    this.stats = new StatsResource(transport)
   }
 
   /**

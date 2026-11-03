@@ -1,10 +1,12 @@
-import type { NetworkStats } from '../types/index.js'
+import type { NetworkInfo } from '../types/network.js'
 import { BaseResource } from './base.js'
 import { type RequestOverrides, withRequestOverrides } from './request-options.js'
 
+/** Public platform statistics; no API key needed. */
 export class NetworkResource extends BaseResource {
-  async get(request?: RequestOverrides): Promise<NetworkStats> {
-    const res = await this.request<NetworkStats>(
+  /** Platform statistics snapshot (`GET /network`); 503 while it is unavailable. */
+  async info(request?: RequestOverrides): Promise<NetworkInfo> {
+    const res = await this.request<NetworkInfo>(
       withRequestOverrides({ method: 'GET', path: '/network', auth: 'none' }, request),
     )
     return res.data
