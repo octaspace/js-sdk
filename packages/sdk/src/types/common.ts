@@ -11,10 +11,13 @@ export type MicroUsd = number
 /** GPU as reported in machine listings (`GpuNvidia` in the API spec). */
 export interface MachineGpu {
   model: string
-  /** Total memory, MB */
-  mem_total_mb: number
-  pcie_link_gen: number
-  pcie_link_width: number
+  /**
+   * Total memory, MB. Integer fields are `null` when a node reports them as `"null"`, `""` or
+   * another non-number; the SDK normalizes such values instead of failing the whole listing.
+   */
+  mem_total_mb: number | null
+  pcie_link_gen: number | null
+  pcie_link_width: number | null
   /** Core clock ceiling, MHz (the one the owner locked, otherwise the card's maximum) */
   core_clock?: number | null
   /** Memory clock ceiling, MHz */

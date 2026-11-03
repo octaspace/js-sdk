@@ -84,7 +84,7 @@ export interface ComputeStartParams {
 
 /** One item of a batch start: a {@link ComputeStartParams} with an optional client id. */
 export interface ComputeBatchItem extends ComputeStartParams {
-  /** Echoed in the result; defaults to the item's position in the array */
+  /** Echoed in the result; defaults to the item's position in the array. Must be unique. */
   id?: BatchId | undefined
 }
 

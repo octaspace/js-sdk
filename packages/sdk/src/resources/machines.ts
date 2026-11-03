@@ -51,9 +51,23 @@ export function pickDefined<T extends object, K extends keyof T>(
   return result
 }
 
-/** Gives every batch item an id: its own, or its position in the array. */
+/**
+ * Gives every batch item an id: its own, or its position in the array. Throws a `TypeError` when
+ * two items end up with the same id (e.g. an explicit `id: 1` and the second item without one):
+ * their results could not be told apart, and each started session costs money.
+ */
 export function withBatchIds<T extends { id?: BatchId | undefined }>(
   items: readonly T[],
 ): Array<Omit<T, 'id'> & { id: BatchId }> {
-  return items.map((item, index) => ({ ...item, id: item.id ?? index }))
+  const withIds = items.map((item, index) => ({ ...item, id: item.id ?? index }))
+  const seen = new Set<BatchId>()
+  for (const { id } of withIds) {
+    if (seen.has(id)) {
+      throw new TypeError(
+        `Duplicate batch id ${JSON.stringify(id)}: give every item a unique id, or none to all of them`,
+      )
+    }
+    seen.add(id)
+  }
+  return withIds
 }

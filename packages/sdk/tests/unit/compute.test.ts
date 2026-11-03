@@ -161,6 +161,27 @@ describe('compute.startBatch', () => {
   })
 })
 
+describe('batch ids', () => {
+  it('refuses duplicate ids before sending, including a clash with a default position', async () => {
+    const mockFetch = vi.fn()
+    const client = makeClient(mockFetch)
+
+    await expect(
+      client.compute.startBatch([
+        { id: 1, node_number: 'A', image: 'alpine' },
+        { node_number: 'B', image: 'alpine' },
+      ]),
+    ).rejects.toThrow(/Duplicate batch id 1/)
+    await expect(
+      client.render.startBatch([
+        { id: 'x', node_number: 'A' },
+        { id: 'x', node_number: 'B' },
+      ]),
+    ).rejects.toBeInstanceOf(TypeError)
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+})
+
 describe('compute.restart', () => {
   it('POSTs without a body to keep the original parameters', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({ uuid: 'u-1' }, 202))

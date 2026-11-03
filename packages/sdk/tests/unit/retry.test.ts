@@ -105,4 +105,18 @@ describe('Retry behavior', () => {
     )
     expect(mockFetch).toHaveBeenCalledOnce()
   })
+
+  it('stops waiting for Retry-After as soon as the caller aborts', async () => {
+    const mockFetch = vi.fn().mockResolvedValue(rateLimited('30'))
+    const client = makeClient(mockFetch, { retries: 1 })
+    const controller = new AbortController()
+
+    const started = Date.now()
+    setTimeout(() => controller.abort(), 20)
+    await expect(client.accounts.balance({ signal: controller.signal })).rejects.toThrow(
+      'Request was aborted',
+    )
+    expect(Date.now() - started).toBeLessThan(1000)
+    expect(mockFetch).toHaveBeenCalledOnce()
+  })
 })

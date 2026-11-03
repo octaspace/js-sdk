@@ -17,6 +17,32 @@ function unixSeconds(value: number | Date | undefined): number | undefined {
   return value instanceof Date ? Math.floor(value.getTime() / 1000) : value
 }
 
+/** {@link GpuHistoryOptions} in the form the API takes: one model string, Unix seconds. */
+export interface NormalizedGpuHistoryOptions {
+  gpuName: string | undefined
+  verified: GpuHistoryOptions['verified']
+  start: number | undefined
+  end: number | undefined
+  step: number | undefined
+}
+
+/**
+ * Normalizes history options the way `stats.gpuHistory()` sends them (model list joined with
+ * commas, dates as Unix seconds), so equal requests compare equal — e.g. as query keys or hook
+ * dependencies.
+ */
+export function normalizeGpuHistoryOptions(
+  options: GpuHistoryOptions = {},
+): NormalizedGpuHistoryOptions {
+  return {
+    gpuName: Array.isArray(options.gpuName) ? options.gpuName.join(',') : options.gpuName,
+    verified: options.verified,
+    start: unixSeconds(options.start),
+    end: unixSeconds(options.end),
+    step: options.step,
+  }
+}
+
 /** Public GPU market statistics; no API key needed. */
 export class StatsResource extends BaseResource {
   /** GPU models on the market now (`GET /stats/gpu/current`). */
@@ -47,7 +73,7 @@ export class StatsResource extends BaseResource {
     options: GpuHistoryOptions = {},
     request?: RequestOverrides,
   ): Promise<GpuHistory> {
-    const gpuName = Array.isArray(options.gpuName) ? options.gpuName.join(',') : options.gpuName
+    const { gpuName, verified, start, end, step } = normalizeGpuHistoryOptions(options)
     const res = await this.request<GpuHistory>(
       withRequestOverrides(
         {
@@ -56,10 +82,10 @@ export class StatsResource extends BaseResource {
           auth: 'none',
           query: {
             gpu_name: gpuName,
-            verified: options.verified,
-            start: unixSeconds(options.start),
-            end: unixSeconds(options.end),
-            step: options.step,
+            verified,
+            start,
+            end,
+            step,
           },
         },
         request,

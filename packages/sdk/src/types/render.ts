@@ -38,6 +38,6 @@ export interface RenderStartParams {
 
 /** One item of a batch render start. */
 export interface RenderBatchItem extends RenderStartParams {
-  /** Echoed in the result; defaults to the item's position in the array */
+  /** Echoed in the result; defaults to the item's position in the array. Must be unique. */
   id?: BatchId | undefined
 }

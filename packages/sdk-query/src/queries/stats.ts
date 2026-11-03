@@ -1,29 +1,18 @@
-import type { GpuCurrentOptions, GpuHistoryOptions, OctaClient } from '@octaspace/sdk'
+import {
+  type GpuCurrentOptions,
+  type GpuHistoryOptions,
+  normalizeGpuHistoryOptions,
+  type OctaClient,
+} from '@octaspace/sdk'
 import { type QueryContext, requestFrom } from '../queryContext.js'
 import { queryOptions } from '../queryOptions.js'
-
-function seconds(value: number | Date | undefined): number | undefined {
-  return value instanceof Date ? Math.floor(value.getTime() / 1000) : value
-}
-
-/** Normalizes history options so equal requests get equal keys. */
-function historyKey(options: GpuHistoryOptions) {
-  const gpuName = Array.isArray(options.gpuName) ? options.gpuName.join(',') : options.gpuName
-  return {
-    gpuName,
-    verified: options.verified,
-    start: seconds(options.start),
-    end: seconds(options.end),
-    step: options.step,
-  }
-}
 
 export const statsKeys = {
   all: () => ['@octaspace', 'stats'] as const,
   gpuCurrent: (options: GpuCurrentOptions = {}) =>
     [...statsKeys.all(), 'gpu', 'current', { verified: options.verified }] as const,
   gpuHistory: (options: GpuHistoryOptions = {}) =>
-    [...statsKeys.all(), 'gpu', 'history', historyKey(options)] as const,
+    [...statsKeys.all(), 'gpu', 'history', normalizeGpuHistoryOptions(options)] as const,
   gpuLocations: () => [...statsKeys.all(), 'gpu', 'locations'] as const,
 }
 

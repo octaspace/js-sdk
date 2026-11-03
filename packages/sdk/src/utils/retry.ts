@@ -62,11 +62,29 @@ export async function withRetry<T>(
       }
 
       const delayMs = retryAfter !== undefined ? retryAfter * 1000 : jitteredDelay(attempt, opts)
-      await sleep(delayMs)
+      await sleep(delayMs, opts.signal)
     }
   }
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+/**
+ * Waits `ms`, or rejects with `OctaNetworkError('Request was aborted')` as soon as `signal` aborts
+ * — the same error an abort during the request itself produces.
+ */
+export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new OctaNetworkError('Request was aborted'))
+      return
+    }
+    const onAbort = () => {
+      clearTimeout(timer)
+      reject(new OctaNetworkError('Request was aborted'))
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
 }

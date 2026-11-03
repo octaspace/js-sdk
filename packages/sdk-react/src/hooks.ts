@@ -1,15 +1,18 @@
-import type {
-  AccountBalance,
-  GpuCurrent,
-  GpuCurrentOptions,
-  GpuHistory,
-  GpuHistoryOptions,
-  GpuLocation,
-  HostingNode,
-  NetworkInfo,
-  Session,
-  SessionLogs,
-  SessionLogsOptions,
+import {
+  type AccountBalance,
+  type ComputeMachine,
+  type GpuCurrent,
+  type GpuCurrentOptions,
+  type GpuHistory,
+  type GpuHistoryOptions,
+  type GpuLocation,
+  type HostingNode,
+  type NetworkInfo,
+  normalizeGpuHistoryOptions,
+  type RenderMachine,
+  type Session,
+  type SessionLogs,
+  type SessionLogsOptions,
 } from '@octaspace/sdk'
 import { useOctaClient } from './context.js'
 import { type UseOctaRequestOptions, useOctaRequest } from './useOctaRequest.js'
@@ -62,13 +65,10 @@ export function useGpuHistory(
   options?: UseOctaRequestOptions<GpuHistory>,
 ) {
   const client = useOctaClient()
-  const { gpuName, verified, start, end, step } = historyOptions ?? {}
-  const gpuNameKey = Array.isArray(gpuName) ? gpuName.join(',') : gpuName
-  const startKey = start instanceof Date ? start.getTime() : start
-  const endKey = end instanceof Date ? end.getTime() : end
+  const { gpuName, verified, start, end, step } = normalizeGpuHistoryOptions(historyOptions)
   return useOctaRequest(
     (request) => client.stats.gpuHistory({ gpuName, verified, start, end, step }, request),
-    [client, gpuNameKey, verified, startKey, endKey, step],
+    [client, gpuName, verified, start, end, step],
     options,
   )
 }
@@ -80,21 +80,13 @@ export function useGpuLocations(options?: UseOctaRequestOptions<GpuLocation[]>) 
 }
 
 /** Compute machines available for rent (`client.compute.list()`). */
-export function useComputeMachines(
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['compute']['list']>>
-  >,
-) {
+export function useComputeMachines(options?: UseOctaRequestOptions<ComputeMachine[]>) {
   const client = useOctaClient()
   return useOctaRequest((request) => client.compute.list(request), [client], options)
 }
 
 /** Render nodes available for rent (`client.render.list()`). */
-export function useRenderMachines(
-  options?: UseOctaRequestOptions<
-    Awaited<ReturnType<ReturnType<typeof useOctaClient>['render']['list']>>
-  >,
-) {
+export function useRenderMachines(options?: UseOctaRequestOptions<RenderMachine[]>) {
   const client = useOctaClient()
   return useOctaRequest((request) => client.render.list(request), [client], options)
 }
