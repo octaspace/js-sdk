@@ -1,20 +1,16 @@
 /**
- * Public node number: 8 Crockford base32 symbols and a check symbol, canonically written as
- * `XXXX-XXXX-X` (e.g. `7KQ4-M2XD-4`). The server ignores case, dashes and spaces and reads
- * `O` as `0`, `I` and `L` as `1`; it is the source of truth for validation.
+ * Node number: 8 Crockford base32 symbols and a check symbol, written as `XXXX-XXXX-X` (e.g.
+ * `7KQ4-M2XD-4`). Case, dashes and spaces are ignored, `O` is read as `0`, `I` and `L` as `1`.
  */
 export type NodeNumber = string
 
 /** Amount of money in micro-USD: `1` = $0.000001. Use `formatUsd()` / `microUsdToUsd()` to display. */
 export type MicroUsd = number
 
-/** GPU as reported in machine listings (`GpuNvidia` in the API spec). */
+/** GPU as reported in machine listings. */
 export interface MachineGpu {
   model: string
-  /**
-   * Total memory, MB. Integer fields are `null` when a node reports them as `"null"`, `""` or
-   * another non-number; the SDK normalizes such values instead of failing the whole listing.
-   */
+  /** Total memory, MB. This and the other integer fields are `null` when unknown. */
   mem_total_mb: number | null
   pcie_link_gen: number | null
   pcie_link_width: number | null
@@ -29,8 +25,8 @@ export interface MachineGpu {
 }
 
 /**
- * Node reliability. Open object: `uptime` (percent online over the last 30 days) is documented;
- * the session stability counters (`stability`, `s_normal`, `s_failed`, …) appear when known.
+ * Node reliability: `uptime` is the percent of time online over the last 30 days; session
+ * stability counters (`stability`, `s_normal`, `s_failed`, …) are present when known.
  */
 export interface Reliability {
   uptime?: number

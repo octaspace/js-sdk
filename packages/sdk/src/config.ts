@@ -1,12 +1,7 @@
 import type { RequestContext, ResponseContext } from './transport/types.js'
 
-/**
- * Test stand of the next-generation OctaSpace API. It is the default base URL until the
- * production host of the new API is announced: the production hosts (`api.octa.computer`,
- * `api.octa.space`) still serve the legacy API.
- */
-export const BASE_URL_DEV = 'https://api-dev.octa.space'
-export const DEFAULT_BASE_URL = BASE_URL_DEV
+/** Base URL of the OctaSpace API, used when `baseUrl` and `baseUrls` are not set. */
+export const DEFAULT_BASE_URL = 'https://api-dev.octa.space'
 export const DEFAULT_TIMEOUT_MS = 30_000
 export const DEFAULT_RETRIES = 2
 declare const __SDK_VERSION__: string | undefined
@@ -16,12 +11,13 @@ export const DEFAULT_USER_AGENT = `@octaspace/sdk/${SDK_VERSION} (js)`
 
 export interface OctaClientOptions {
   /**
-   * Account API key (`octa_ak_…`), issued in Cube under Profile → Credentials. Sent as
-   * `Authorization: Bearer <apiKey>`; a value that already starts with `Bearer ` is accepted.
-   * Optional: public endpoints (network, GPU statistics, machine listings) work without it.
+   * API key of your OctaSpace account (`octa_ak_…`), created in the dashboard under
+   * Account → Credentials → API Keys. Sent as `Authorization: Bearer <apiKey>`; a value that
+   * already starts with `Bearer ` is accepted. Optional: network and GPU statistics and the
+   * machine listings work without it.
    */
   apiKey?: string
-  /** API base URL (default: {@link BASE_URL_DEV}) */
+  /** API base URL (default: {@link DEFAULT_BASE_URL}) */
   baseUrl?: string
   /**
    * Ordered list of base URLs. GET requests fail over to the next URL on network errors

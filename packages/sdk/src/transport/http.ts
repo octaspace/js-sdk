@@ -28,7 +28,7 @@ export interface HttpTransportOptions {
   onResponse?: (ctx: ResponseContext) => void | Promise<void>
 }
 
-/** Prefix of the account API keys the next API issues (Cube → Profile → Credentials). */
+/** Prefix of OctaSpace API keys. */
 export const API_KEY_PREFIX = 'octa_ak_'
 
 /** Longest error message kept from a response body (e.g. when the server returns an HTML page). */
@@ -262,7 +262,7 @@ export class HttpTransport {
         headers.set('Authorization', `Bearer ${this.apiKey}`)
       } else if (auth === 'required') {
         throw new OctaAuthenticationError(
-          `apiKey is required for ${options.method} ${options.path}: pass an API key (${API_KEY_PREFIX}…) issued in Cube → Profile → Credentials`,
+          `apiKey is required for ${options.method} ${options.path}: pass an API key (${API_KEY_PREFIX}…) from the OctaSpace dashboard: Account → Credentials → API Keys`,
           401,
         )
       }
@@ -295,7 +295,7 @@ export class HttpTransport {
     )
 
     if (response.status === 401 && this.apiKey && !this.apiKey.startsWith(API_KEY_PREFIX)) {
-      message += ` (the next API expects a key starting with "${API_KEY_PREFIX}"; legacy account tokens are not accepted)`
+      message += ` (API keys start with "${API_KEY_PREFIX}"; create one in the OctaSpace dashboard: Account → Credentials → API Keys)`
     }
 
     const requestId = response.headers.get('x-request-id') ?? undefined

@@ -15,7 +15,7 @@ const PRICE_FIELDS = [
 export class HostingResource extends BaseResource {
   /**
    * Online nodes of the account with their state, hardware and prices (`GET /hosting/nodes`).
-   * Offline nodes are not listed, and there is no per-node endpoint.
+   * Offline nodes are not listed.
    */
   async nodes(request?: RequestOverrides): Promise<HostingNode[]> {
     const res = await this.request<HostingNode[]>(
@@ -25,13 +25,12 @@ export class HostingResource extends BaseResource {
   }
 
   /**
-   * Updates some prices of a node (`PATCH /hosting/nodes/{number}/prices` → 204). Only the fields
-   * that are set are sent; at least one is required. Amounts are integer micro-USD (convert
+   * Updates some prices of a node (`PATCH /hosting/nodes/{number}/prices`). Only the fields that
+   * are set are sent; at least one is required. Amounts are integer micro-USD (convert
    * dollars with `usdToMicroUsd()`); the API refuses other values with an `OctaValidationError`,
    * an unknown node with `OctaNotFoundError`.
    *
-   * 204 means the prices are stored; listings (`hosting.nodes()`, `compute.list()`) show them
-   * after replication, usually within a few seconds.
+   * The listings (`hosting.nodes()`, `compute.list()`) show new prices within a few seconds.
    */
   async setPrices(number: string, prices: NodePrices, request?: RequestOverrides): Promise<void> {
     const body = pickDefined(prices, PRICE_FIELDS)

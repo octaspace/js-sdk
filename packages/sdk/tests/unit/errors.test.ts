@@ -117,7 +117,7 @@ describe('HTTP status → error class mapping', () => {
     await expect(client.accounts.balance()).rejects.toThrow('Request failed with status 500')
   })
 
-  it('hints at octa_ak_ keys when a legacy token is refused', async () => {
+  it('hints at octa_ak_ keys when a key without the prefix is refused', async () => {
     const mockFetch = vi
       .fn()
       .mockResolvedValueOnce(makeErrorResponse({ message: 'Invalid bearer token' }, 401))

@@ -18,15 +18,15 @@ import {
 import { HttpTransport } from './transport/http.js'
 
 /**
- * Client of the next-generation OctaSpace API.
+ * Client of the OctaSpace API.
  *
  * ```ts
  * const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })
  * const machines = await client.compute.list()
  * ```
  *
- * Every option is optional: without `apiKey` only the public endpoints (network, stats, machine
- * listings) work, and the base URL defaults to {@link BASE_URL_DEV}.
+ * Every option is optional: without `apiKey` only network and GPU statistics and the machine
+ * listings work, and the base URL defaults to {@link DEFAULT_BASE_URL}.
  */
 export class OctaClient {
   /** Account: balance */
@@ -35,13 +35,13 @@ export class OctaClient {
   readonly compute: ComputeResource
   /** Account nodes and their prices: nodes, setPrices */
   readonly hosting: HostingResource
-  /** Public platform statistics: info */
+  /** Platform statistics: info */
   readonly network: NetworkResource
   /** Render nodes: list, start, startBatch */
   readonly render: RenderResource
   /** Running sessions: list, get, logs, stop, waitReady, waitStopped */
   readonly sessions: SessionsResource
-  /** Public GPU market statistics: gpuCurrent, gpuHistory, gpuLocations */
+  /** GPU market statistics: gpuCurrent, gpuHistory, gpuLocations */
   readonly stats: StatsResource
 
   private readonly transport: HttpTransport

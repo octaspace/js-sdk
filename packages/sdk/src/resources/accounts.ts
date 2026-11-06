@@ -5,8 +5,8 @@ import { type RequestOverrides, withRequestOverrides } from './request-options.j
 /** The account the API key belongs to. */
 export class AccountsResource extends BaseResource {
   /**
-   * Account balance (`GET /accounts/balance`). The API has no "who am I" endpoint, so this is
-   * also the way to check that an API key is valid.
+   * Account balance (`GET /accounts/balance`). Also a quick way to check that an API key is
+   * valid.
    */
   async balance(request?: RequestOverrides): Promise<AccountBalance> {
     const res = await this.request<AccountBalance>(

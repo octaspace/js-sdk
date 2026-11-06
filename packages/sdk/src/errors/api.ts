@@ -2,11 +2,11 @@ import { OctaError } from './base.js'
 
 /**
  * Rate limit state reported by the API in the `RateLimit-Limit`, `RateLimit-Remaining` and
- * `RateLimit-Reset` headers (IETF draft format, no `X-` prefix).
+ * `RateLimit-Reset` headers.
  *
- * The API keeps separate windows (anonymous per IP, authenticated per account, and a stricter one
- * for starting and restarting services), so the values describe the window of the request they
- * came from. When a request is refused with 429, prefer {@link OctaApiError.retryAfter}: a
+ * The API keeps separate limits (without a key per IP address, with a key per account, and a
+ * stricter one for starting and restarting sessions), so the values describe the limit of the
+ * request they came from. When a request is refused with 429, prefer {@link OctaApiError.retryAfter}: a
  * per-session cooldown can demand a longer wait than the window reset.
  */
 export interface RateLimit {
@@ -23,7 +23,7 @@ export interface OctaApiErrorDetails {
   code?: string
   /** Value of the `X-Request-Id` response header, if present */
   requestId?: string
-  /** Parsed response body (`{ message }` on the next API) */
+  /** Parsed response body (`{ message }`) */
   body?: unknown
   /** Seconds to wait before retrying, from the `Retry-After` header */
   retryAfter?: number
@@ -55,14 +55,14 @@ export class OctaApiError extends OctaError {
 }
 
 /**
- * 401: the API key is missing or invalid. The next API requires `Authorization: Bearer <key>`
- * with a key `octa_ak_…` issued in Cube (Profile → Credentials); legacy account tokens are refused.
+ * 401: the API key is missing, wrong or deleted. Create a key (`octa_ak_…`) in the OctaSpace
+ * dashboard under Account → Credentials → API Keys.
  */
 export class OctaAuthenticationError extends OctaApiError {
   override readonly name: string = 'OctaAuthenticationError'
 }
 
-/** 403: the key is valid but may not perform this operation. */
+/** 403: access denied. */
 export class OctaPermissionError extends OctaApiError {
   override readonly name: string = 'OctaPermissionError'
 }
@@ -99,17 +99,17 @@ export class OctaServerError extends OctaApiError {
 }
 
 /**
- * 503: a backend the API depends on is temporarily unavailable (for example render nodes or
- * statistics). The request itself was fine; retry later.
+ * 503: the service is temporarily unavailable (for example render or statistics). The request
+ * itself was fine; retry later.
  */
 export class OctaServiceUnavailableError extends OctaServerError {
   override readonly name: string = 'OctaServiceUnavailableError'
 }
 
 /**
- * Thrown by `sessions.waitReady()` when the session disappears (404) while being waited for: it
- * stopped, for example because its configuration failed. Read its system log with
- * `sessions.logs()` only while it runs; a stopped session's logs are no longer available.
+ * Thrown by `sessions.waitReady()` when the session stops while it is starting, for example
+ * because SSH could not be set up. Logs are available only while a session runs, so read them
+ * with `sessions.logs()` before it stops.
  */
 export class OctaSessionStoppedError extends OctaNotFoundError {
   override readonly name: string = 'OctaSessionStoppedError'

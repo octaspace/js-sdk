@@ -35,9 +35,9 @@ export function makeClient(
   })
 }
 
-/** Reads a recorded next API response from tests/fixtures/next. */
+/** Reads an API response from tests/fixtures. */
 export function loadFixture<T = unknown>(name: string): T {
-  const url = new URL(`../fixtures/next/${name}`, import.meta.url)
+  const url = new URL(`../fixtures/${name}`, import.meta.url)
   return JSON.parse(readFileSync(url, 'utf-8')) as T
 }
 

@@ -5,7 +5,7 @@ export type SessionStatus = 'starting' | 'ready'
 
 /** Fields every session has, whatever its service. */
 export interface SessionBase {
-  /** Service kind: `compute` or `render` today; other values may appear later */
+  /** Service kind: `compute` or `render` */
   service: string
   uuid: string
   status: SessionStatus
@@ -66,9 +66,9 @@ export interface ComputeSessionNodeHw {
   disk_speed_mbs?: number | null
   gpu_vendor?: string | null
   gpus?: Array<{ model?: string | null; mem_total_mb?: number | null }>
-  /** Mbit/s; absent for sessions started before 2026-11-02 */
+  /** Download speed, Mbit/s */
   net_down_mbps?: number | null
-  /** Mbit/s; absent for sessions started before 2026-11-02 */
+  /** Upload speed, Mbit/s */
   net_up_mbps?: number | null
 }
 
@@ -116,8 +116,8 @@ export interface RenderSession extends SessionBase {
 }
 
 /**
- * A running session. Narrow it with `isComputeSession()` / `isRenderSession()`: a service the
- * SDK does not know yet is returned as is, with every field the API sent.
+ * A running session. Narrow it with `isComputeSession()` / `isRenderSession()`; a session of
+ * another service is returned with every field the API sent.
  */
 export type Session = ComputeSession | RenderSession | (SessionBase & Record<string, unknown>)
 

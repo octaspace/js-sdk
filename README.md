@@ -1,59 +1,69 @@
-# OctaSpace JS SDK — monorepo
-
-Official JavaScript/TypeScript SDK for the next-generation [OctaSpace](https://octa.space) API.
+# OctaSpace JavaScript SDK
 
 [![CI](https://github.com/octaspace/js-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/octaspace/js-sdk/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/v/@octaspace/sdk)](https://www.npmjs.com/package/@octaspace/sdk)
 
-> **Branch `next`.** This branch targets the new API, which runs on the test stand
-> `https://api-dev.octa.space` (the default base URL). The production hosts still serve the
-> legacy API, used by the releases on `main`. Moving from the legacy SDK: see the
-> [migration guide](docs/migration-next.md).
+The official JavaScript and TypeScript libraries for the [OctaSpace](https://octa.space) API. Rent
+compute machines and render nodes, manage sessions and the nodes you host, and read GPU market
+statistics from your code.
+
+**Contents:** [Packages](#packages) · [Quick start](#quick-start) ·
+[Documentation](#documentation) · [Versioning](#versioning) · [License](#license)
 
 ## Packages
 
-| Package | Description |
-|---|---|
-| [`@octaspace/sdk`](packages/sdk) | Core SDK — Node.js 22+, browsers, edge runtimes; zero dependencies |
-| [`@octaspace/sdk-query`](packages/sdk-query) | TanStack Query v5 query options and keys (any framework adapter) |
-| [`@octaspace/sdk-react`](packages/sdk-react) | React context and hooks without TanStack Query |
+| Package | Use it for |
+| --- | --- |
+| [`@octaspace/sdk`](packages/sdk/README.md) | The API client: Node.js 22 or later, browsers, Deno and Bun; no dependencies |
+| [`@octaspace/sdk-query`](packages/sdk-query/README.md) | Query options and keys for TanStack Query v5, with any framework adapter |
+| [`@octaspace/sdk-react`](packages/sdk-react/README.md) | React context and hooks, for apps without TanStack Query |
 
 ## Quick start
 
-```bash
-npm install @octaspace/sdk
-```
+1. [Create an API key](packages/sdk/README.md#authentication) and export it:
 
-```ts
-import { OctaClient, formatUsd } from '@octaspace/sdk'
+   ```bash
+   export OCTA_API_KEY="octa_ak_..."
+   ```
 
-// Public endpoints need no key
-const stats = await new OctaClient().stats.gpuCurrent()
+2. Install the SDK:
 
-// The rest needs an account key (octa_ak_…, Cube → Profile → Credentials)
-const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })
-const balance = await client.accounts.balance()
-const machines = await client.compute.list()
-console.log(formatUsd(balance.balance), machines.length)
-```
+   ```bash
+   npm install @octaspace/sdk
+   ```
+
+3. Save this program as `quickstart.mjs` and run it with `node quickstart.mjs`:
+
+   ```js
+   import { OctaClient, formatUsd } from '@octaspace/sdk'
+
+   const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })
+
+   const { balance } = await client.accounts.balance()
+   console.log('Balance:', formatUsd(balance)) // Balance: $12.500000
+
+   const machines = await client.compute.list()
+   console.log(machines.length, 'machines for rent')
+   ```
 
 ## Documentation
 
-- Core SDK: [`packages/sdk/README.md`](packages/sdk/README.md)
-- TanStack Query integration: [`packages/sdk-query/README.md`](packages/sdk-query/README.md)
-- React hooks/context: [`packages/sdk-react/README.md`](packages/sdk-react/README.md)
-- [Migrating from the legacy SDK](docs/migration-next.md)
-- [Testing the SDK from the console](docs/testing.md)
-- [Working with the `next` branch](docs/GIT_WORKFLOW_NEXT.md)
+| Guide | Covers |
+| --- | --- |
+| [`@octaspace/sdk` README](packages/sdk/README.md) | Installation, authentication, handling errors, API overview |
+| [Client configuration](packages/sdk/docs/configuration.md) | Options and defaults, cancellation and timeouts, logging, several hosts |
+| [Resources](packages/sdk/docs/resources.md) | Compute, render, hosting, balance, network and GPU statistics |
+| [Sessions](packages/sdk/docs/sessions.md) | Waiting until ready, connecting, logs, stopping |
+| [Errors, rate limits and retries](packages/sdk/docs/errors-and-reliability.md) | Error types, limits, automatic retries |
+| [Changelog](packages/sdk/CHANGELOG.md) | Changes in each release |
 
-## Development
+To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-```bash
-corepack enable pnpm
-pnpm install
-pnpm check      # build + typecheck + lint + test
-pnpm audit
-```
+## Versioning
 
-Requires Node.js 22.18+ and pnpm via Corepack. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
-full development guide.
+The packages follow [Semantic Versioning](https://semver.org). Until version 1.0, a minor release
+can contain breaking changes; the changelogs mark them as **Breaking**.
+
+## License
+
+[MIT](LICENSE)

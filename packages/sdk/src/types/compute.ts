@@ -43,7 +43,7 @@ export interface ComputeMachine {
   reliability: Reliability
 }
 
-/** Parameters of `POST /services/compute` (`ComputeRequest`). Only fields that are set are sent. */
+/** Parameters of `compute.start()`. Only fields that are set are sent. */
 export interface ComputeStartParams {
   /** Machine number from the listing */
   node_number: NodeNumber
@@ -89,9 +89,9 @@ export interface ComputeBatchItem extends ComputeStartParams {
 }
 
 /**
- * New parameters for `POST /services/compute/{uuid}/restart` (`ComputeRestartRequest`).
+ * New parameters for `compute.restart()`.
  *
- * **A non-empty body replaces all parameters of the session**, it does not merge with them.
+ * **Parameters you pass replace all parameters of the session**; they are not merged.
  * Every field you leave out falls back to a fixed default, not to the session's current value:
  *
  * | Field | Default when omitted |

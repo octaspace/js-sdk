@@ -1,5 +1,5 @@
 /**
- * The next API sometimes sends a missing value as the string `"null"` instead of JSON `null`: in
+ * The API sometimes sends a missing value as the string `"null"` instead of JSON `null`: in
  * GPU statistics (price percentiles, TFLOPS) and in what nodes report about their hardware
  * (`mem_clock`, `power_limit`, `fan_speed`, …). This replaces every `"null"` string value (not
  * object keys) with `null`, in place.

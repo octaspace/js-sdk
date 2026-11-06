@@ -4,7 +4,7 @@ import type { NetworkInfo } from '../../src/types/index.js'
 import { loadFixture, makeClient, makeErrorResponse, makeResponse, sentRequest } from './helpers.js'
 
 describe('network.info', () => {
-  it('GETs /network anonymously and decodes the live snapshot', async () => {
+  it('GETs /network anonymously and decodes the snapshot', async () => {
     const fixture = loadFixture<NetworkInfo>('network.json')
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(fixture))
     const client = makeClient(mockFetch, { apiKey: null })

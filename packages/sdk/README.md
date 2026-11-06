@@ -1,295 +1,174 @@
-# @octaspace/sdk
+# OctaSpace JavaScript SDK
 
-Typed JavaScript/TypeScript client for the next-generation [OctaSpace](https://octa.space) API:
-rent compute machines and render nodes, follow running sessions, manage the nodes you host and
-their prices, read the account balance and public network and GPU market statistics.
+[![CI](https://github.com/octaspace/js-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/octaspace/js-sdk/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@octaspace/sdk)](https://www.npmjs.com/package/@octaspace/sdk)
 
-- Zero runtime dependencies, native `fetch` — Node.js 22+, browsers, Deno, Bun, edge runtimes.
-- ESM and CommonJS builds with full type definitions.
-- Typed errors, rate-limit awareness, retries for safe requests, abort signals, host failover.
+The official JavaScript and TypeScript library for the [OctaSpace](https://octa.space) API. Rent
+compute machines and render nodes, manage sessions and the nodes you host, and read GPU market
+statistics from your code.
 
-> **Branch `next`.** This version targets the new API, which runs on the test stand
-> `https://api-dev.octa.space` (the default base URL). The production hosts still serve the legacy
-> API used by the releases on `main`. Moving from the legacy SDK: see the
-> [migration guide](../../docs/migration-next.md).
+**Contents:** [Installation](#installation) · [Quick start](#quick-start) ·
+[Authentication](#authentication) · [Handling errors](#handling-errors) ·
+[API overview](#api-overview) · [Documentation](#documentation) · [Versioning](#versioning)
 
 ## Installation
 
 ```bash
 npm install @octaspace/sdk
-# or
-pnpm add @octaspace/sdk
 ```
+
+Requires Node.js 22 or later. The package has no dependencies and uses the built-in `fetch`, so it
+also runs in browsers, Deno and Bun. It ships ESM and CommonJS builds with type definitions.
 
 ## Quick start
 
+1. [Create an API key](#authentication) and export it:
+
+   ```bash
+   export OCTA_API_KEY="octa_ak_..."
+   ```
+
+2. Save this program as `quickstart.mjs`:
+
+   ```js
+   import { OctaClient, OctaApiError, formatUsd } from '@octaspace/sdk'
+
+   const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })
+
+   try {
+     const { balance } = await client.accounts.balance()
+     console.log('Balance:', formatUsd(balance)) // Balance: $12.500000
+
+     const machines = await client.compute.list()
+     for (const m of machines) {
+       console.log(m.node_number, m.city, formatUsd(m.base_price), 'per hour')
+     }
+   } catch (err) {
+     if (err instanceof OctaApiError) {
+       console.error(`${err.status}: ${err.message}`)
+       process.exitCode = 1
+     } else {
+       throw err
+     }
+   }
+   ```
+
+3. Run it:
+
+   ```bash
+   node quickstart.mjs
+   ```
+
+Create one client and reuse it.
+
+## Authentication
+
+The SDK authenticates with an **API key** of your OctaSpace account. You create and delete API
+keys in the OctaSpace dashboard:
+
+1. Sign in to the [OctaSpace dashboard](https://cube-dev.octa.space).
+2. In the sidebar, open **Account → Credentials**.
+3. In the **API Keys** section, click **New key**.
+4. Enter a **Label** that tells you where the key is used, for example `billing-service`, and
+   click **Create key**.
+5. Copy the key. It starts with `octa_ak_`.
+
+> [!IMPORTANT]
+> The key is shown in full only once, right after you create it. Copy it before you close the
+> dialog. If you lose it, delete it and create a new one.
+
+Pass the key as the `apiKey` option. The SDK sends it in the `Authorization: Bearer <key>` header.
+
 ```ts
-import { OctaClient, formatUsd } from '@octaspace/sdk'
-
-// Public endpoints need no key
-const publicClient = new OctaClient()
-const network = await publicClient.network.info()
-console.log(`${network.nodes.online} nodes online`)
-
-// Everything else needs an account key (octa_ak_…, Cube → Profile → Credentials)
 const client = new OctaClient({ apiKey: process.env.OCTA_API_KEY })
-
-const balance = await client.accounts.balance()
-console.log(formatUsd(balance.balance)) // "$2.147661"
-
-const [machine] = await client.compute.list()
-const { uuid } = await client.compute.start({
-  node_number: machine.node_number,
-  image: 'ubuntu:24.04',
-  disk_size: 20,
-  ssh: true,
-})
-
-const session = await client.sessions.waitReady(uuid, {
-  onProgress: (s) => console.log(s.status, s.progress, s.pull_percent),
-})
-// … use it …
-await client.sessions.stop(uuid)
-await client.sessions.waitStopped(uuid)
 ```
 
-## Client options
+> [!WARNING]
+> An API key acts on behalf of your account: it can start sessions that are charged to your
+> balance. Keep it out of source code, version control and browser bundles. If a key leaks,
+> delete it under **Account → Credentials → API Keys**; every program that uses it stops working
+> at once.
+
+The **API Keys** list shows each key's label, its first characters and when it was last used. Use
+a separate key for each program or machine, so that you can delete one without affecting the
+others. The number of keys per account is limited; the counter next to **API Keys** shows how
+many you have.
+
+### Calls without an API key
+
+These methods also work without an API key. Create the client without `apiKey` to use them
+anonymously:
+
+| Method | Without a key |
+| --- | --- |
+| `network.info` | Same result |
+| `stats.gpuCurrent`, `stats.gpuHistory`, `stats.gpuLocations` | Same result |
+| `compute.list`, `render.list` | Refreshed about once an hour instead of every 10 seconds |
+
+Every other method requires an API key. Without one it throws an `OctaAuthenticationError`
+before the request is sent.
+
+## Handling errors
+
+Every error the SDK throws is an `OctaError`. Errors returned by the API are subclasses of
+`OctaApiError`; check them with `instanceof`:
 
 ```ts
-const client = new OctaClient({
-  apiKey: process.env.OCTA_API_KEY, // optional; sent as "Authorization: Bearer <key>"
-  baseUrl: 'https://api-dev.octa.space', // default: BASE_URL_DEV
-  baseUrls: ['https://a.example', 'https://b.example'], // GET failover on network errors
-  timeoutMs: 30_000, // per request
-  retries: 2, // automatic retries of safe requests
-  userAgent: 'my-app/1.0',
-  fetch: customFetch, // tests, proxies
-  onRequest: (ctx) => {}, // method, url, headers, body, attempt
-  onResponse: (ctx) => {}, // request, status, headers, durationMs
-})
-```
-
-Every method that reads data also takes request overrides as its last argument:
-`{ signal?: AbortSignal, retries?: number }`.
-
-## Resources
-
-| Resource | Methods | API |
-|---|---|---|
-| `client.compute` | `list()`, `start(params)`, `startBatch(items)`, `restart(uuid, params?)` | `/services/compute` |
-| `client.render` | `list()`, `start({ node_number })`, `startBatch(items)` | `/services/render` |
-| `client.sessions` | `list()`, `get(uuid)`, `logs(uuid, { tail })`, `stop(uuid)`, `waitReady(uuid)`, `waitStopped(uuid)` | `/sessions`, `/services/{uuid}/…` |
-| `client.hosting` | `nodes()`, `setPrices(number, prices)` | `/hosting/nodes` |
-| `client.accounts` | `balance()` | `/accounts/balance` |
-| `client.network` | `info()` (public) | `/network` |
-| `client.stats` | `gpuCurrent()`, `gpuHistory()`, `gpuLocations()` (public) | `/stats/gpu/*` |
-
-`compute.list()` and `render.list()` work without a key too, but the anonymous listing is cached
-for up to an hour; with a key it is at most 10 seconds old.
-
-### Compute
-
-```ts
-// One session: an object → 201 { uuid }; errors throw (e.g. OctaValidationError "Insufficient balance")
-const { uuid } = await client.compute.start({
-  node_number: '7KQ4-M2XD-4', // case, dashes and spaces are ignored by the API
-  image: 'vllm/vllm-openai:latest',
-  disk_size: 50, // GB, default 1
-  envs: { HF_TOKEN: '…' },
-  ports: [9000], // TCP/UDP
-  http_ports: [8000], // public URLs in session.urls
-  entrypoint: 'python3 -m vllm.entrypoints.openai.api_server',
-  args: '--model meta-llama/Llama-3.1-8B-Instruct',
-  ssh: true, // web terminal + SSH; omitted = the app's setting
-  fm: false, // web file manager (no login!); omitted = the app's setting
-  startup_script: 'apt-get update && apt-get install -y htop',
-})
-
-// Several sessions: an array → 200, one result per item, in order; a failed item does not fail the batch
-const results = await client.compute.startBatch([
-  { id: 'a', node_number: '7KQ4-M2XD-4', image: 'alpine' },
-  { node_number: 'M95S-WZG8-7', image: 'alpine' }, // id defaults to the position
-])
-for (const r of results) {
-  if (r.status === 0) console.log(r.id, 'started', r.uuid)
-  else console.log(r.id, 'failed:', r.reason)
-}
-```
-
-Starts and restarts are never retried automatically: they cost money.
-
-#### Restart
-
-```ts
-await client.compute.restart(uuid) // same container parameters
-```
-
-`restart(uuid, params)` **replaces all parameters** of the session. Every field you leave out gets
-a fixed default, not the session's current value. In particular `disk_size` becomes **1 GB**, and
-`envs`, ports, `startup_script`, `ssh` and `fm` are dropped. The session info does not report
-`entrypoint`, `args`, `startup_script` or `disk_size`, so always pass the complete set:
-
-```ts
-await client.compute.restart(uuid, {
-  disk_size: 50,
-  envs: { HF_TOKEN: '…' },
-  http_ports: [8000],
-  entrypoint: 'python3 -m vllm.entrypoints.openai.api_server',
-  args: '--model meta-llama/Llama-3.1-8B-Instruct --max-model-len 8192',
-  ssh: true,
-})
-```
-
-A restart answers 202 and runs in the background; follow it with `sessions.get()`. While the
-session is still starting or restarting the API refuses with `OctaConflictError` (409); a session
-can be restarted once per 5 minutes and 6 times per hour, otherwise `OctaRateLimitError` (429)
-with `retryAfter` in seconds.
-
-### Sessions
-
-Only running sessions exist in the API. Once a session stops, `get`, `logs` and `stop` answer 404
-(`OctaNotFoundError`), and there is no session history.
-
-```ts
-import { isComputeSession } from '@octaspace/sdk'
-
-for (const s of await client.sessions.list()) {
-  if (isComputeSession(s)) {
-    console.log(s.uuid, s.status, s.node_number, s.urls, s.ssh?.proxy)
-  }
-}
-
-const logs = await client.sessions.logs(uuid, { tail: 100 }) // compute sessions only
-console.log(logs.system.map((e) => e.msg), logs.container)
-
-const ready = await client.sessions.waitReady(uuid, { intervalMs: 3000, timeoutMs: 300_000 })
-```
-
-`waitReady` throws `OctaSessionStoppedError` (a subclass of `OctaNotFoundError`) when the session
-stops while starting, for example because its SSH setup failed.
-
-- `ssh.web` contains credentials in the URL — do not log it.
-- `ssh.*.user` comes from the image's `USER`: validate `user` and `host` and pass them as separate
-  arguments after `--` (`ssh -p PORT -l USER -- HOST`).
-- `stop()` is idempotent (repeating it is harmless). A session stopped before
-  `min_rent_minutes` is charged base and storage for that long.
-
-### Render
-
-```ts
-const nodes = await client.render.list()
-const { uuid } = await client.render.start({ node_number: nodes[0].node_number })
-```
-
-A render node is billed by the hour until stopped. When render is temporarily unavailable,
-`start` throws `OctaServiceUnavailableError` (503), while `startBatch` reports it per item
-(`status: 1`, `reason: "Service is temporarily unavailable"`).
-
-### Hosting
-
-```ts
-import { usdToMicroUsd } from '@octaspace/sdk'
-
-for (const node of await client.hosting.nodes()) {
-  console.log(node.number, node.status, node.prices, node.services)
-}
-
-await client.hosting.setPrices('7KQ4-M2XD-4', {
-  base: usdToMicroUsd(0.25), // per hour
-  min_rent_minutes: 15,
-})
-```
-
-`hosting.nodes()` lists online nodes only. `setPrices` sends only the fields you set; it answers
-204 once the prices are stored, and listings show them after replication, usually within seconds.
-
-### Statistics (public)
-
-```ts
-import { gpuHistoryPoints } from '@octaspace/sdk'
-
-const current = await publicClient.stats.gpuCurrent({ verified: 'yes' })
-const history = await publicClient.stats.gpuHistory({
-  gpuName: ['NVIDIA GeForce RTX 4090'],
-  start: new Date(Date.now() - 7 * 86_400_000),
-  step: 3600,
-})
-const points = gpuHistoryPoints(history['NVIDIA GeForce RTX 4090'])
-const locations = await publicClient.stats.gpuLocations()
-```
-
-## Data conventions
-
-- **Node numbers** (`node_number`, `HostingNode.number`) are strings like `7KQ4-M2XD-4`.
-- **Money** is integer **micro-USD** everywhere (`1` = $0.000001): prices, charges, the balance.
-  Use `formatUsd(amount)` (`"$0.000100"`), `microUsdToUsd()` and `usdToMicroUsd()`. The balance is
-  `balance / 10 ** decimals` — read `decimals` from the response — and can be negative.
-- **Prices**: `base_price` per hour, `storage_price` per GB of disk per hour, `traffic_price` per
-  GB of traffic; `min_rent_minutes` is the shortest billed rent (0 = none).
-- **Network speed** `net_down_mbps` / `net_up_mbps` is whole Mbit/s (0 = not measured).
-- **Time** keeps the API's units: `started_at` and log `ts` are Unix **milliseconds**;
-  `NetworkInfo.at`, stats timestamps and `activity.started_at` are Unix **seconds**;
-  `HostingNode.online_at` is an ISO 8601 string.
-- **Raw data.** Methods return the parsed JSON as is: fields the SDK does not type yet are still
-  there. The only change is that hosting, stats and listings turn the string `"null"` some nodes
-  report into `null`.
-
-## Errors
-
-```
-OctaError
-├── OctaNetworkError                DNS, connection, aborted request
-│   └── OctaTimeoutError            request timeout, or waitReady/waitStopped timeoutMs
-└── OctaApiError                    HTTP 4xx/5xx: status, message, retryAfter, rateLimit, requestId, body
-    ├── OctaValidationError         400, 422 — message says why
-    ├── OctaAuthenticationError     401 — missing or invalid key
-    ├── OctaPermissionError         403
-    ├── OctaNotFoundError           404 — e.g. a stopped session
-    │   └── OctaSessionStoppedError waitReady: the session stopped while starting
-    ├── OctaConflictError           409 — e.g. restart while restarting
-    ├── OctaRateLimitError          429 — wait retryAfter seconds
-    └── OctaServerError             5xx
-        └── OctaServiceUnavailableError 503 — retry later
-```
-
-```ts
-import { OctaRateLimitError, OctaValidationError } from '@octaspace/sdk'
+import {
+  OctaAuthenticationError,
+  OctaRateLimitError,
+  OctaValidationError,
+} from '@octaspace/sdk'
 
 try {
-  await client.compute.restart(uuid)
+  await client.compute.start({ node_number: '7KQ4-M2XD-4', image: 'ubuntu:24.04' })
 } catch (err) {
-  if (err instanceof OctaRateLimitError) console.log(`retry in ${err.retryAfter}s`)
-  else if (err instanceof OctaValidationError) console.log(err.message)
-  else throw err
+  if (err instanceof OctaAuthenticationError) {
+    // the API key is missing, wrong or deleted
+  } else if (err instanceof OctaValidationError) {
+    // the request was rejected; err.message says why
+  } else if (err instanceof OctaRateLimitError) {
+    // too many requests; wait err.retryAfter seconds
+  } else {
+    throw err
+  }
 }
 ```
 
-A request that needs a key fails before it is sent when the client has none
-(`OctaAuthenticationError`). Legacy account tokens are refused by the API; the error message says
-so when the key does not start with `octa_ak_`.
+See [Errors, rate limits and retries](docs/errors-and-reliability.md).
 
-## Rate limits and retries
+## API overview
 
-The API allows 60 requests per minute per IP without a key, 300 per minute per account with one,
-and 10 per minute for starts and restarts. `client.rateLimit` holds the `RateLimit-Limit`,
-`-Remaining` and `-Reset` values of the last response.
+| Resource | Dashboard section | Operations | Guide |
+| --- | --- | --- | --- |
+| `client.compute` | Marketplace → Compute | List machines, start, batch start, restart | [Compute](docs/resources.md#compute) |
+| `client.render` | Render → Launch Nodes | List render nodes, start, batch start | [Render](docs/resources.md#render) |
+| `client.sessions` | Marketplace → Sessions, Render → Render Nodes | List, get, logs, stop, wait until ready or stopped | [Sessions](docs/sessions.md) |
+| `client.hosting` | Hosting → Nodes | Your nodes, set prices | [Hosting](docs/resources.md#hosting) |
+| `client.accounts` | Account → Billing | Balance | [Accounts](docs/resources.md#accounts) |
+| `client.network` | — | Platform statistics | [Network](docs/resources.md#network) |
+| `client.stats` | — | GPU market: current, history, locations | [Stats](docs/resources.md#stats) |
 
-Only GET requests are retried (and `sessions.stop`, which is idempotent): on network errors and on
-429, 502, 503 and 504, with exponential backoff, honouring `Retry-After` up to 60 seconds. A longer
-wait (such as the restart cooldown) is returned to you at once.
+Every type and method has TSDoc comments, which your editor shows as you type.
 
-## Development
+For TanStack Query and React, see [`@octaspace/sdk-query`](../sdk-query/README.md) and
+[`@octaspace/sdk-react`](../sdk-react/README.md).
 
-Trying the SDK by hand (smoke test, one-liners, REPL, a full session cycle):
-[docs/testing.md](../../docs/testing.md).
+## Documentation
 
-```bash
-pnpm test                                  # unit tests (fetch is mocked)
-pnpm smoke                                 # live read-only checks, public endpoints
-OCTA_API_KEY=octa_ak_… pnpm smoke          # all suites
-OCTA_API_KEY=octa_ak_… pnpm smoke --suite compute,sessions
-```
+| Guide | Covers |
+| --- | --- |
+| [Client configuration](docs/configuration.md) | Options and defaults, cancellation and timeouts, logging, several hosts |
+| [Resources](docs/resources.md) | Compute, render, hosting, balance, network and GPU statistics |
+| [Sessions](docs/sessions.md) | Waiting until ready, connecting, logs, stopping |
+| [Errors, rate limits and retries](docs/errors-and-reliability.md) | Error types, limits, automatic retries |
+| [Changelog](CHANGELOG.md) | Changes in each release |
+
+## Versioning
+
+The library follows [Semantic Versioning](https://semver.org). Until version 1.0, a minor release
+can contain breaking changes; the [changelog](CHANGELOG.md) marks them as **Breaking**.
 
 ## License
 
-MIT
+[MIT](LICENSE)

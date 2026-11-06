@@ -16,7 +16,7 @@ export const statsKeys = {
   gpuLocations: () => [...statsKeys.all(), 'gpu', 'locations'] as const,
 }
 
-/** Public GPU market statistics; work without an API key. */
+/** GPU market statistics; no API key needed. */
 export const statsQueries = {
   gpuCurrent: (client: OctaClient, options: GpuCurrentOptions = {}) =>
     queryOptions({

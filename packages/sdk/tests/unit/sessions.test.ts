@@ -10,7 +10,7 @@ import { isComputeSession, isRenderSession } from '../../src/resources/sessions.
 import type { ComputeSession, Session, SessionLogs } from '../../src/types/index.js'
 import { loadFixture, makeClient, makeErrorResponse, makeResponse, sentRequest } from './helpers.js'
 
-const UUID = '2a63b54f-f243-45ab-8416-2728e178a384'
+const UUID = '5f3c2b1a-7d6e-4f8a-9b0c-1d2e3f4a5b6c'
 const notFound = () => makeErrorResponse({ message: 'Session not found' }, 404)
 
 describe('sessions.list', () => {

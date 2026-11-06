@@ -10,5 +10,3 @@ pnpm changeset
 
 Pick the affected packages, the bump type (patch / minor / major), and write a short description.
 Commit the generated `.md` file together with your changes.
-
-On merge to `main`, CI will open a "Version Packages" PR that bumps versions and updates `CHANGELOG.md` files.

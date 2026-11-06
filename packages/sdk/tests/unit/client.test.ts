@@ -8,7 +8,7 @@ describe('OctaClient', () => {
     expect(() => new OctaClient({})).not.toThrow()
   })
 
-  it('exposes the next API resources only', () => {
+  it('exposes exactly the supported resources', () => {
     const client = new OctaClient({ apiKey: 'octa_ak_test' })
     const resources = Object.keys(client).filter((key) => key !== 'transport')
     expect(resources.sort()).toEqual([
@@ -22,18 +22,18 @@ describe('OctaClient', () => {
     ])
   })
 
-  it('exports no legacy API', () => {
+  it('exports no removed resources', () => {
     const names = Object.keys(sdk)
-    for (const legacy of [
+    for (const removed of [
       'NodesResource',
       'AppsResource',
       'IdleJobsResource',
       'ServicesResource',
     ]) {
-      expect(names).not.toContain(legacy)
+      expect(names).not.toContain(removed)
     }
     expect(names).toEqual(
-      expect.arrayContaining(['OctaClient', 'BASE_URL_DEV', 'formatUsd', 'gpuHistoryPoints']),
+      expect.arrayContaining(['OctaClient', 'DEFAULT_BASE_URL', 'formatUsd', 'gpuHistoryPoints']),
     )
   })
 })

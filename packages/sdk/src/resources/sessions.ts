@@ -29,8 +29,8 @@ function sessionPath(uuid: string, action: string): string {
 }
 
 /**
- * The account's running sessions. The API reports running sessions only: once a session stops,
- * `get`, `logs` and `stop` answer 404 (`OctaNotFoundError`), and there is no session history.
+ * The account's running sessions. Once a session stops, `get`, `logs` and `stop` throw
+ * `OctaNotFoundError`.
  */
 export class SessionsResource extends BaseResource {
   /** Running sessions of the account, oldest first (`GET /sessions`). */
@@ -71,8 +71,8 @@ export class SessionsResource extends BaseResource {
   }
 
   /**
-   * Stops a session (`POST /services/{uuid}/stop` → 202). Stopping is asynchronous: the session
-   * is gone once `get()` answers 404 — use {@link waitStopped}. Repeating the call while the
+   * Stops a session (`POST /services/{uuid}/stop`). Stopping takes a few seconds: the session is
+   * gone once `get()` throws `OctaNotFoundError` — use {@link waitStopped}. Repeating the call while the
    * session is stopping is harmless, so it is retried on transient errors like a GET. A session
    * stopped before its `min_rent_minutes` is charged base and storage for that long.
    */
@@ -118,7 +118,7 @@ export class SessionsResource extends BaseResource {
   }
 
   /**
-   * Polls the session until the API no longer reports it (404), i.e. it has stopped. Resolves
+   * Polls the session until `get()` throws `OctaNotFoundError`, i.e. it has stopped. Resolves
    * immediately for a session that is already gone.
    */
   async waitStopped(uuid: string, options: WaitOptions = {}): Promise<void> {

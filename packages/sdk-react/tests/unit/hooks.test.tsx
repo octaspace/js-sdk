@@ -29,7 +29,7 @@ describe('sdk-react hooks', () => {
   it('loads data for useHostingNodes', async () => {
     const list = vi
       .fn()
-      .mockResolvedValue([{ number: 'M95S-WZG8-7' }] satisfies Partial<HostingNode>[])
+      .mockResolvedValue([{ number: '7KQ4-M2XD-4' }] satisfies Partial<HostingNode>[])
     const client = {
       hosting: { nodes: list },
     } as unknown as OctaClient
@@ -51,7 +51,7 @@ describe('sdk-react hooks', () => {
     await waitFor(() => {
       expect(list).toHaveBeenCalledOnce()
       expect(snapshots.at(-1)).toEqual({
-        data: [{ number: 'M95S-WZG8-7' }],
+        data: [{ number: '7KQ4-M2XD-4' }],
         loading: false,
       })
     })
@@ -216,7 +216,7 @@ describe('sdk-react hooks', () => {
   })
 
   it('loads compute machines and passes the abort signal', async () => {
-    const list = vi.fn().mockResolvedValue([{ node_number: 'M95S-WZG8-7' }])
+    const list = vi.fn().mockResolvedValue([{ node_number: '7KQ4-M2XD-4' }])
     const client = { compute: { list } } as unknown as OctaClient
     let data: unknown
 
@@ -231,7 +231,7 @@ describe('sdk-react hooks', () => {
       </OctaProvider>,
     )
 
-    await waitFor(() => expect(data).toEqual([{ node_number: 'M95S-WZG8-7' }]))
+    await waitFor(() => expect(data).toEqual([{ node_number: '7KQ4-M2XD-4' }]))
     expect(list.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
   })
 

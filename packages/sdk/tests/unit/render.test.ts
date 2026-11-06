@@ -11,7 +11,7 @@ import {
 } from './helpers.js'
 
 describe('render.list', () => {
-  it('GETs /services/render and decodes the live listing', async () => {
+  it('GETs /services/render and decodes the listing', async () => {
     const fixture = loadFixture<RenderMachine[]>('services_render.json')
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(fixture))
     const client = makeClient(mockFetch, { apiKey: null })
@@ -30,9 +30,9 @@ describe('render.start', () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({ uuid: 'r-1' }, 201))
     const client = makeClient(mockFetch)
 
-    const params = { node_number: '7R2S-S05E-S', disk_size: 10 }
+    const params = { node_number: '3HW9-P6TR-8', disk_size: 10 }
     await expect(client.render.start(params)).resolves.toEqual({ uuid: 'r-1' })
-    expect(sentBody(mockFetch)).toEqual({ node_number: '7R2S-S05E-S' })
+    expect(sentBody(mockFetch)).toEqual({ node_number: '3HW9-P6TR-8' })
   })
 
   it('throws OctaServiceUnavailableError when render is unavailable', async () => {
@@ -60,12 +60,12 @@ describe('render.startBatch', () => {
     const client = makeClient(mockFetch)
 
     const out = await client.render.startBatch([
-      { node_number: '7R2S-S05E-S' },
+      { node_number: '3HW9-P6TR-8' },
       { id: 'x', node_number: 'ZZZZ-ZZZZ-Z' },
     ])
     expect(out).toEqual(results)
     expect(sentBody(mockFetch)).toEqual([
-      { id: 0, node_number: '7R2S-S05E-S' },
+      { id: 0, node_number: '3HW9-P6TR-8' },
       { id: 'x', node_number: 'ZZZZ-ZZZZ-Z' },
     ])
   })
