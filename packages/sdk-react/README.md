@@ -152,4 +152,4 @@ can contain breaking changes; the [changelog](CHANGELOG.md) marks them as **Brea
 
 ## License
 
-MIT © OctaSpace
+[MIT](LICENSE)

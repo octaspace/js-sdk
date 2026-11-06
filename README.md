@@ -66,4 +66,4 @@ can contain breaking changes; the changelogs mark them as **Breaking**.
 
 ## License
 
-MIT
+[MIT](LICENSE)
