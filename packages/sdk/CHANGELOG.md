@@ -2,18 +2,21 @@
 
 All notable changes to `@octaspace/sdk` are documented here.
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
-This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
+adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
----
+## [0.1.1] - 2026-07-06
 
-## 0.1.1
+### Added
 
-### Patch Changes
+- `http_proxy` VPN sessions: `'http_proxy'` in `VpnSubkind` and the `ProxyConfig` type.
 
-- 245e71e: Add `http_proxy` to `VpnSubkind` and type `ServiceInfo.config` as `string | ProxyConfig` — for `http_proxy` sessions the API returns a `{ ip, port }` object instead of a config string. New exported type: `ProxyConfig`.
+### Changed
 
-## [0.1.0] — 2026-04-10
+- `ServiceInfo.config` is typed `string | ProxyConfig`: an `http_proxy` session has a
+  `{ ip, port }` object instead of a configuration string.
+
+## [0.1.0] - 2026-07-06
 
 ### Added
 
@@ -21,7 +24,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `OctaClient` with full resource coverage:
   - `accounts` — account details, balance, wallet generation
   - `apps` — available applications
-  - `network` — public network statistics (no auth required)
+  - `network` — network statistics (no API key needed)
   - `nodes` — list, get, pricing, reboot, binary file downloads
   - `services.mr` — Machine Rental: browse and start sessions
   - `services.render` — Render: browse and start sessions
@@ -37,4 +40,5 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Dual ESM + CJS build with TypeScript declarations
 - Zero runtime dependencies
 
+[0.1.1]: https://github.com/octaspace/js-sdk/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/octaspace/js-sdk/releases/tag/v0.1.0

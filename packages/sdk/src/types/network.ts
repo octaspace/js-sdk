@@ -1,4 +1,4 @@
-/** Public platform statistics (`GET /network`), a snapshot refreshed every few minutes. */
+/** Platform statistics (`GET /network`), a snapshot refreshed every few minutes. */
 export interface NetworkInfo {
   /** Snapshot time, Unix **seconds** */
   at: number

@@ -1,10 +1,12 @@
 # @octaspace/sdk-react
 
-React context and hooks for the [OctaSpace SDK](https://github.com/octaspace/js-sdk), for apps
-that do not use TanStack Query (with it, prefer [`@octaspace/sdk-query`](../sdk-query)).
+[![npm](https://img.shields.io/npm/v/@octaspace/sdk-react)](https://www.npmjs.com/package/@octaspace/sdk-react)
 
-[![npm version](https://img.shields.io/npm/v/@octaspace/sdk-react)](https://www.npmjs.com/package/@octaspace/sdk-react)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+React context and hooks for the [OctaSpace SDK](../sdk/README.md), for apps that do not use
+TanStack Query. With TanStack Query, use [`@octaspace/sdk-query`](../sdk-query/README.md).
+
+**Contents:** [Installation](#installation) · [Quick start](#quick-start) · [Hooks](#hooks) ·
+[Provider](#provider)
 
 ## Installation
 
@@ -14,7 +16,7 @@ npm install @octaspace/sdk @octaspace/sdk-react react
 pnpm add @octaspace/sdk @octaspace/sdk-react react
 ```
 
-Requires React 18+.
+Requires React 18 or later.
 
 ## Quick start
 
@@ -53,8 +55,12 @@ export function App() {
 }
 ```
 
-An API key in a browser bundle is visible to every user of the page. Ship it only in trusted
-internal tools; public apps should call the API from their backend.
+Create the client with the API key of your OctaSpace account, see
+[Authentication](../sdk/README.md#authentication).
+
+> [!WARNING]
+> An API key in a browser bundle is visible to every user of the page. Use it there only in
+> trusted internal tools; in public apps, call the API from your backend.
 
 ## Hooks
 
@@ -67,10 +73,10 @@ internal tools; public apps should call the API from their backend.
 | `useSession(uuid)` | `client.sessions.get(uuid)` — skipped while `uuid` is empty |
 | `useSessionLogs(uuid, { tail })` | `client.sessions.logs(uuid, { tail })` |
 | `useHostingNodes()` | `client.hosting.nodes()` |
-| `useNetworkInfo()` | `client.network.info()` (public) |
-| `useGpuCurrent({ verified })` | `client.stats.gpuCurrent()` (public) |
-| `useGpuHistory(options)` | `client.stats.gpuHistory()` (public) |
-| `useGpuLocations()` | `client.stats.gpuLocations()` (public) |
+| `useNetworkInfo()` | `client.network.info()` (no API key needed) |
+| `useGpuCurrent({ verified })` | `client.stats.gpuCurrent()` (no API key needed) |
+| `useGpuHistory(options)` | `client.stats.gpuHistory()` (no API key needed) |
+| `useGpuLocations()` | `client.stats.gpuLocations()` (no API key needed) |
 
 Every hook takes options as its last argument and returns the same shape:
 
@@ -87,8 +93,7 @@ const { data, error, loading, fetching, refetch } = useSession(uuid, {
 - `refetch()` and polling keep the current data until the new response arrives; changing the
   inputs (e.g. another `uuid`) starts from scratch.
 - Requests are cancelled through `AbortController` on unmount and when the inputs change.
-- A stopped session yields an `OctaNotFoundError` in `error`: the API only reports running
-  sessions.
+- A stopped session yields an `OctaNotFoundError` in `error`.
 
 ### Following a starting session
 
@@ -139,6 +144,11 @@ const logs = useOctaRequest((request) => client.sessions.logs(uuid, { tail: 1000
 ```
 
 `useOctaClient()` returns the `OctaClient` from context and throws outside a provider.
+
+## Versioning
+
+The package follows [Semantic Versioning](https://semver.org). Until version 1.0, a minor release
+can contain breaking changes; the [changelog](CHANGELOG.md) marks them as **Breaking**.
 
 ## License
 

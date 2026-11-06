@@ -31,8 +31,8 @@ const START_FIELDS = [
 /** Compute machines: listing, start (single and batch) and restart. */
 export class ComputeResource extends BaseResource {
   /**
-   * Machines available for rent (`GET /services/compute`). Works without an API key, but the
-   * anonymous listing is cached for up to an hour; with a key it is at most 10 seconds old.
+   * Machines available for rent (`GET /services/compute`). Works without an API key, but is then
+   * refreshed about once an hour; with a key it is at most 10 seconds old.
    */
   async list(request?: RequestOverrides): Promise<ComputeMachine[]> {
     const res = await this.request<ComputeMachine[]>(
@@ -42,9 +42,8 @@ export class ComputeResource extends BaseResource {
   }
 
   /**
-   * Starts one session (`POST /services/compute` with an object → 201). Validation and business
-   * errors (`Insufficient balance`, `Node not available`, …) throw an `OctaValidationError`.
-   * Never retried automatically: a start costs money.
+   * Starts one session (`POST /services/compute`). Validation and business errors (`Insufficient balance`, `Node not available`, …)
+   * throw an `OctaValidationError`. Never retried automatically: a start costs money.
    */
   async start(params: ComputeStartParams, request?: RequestOverrides): Promise<StartResult> {
     const res = await this.request<StartResult>(
@@ -61,7 +60,7 @@ export class ComputeResource extends BaseResource {
   }
 
   /**
-   * Starts several sessions at once (`POST /services/compute` with an array → 200). Each item is
+   * Starts several sessions at once (`POST /services/compute` with an array). Each item is
    * validated on its own and reported in the result in request order; a failed item does not fail
    * the batch. Items without an `id` get their position in the array.
    */
@@ -81,16 +80,16 @@ export class ComputeResource extends BaseResource {
 
   /**
    * Recreates the session's container on the same node, keeping the rent, `uuid` and prices
-   * (`POST /services/compute/{uuid}/restart` → 202). Follow the progress with
+   * (`POST /services/compute/{uuid}/restart`). Follow the progress with
    * `sessions.get(uuid)`; if the new parameters cannot be applied, the session stops.
    *
    * - Without `params`: restarts with the original parameters.
    * - With `params`: **replaces all parameters**; omitted fields get fixed defaults, including
    *   `disk_size` = 1 GB. See {@link ComputeRestartParams}.
    *
-   * Throws `OctaConflictError` (409) while the session is still starting or restarting, and
-   * `OctaRateLimitError` (429) when restarted more often than once per 5 minutes / 6 per hour
-   * (`retryAfter` says how long to wait). Never retried automatically.
+   * Throws `OctaConflictError` when the session is already starting or restarting, and
+   * `OctaRateLimitError` when it was restarted too recently: once in 5 minutes and 6 times an
+   * hour (`retryAfter` says how long to wait). Never retried automatically.
    */
   async restart(
     uuid: string,

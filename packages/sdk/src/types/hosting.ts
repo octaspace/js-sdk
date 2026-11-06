@@ -24,7 +24,7 @@ export interface HostingNodePrices {
 
 /** A node of the account (`GET /hosting/nodes`). Only online nodes are listed. */
 export interface HostingNode {
-  /** Public node number, the one renters see and `setPrices` takes */
+  /** Node number, the one renters see and `setPrices` takes */
   number: NodeNumber
   status: HostingNodeStatus
   /** A verification or benchmark in progress */
@@ -49,8 +49,8 @@ export interface HostingNode {
     memory?: HostingNodeUsage | null
     disk?: HostingNodeUsage | null
     /**
-     * GPUs as the node reports them (open objects): `model` and `mem_total_mb` are always there;
-     * clocks, temperature, fan speed, power draw and utilization when reported.
+     * GPUs of the node: `model` and `mem_total_mb`, and clocks, temperature, fan speed, power
+     * draw and utilization when the node reports them.
      */
     gpus?: Array<{ model?: string; mem_total_mb?: number | null; [key: string]: unknown }>
   }

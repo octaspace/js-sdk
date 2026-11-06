@@ -6,7 +6,7 @@ export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE'
  * How a request authenticates:
  * - `required` (default): sends `Authorization: Bearer <apiKey>`; fails before `fetch` without a key.
  * - `optional`: sends the key when the client has one (fresher data), otherwise goes anonymous.
- * - `none`: never sends the key (public endpoints).
+ * - `none`: never sends the key (no key needed).
  */
 export type AuthMode = 'required' | 'optional' | 'none'
 
@@ -21,8 +21,8 @@ export interface RequestOptions {
   /** Override per-request retry count */
   retries?: number
   /**
-   * Allow retries for a non-GET request that the API documents as idempotent
-   * (e.g. `POST /services/{uuid}/stop`). Never set it for starts or restarts.
+   * Allow retries for a non-GET request that is safe to repeat (e.g.
+   * `POST /services/{uuid}/stop`). Never set it for starts or restarts.
    */
   idempotent?: boolean
 }

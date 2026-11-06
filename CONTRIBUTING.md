@@ -1,4 +1,4 @@
-# Contributing to @octaspace/sdk
+# Contributing
 
 ## Prerequisites
 
@@ -25,12 +25,12 @@ dependency needs a build script, add it to `allowBuilds` deliberately.
 
 This is a pnpm workspace monorepo.
 
-```
+```text
 packages/
-  sdk/               # @octaspace/sdk — the core SDK package
+  sdk/               # @octaspace/sdk — the API client
     src/             # Source code
+    docs/            # Guides
     tests/unit/      # Unit tests (one file per resource)
-    scripts/         # Live smoke test against the real API
   sdk-query/         # @octaspace/sdk-query — TanStack Query wrappers
   sdk-react/         # @octaspace/sdk-react — React hooks & context
 .changeset/          # Changesets for versioning
@@ -61,7 +61,7 @@ pnpm check
 3. Register it in `OctaClient` (`packages/sdk/src/client.ts`)
 4. Export public types and classes from `packages/sdk/src/index.ts`
 5. Add or update unit tests in `packages/sdk/tests/unit/`
-6. Update `packages/sdk/README.md` if the public API changes
+6. Update `packages/sdk/README.md` and `packages/sdk/docs/` if the public API changes
 
 ## Writing tests
 
@@ -72,7 +72,7 @@ import { expect, it, vi } from 'vitest'
 import { loadFixture, makeClient, makeResponse, sentRequest } from './helpers.js'
 
 it('example', async () => {
-  const fixture = loadFixture('account_balance.json') // recorded next API response
+  const fixture = loadFixture('account_balance.json') // a JSON file in tests/fixtures
   const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(fixture))
   const client = makeClient(mockFetch) // key octa_ak_test, retries disabled
 
@@ -82,12 +82,9 @@ it('example', async () => {
 })
 ```
 
-Never make real HTTP requests in unit tests. Fixtures in `packages/sdk/tests/fixtures/next/` are
-recorded API responses with IP addresses replaced by documentation ranges; keep credentials
-(`ssh.web` URLs, keys) out of them.
-
-`pnpm smoke` runs read-only checks against the live API; set `OCTA_API_KEY` to include the
-authenticated ones.
+Never make real HTTP requests in unit tests. Fixtures in `packages/sdk/tests/fixtures/` are API
+responses with placeholder values: documentation IP ranges, `example.com` hosts, placeholder node
+numbers. Keep credentials (`ssh.web` URLs, keys) out of them.
 
 Run a single test file:
 

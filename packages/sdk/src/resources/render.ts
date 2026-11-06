@@ -7,8 +7,8 @@ import { type RequestOverrides, withRequestOverrides } from './request-options.j
 /** Render nodes: listing and start (single and batch). */
 export class RenderResource extends BaseResource {
   /**
-   * Nodes available for render (`GET /services/render`). Works without an API key; with a key
-   * the listing is fresher.
+   * Nodes available for render (`GET /services/render`). Works without an API key, but is then
+   * refreshed about once an hour; with a key it is at most 10 seconds old.
    */
   async list(request?: RequestOverrides): Promise<RenderMachine[]> {
     const res = await this.request<RenderMachine[]>(
@@ -18,9 +18,9 @@ export class RenderResource extends BaseResource {
   }
 
   /**
-   * Rents a node as a render node (`POST /services/render` with an object → 201), billed by the
-   * hour until stopped. When render is temporarily unavailable this throws an
-   * `OctaServiceUnavailableError` (503). Never retried automatically.
+   * Rents a node as a render node (`POST /services/render`), billed by the hour until stopped.
+   * When render is temporarily unavailable this throws an `OctaServiceUnavailableError`. Never
+   * retried automatically.
    */
   async start(params: RenderStartParams, request?: RequestOverrides): Promise<StartResult> {
     const res = await this.request<StartResult>(
@@ -37,9 +37,9 @@ export class RenderResource extends BaseResource {
   }
 
   /**
-   * Rents several render nodes at once (`POST /services/render` with an array → 200). Unlike
+   * Rents several render nodes at once (`POST /services/render` with an array). Unlike
    * {@link start}, a temporarily unavailable service is reported per item (`status: 1`,
-   * `reason: "Service is temporarily unavailable"`), not as an HTTP 503.
+   * `reason: "Service is temporarily unavailable"`), not as an error.
    */
   async startBatch(
     items: readonly RenderBatchItem[],

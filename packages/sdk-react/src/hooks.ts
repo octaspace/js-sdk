@@ -33,7 +33,7 @@ export function useBalance(options?: UseOctaRequestOptions<AccountBalance>) {
   return useOctaRequest((request) => client.accounts.balance(request), [client], options)
 }
 
-/** Public platform statistics (`client.network.info()`); no API key needed. */
+/** Platform statistics (`client.network.info()`); no API key needed. */
 export function useNetworkInfo(options?: UseOctaRequestOptions<NetworkInfo>) {
   const client = useOctaClient()
   return useOctaRequest((request) => client.network.info(request), [client], options)

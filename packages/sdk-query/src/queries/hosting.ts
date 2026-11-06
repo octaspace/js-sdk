@@ -9,7 +9,7 @@ export const hostingKeys = {
 
 /**
  * Nodes the account hosts. `setPrices()` is a mutation and is not wrapped; after it, invalidate
- * `hostingKeys.all()` (the new prices appear after replication, usually within seconds).
+ * `hostingKeys.all()` (the new prices appear within a few seconds).
  */
 export const hostingQueries = {
   nodes: (client: OctaClient) =>

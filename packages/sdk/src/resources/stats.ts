@@ -43,7 +43,7 @@ export function normalizeGpuHistoryOptions(
   }
 }
 
-/** Public GPU market statistics; no API key needed. */
+/** GPU market statistics; no API key needed. */
 export class StatsResource extends BaseResource {
   /** GPU models on the market now (`GET /stats/gpu/current`). */
   async gpuCurrent(

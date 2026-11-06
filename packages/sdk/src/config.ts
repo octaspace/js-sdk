@@ -11,9 +11,10 @@ export const DEFAULT_USER_AGENT = `@octaspace/sdk/${SDK_VERSION} (js)`
 
 export interface OctaClientOptions {
   /**
-   * Account API key (`octa_ak_…`), issued in Cube under Profile → Credentials. Sent as
-   * `Authorization: Bearer <apiKey>`; a value that already starts with `Bearer ` is accepted.
-   * Optional: public endpoints (network, GPU statistics, machine listings) work without it.
+   * API key of your OctaSpace account (`octa_ak_…`), created in the dashboard under
+   * Account → Credentials → API Keys. Sent as `Authorization: Bearer <apiKey>`; a value that
+   * already starts with `Bearer ` is accepted. Optional: network and GPU statistics and the
+   * machine listings work without it.
    */
   apiKey?: string
   /** API base URL (default: {@link DEFAULT_BASE_URL}) */

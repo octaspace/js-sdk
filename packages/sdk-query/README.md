@@ -1,10 +1,13 @@
 # @octaspace/sdk-query
 
-TanStack Query v5 integration for the [OctaSpace SDK](https://github.com/octaspace/js-sdk):
-query key factories and ready `queryOptions` for every read operation of `@octaspace/sdk`.
+[![npm](https://img.shields.io/npm/v/@octaspace/sdk-query)](https://www.npmjs.com/package/@octaspace/sdk-query)
 
-[![npm version](https://img.shields.io/npm/v/@octaspace/sdk-query)](https://www.npmjs.com/package/@octaspace/sdk-query)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+TanStack Query v5 integration for the [OctaSpace SDK](../sdk/README.md): query key factories and
+ready `queryOptions` for every read operation of `@octaspace/sdk`.
+
+**Contents:** [Installation](#installation) · [Quick start](#quick-start) ·
+[Available queries](#available-queries) · [Query key factories](#query-key-factories) ·
+[Mutations](#mutations)
 
 ## Installation
 
@@ -14,8 +17,8 @@ npm install @octaspace/sdk @octaspace/sdk-query
 pnpm add @octaspace/sdk @octaspace/sdk-query
 ```
 
-The only peer dependency is `@octaspace/sdk`. It works with any TanStack Query v5 adapter —
-`@tanstack/react-query`, `@tanstack/vue-query`, `@tanstack/solid-query`, …
+The only peer dependency is `@octaspace/sdk`. It works with any TanStack Query v5 adapter:
+`@tanstack/react-query`, `@tanstack/vue-query`, `@tanstack/solid-query` and others.
 
 ## Quick start
 
@@ -35,10 +38,15 @@ const { data: session } = useQuery({
   refetchInterval: (query) => (query.state.data?.status === 'ready' ? false : 3000),
 })
 
-// Public data needs no key
-const publicClient = new OctaClient()
-const { data: gpus } = useQuery(statsQueries.gpuCurrent(publicClient, { verified: 'yes' }))
+// GPU statistics need no API key
+const anonymousClient = new OctaClient()
+const { data: gpus } = useQuery(statsQueries.gpuCurrent(anonymousClient, { verified: 'yes' }))
 ```
+
+Create the client with the API key of your OctaSpace account, see
+[Authentication](../sdk/README.md#authentication). An API key in a browser bundle is visible to
+every user of the page: use it there only in trusted internal tools, and call the API from your
+backend in public apps.
 
 Every `queryFn` forwards TanStack's `signal`, so a cancelled query aborts its HTTP request.
 
@@ -86,10 +94,15 @@ const stop = useMutation({
 | Mutation | Invalidate |
 |---|---|
 | `client.compute.start()` / `startBatch()` / `restart()`, `client.render.start()` / `startBatch()`, `client.sessions.stop()` | `sessionKeys.all()` |
-| `client.hosting.setPrices()` | `hostingKeys.all()`, `computeKeys.all()` (prices appear after a few seconds) |
+| `client.hosting.setPrices()` | `hostingKeys.all()`, `computeKeys.all()` (new prices appear within a few seconds) |
 
 Starts and restarts cost money and are never retried by the SDK; keep TanStack's mutation
 `retry` at its default `0` for them.
+
+## Versioning
+
+The package follows [Semantic Versioning](https://semver.org). Until version 1.0, a minor release
+can contain breaking changes; the [changelog](CHANGELOG.md) marks them as **Breaking**.
 
 ## License
 
