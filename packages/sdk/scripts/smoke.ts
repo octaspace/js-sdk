@@ -11,7 +11,7 @@
  */
 
 import {
-  BASE_URL_DEV,
+  DEFAULT_BASE_URL,
   formatUsd,
   gpuHistoryPoints,
   isComputeSession,
@@ -86,7 +86,7 @@ function assert(condition: unknown, message: string): asserts condition {
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
 const apiKey = process.env.OCTA_API_KEY?.trim() || undefined
-const baseUrl = process.env.OCTA_API_URL?.trim() || BASE_URL_DEV
+const baseUrl = process.env.OCTA_API_URL?.trim() || DEFAULT_BASE_URL
 
 const clientOptions: OctaClientOptions = {
   baseUrl,

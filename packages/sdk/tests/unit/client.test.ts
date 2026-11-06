@@ -33,7 +33,7 @@ describe('OctaClient', () => {
       expect(names).not.toContain(legacy)
     }
     expect(names).toEqual(
-      expect.arrayContaining(['OctaClient', 'BASE_URL_DEV', 'formatUsd', 'gpuHistoryPoints']),
+      expect.arrayContaining(['OctaClient', 'DEFAULT_BASE_URL', 'formatUsd', 'gpuHistoryPoints']),
     )
   })
 })

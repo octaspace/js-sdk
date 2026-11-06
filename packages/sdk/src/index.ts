@@ -1,6 +1,6 @@
 // Client and configuration
 export { OctaClient } from './client.js'
-export { BASE_URL_DEV, type OctaClientOptions } from './config.js'
+export { DEFAULT_BASE_URL, type OctaClientOptions } from './config.js'
 
 // Errors
 export {

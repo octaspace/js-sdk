@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { OctaClient } from '../../src/client.js'
-import { BASE_URL_DEV } from '../../src/config.js'
+import { DEFAULT_BASE_URL } from '../../src/config.js'
 import {
   OctaApiError,
   OctaAuthenticationError,
@@ -74,7 +74,7 @@ describe('HttpTransport', () => {
     const client = new OctaClient({ fetch: mockFetch, retries: 0 })
     await client.network.info()
 
-    expect(BASE_URL_DEV).toBe('https://api-dev.octa.space')
+    expect(DEFAULT_BASE_URL).toBe('https://api-dev.octa.space')
     expect(urlOf(mockFetch)).toBe('https://api-dev.octa.space/network')
   })
 

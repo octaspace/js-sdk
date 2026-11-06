@@ -26,7 +26,7 @@ import { HttpTransport } from './transport/http.js'
  * ```
  *
  * Every option is optional: without `apiKey` only the public endpoints (network, stats, machine
- * listings) work, and the base URL defaults to {@link BASE_URL_DEV}.
+ * listings) work, and the base URL defaults to {@link DEFAULT_BASE_URL}.
  */
 export class OctaClient {
   /** Account: balance */
