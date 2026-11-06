@@ -1,7 +1,5 @@
 version: 2
 
-# Development happens on `next` until the new API is released; switch
-# target-branch back to `main` when `next` is merged.
 updates:
   - package-ecosystem: npm
     directory: /

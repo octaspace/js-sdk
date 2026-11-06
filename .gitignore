@@ -16,9 +16,4 @@ coverage/
 *.swp
 *.bak
 *.tmp
-*.claude
 package-lock.json
-
-# Local AI agent instructions
-CLAUDE.md
-AGENTS.md
