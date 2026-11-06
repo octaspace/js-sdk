@@ -112,7 +112,8 @@ pnpm lint:fix
 
 ## Versioning
 
-This project follows [Semantic Versioning](https://semver.org/):
+This project follows [Semantic Versioning](https://semver.org/). The three packages are always
+released together with the same version.
 
 | Change | Version bump |
 |--------|-------------|
