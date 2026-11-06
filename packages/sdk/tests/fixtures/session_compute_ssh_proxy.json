@@ -14,14 +14,14 @@
     "direct": null
   },
   "duration": 130,
-  "city": "Mukachevo",
-  "country": "Ukraine",
+  "city": "Frankfurt",
+  "country": "Germany",
   "tx": 603853,
   "rx": 48245888,
   "uuid": "9b2f6c1e-3d4a-4f5b-8c7d-0e1f2a3b4c5d",
   "traffic_price": 100,
   "storage_price": 100,
-  "node_number": "M95S-WZG8-7",
+  "node_number": "7KQ4-M2XD-4",
   "min_rent_minutes": 0,
   "base_price": 100,
   "fm": null,
@@ -54,7 +54,7 @@
     "cpu_cores": 48,
     "total_memory": 132114866176
   },
-  "country_iso": "UA",
+  "country_iso": "DE",
   "charge_amount": 22,
   "app_name": "Ubuntu 24",
   "app_logo": "https://files.octa.space/apps-logo/docker.svg"

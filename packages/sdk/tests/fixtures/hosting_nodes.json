@@ -67,12 +67,12 @@
       "cpu_load_percent": 0
     },
     "ip": "203.0.113.10",
-    "number": "M95S-WZG8-7",
+    "number": "7KQ4-M2XD-4",
     "location": {
-      "city": "Mukachevo",
-      "country": "Ukraine",
-      "latitude": 48.4425,
-      "longitude": 22.718
+      "city": "Frankfurt",
+      "country": "Germany",
+      "latitude": 50.1109,
+      "longitude": 8.6821
     },
     "services": {
       "render": {
@@ -136,12 +136,12 @@
       "cpu_load_percent": 0
     },
     "ip": "203.0.113.11",
-    "number": "7R2S-S05E-S",
+    "number": "3HW9-P6TR-8",
     "location": {
-      "city": "Mukachevo",
-      "country": "Ukraine",
-      "latitude": 48.4425,
-      "longitude": 22.718
+      "city": "Frankfurt",
+      "country": "Germany",
+      "latitude": 50.1109,
+      "longitude": 8.6821
     },
     "services": {
       "render": {
@@ -218,12 +218,12 @@
       "cpu_load_percent": 0
     },
     "ip": "203.0.113.12",
-    "number": "WJFM-MYWR-9",
+    "number": "5NBT-C8VJ-2",
     "location": {
-      "city": "Mukachevo",
-      "country": "Ukraine",
-      "latitude": 48.4425,
-      "longitude": 22.718
+      "city": "Frankfurt",
+      "country": "Germany",
+      "latitude": 50.1109,
+      "longitude": 8.6821
     },
     "services": {
       "compute": {

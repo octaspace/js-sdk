@@ -10,14 +10,14 @@
     "direct": null
   },
   "duration": 2,
-  "city": "Mukachevo",
-  "country": "Ukraine",
+  "city": "Frankfurt",
+  "country": "Germany",
   "tx": 0,
   "rx": 0,
   "uuid": "4c6d8e2f-1a3b-4c5d-9e7f-8a9b0c1d2e3f",
   "traffic_price": 100,
   "storage_price": 100,
-  "node_number": "WJFM-MYWR-9",
+  "node_number": "5NBT-C8VJ-2",
   "min_rent_minutes": 0,
   "base_price": 100,
   "fm": null,
@@ -50,7 +50,7 @@
     "cpu_cores": 16,
     "total_memory": 97915236352
   },
-  "country_iso": "UA",
+  "country_iso": "DE",
   "charge_amount": 0,
   "app_name": "alpine:3.20",
   "app_logo": "https://files.octa.space/apps-logo/docker.svg"

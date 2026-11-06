@@ -34,7 +34,7 @@ describe('compute.list', () => {
     expect(sentRequest(mockFetch).headers.has('Authorization')).toBe(false)
   })
 
-  it('decodes the live listing and normalizes "null" strings in GPUs', async () => {
+  it('decodes the listing and normalizes "null" strings in GPUs', async () => {
     const fixture = loadFixture<ComputeMachine[]>('services_compute.json')
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(fixture))
     const client = makeClient(mockFetch)
@@ -43,7 +43,7 @@ describe('compute.list', () => {
     expect(machines).toHaveLength(fixture.length)
 
     const first = machines[0]
-    expect(first?.node_number).toBe('7R2S-S05E-S')
+    expect(first?.node_number).toBe('3HW9-P6TR-8')
     expect(first?.base_price).toBe(100000)
     expect(first?.net_down_mbps).toBe(222)
     expect(first?.reliability.uptime).toBeGreaterThan(90)
@@ -78,7 +78,7 @@ describe('compute.start', () => {
     const client = makeClient(mockFetch)
 
     const result = await client.compute.start({
-      node_number: 'M95S-WZG8-7',
+      node_number: '7KQ4-M2XD-4',
       image: 'ubuntu:24.04',
       disk_size: 20,
       envs: { FOO: 'bar' },
@@ -94,7 +94,7 @@ describe('compute.start', () => {
     expect(result).toEqual({ uuid: 'u-1' })
     expect(sentRequest(mockFetch).method).toBe('POST')
     expect(sentBody(mockFetch)).toEqual({
-      node_number: 'M95S-WZG8-7',
+      node_number: '7KQ4-M2XD-4',
       image: 'ubuntu:24.04',
       disk_size: 20,
       envs: { FOO: 'bar' },
@@ -112,14 +112,14 @@ describe('compute.start', () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({ uuid: 'u-1' }, 201))
     const client = makeClient(mockFetch)
 
-    await client.compute.start({ node_number: 'M95S-WZG8-7', image: 'alpine', ssh: undefined })
-    expect(sentBody(mockFetch)).toEqual({ node_number: 'M95S-WZG8-7', image: 'alpine' })
+    await client.compute.start({ node_number: '7KQ4-M2XD-4', image: 'alpine', ssh: undefined })
+    expect(sentBody(mockFetch)).toEqual({ node_number: '7KQ4-M2XD-4', image: 'alpine' })
   })
 
   it('drops fields that are not part of the request schema', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({ uuid: 'u-1' }, 201))
     const client = makeClient(mockFetch)
-    const params = { node_number: 'N', image: 'alpine', start_command: 'legacy' }
+    const params = { node_number: 'N', image: 'alpine', start_command: 'echo' }
 
     await client.compute.start(params)
     expect(sentBody(mockFetch)).toEqual({ node_number: 'N', image: 'alpine' })
@@ -149,13 +149,13 @@ describe('compute.startBatch', () => {
     const client = makeClient(mockFetch)
 
     const out = await client.compute.startBatch([
-      { id: 'a', node_number: 'M95S-WZG8-7', image: 'alpine' },
+      { id: 'a', node_number: '7KQ4-M2XD-4', image: 'alpine' },
       { node_number: 'ZZZZ-ZZZZ-Z', image: 'alpine', fm: true },
     ])
 
     expect(out).toEqual(results)
     expect(sentBody(mockFetch)).toEqual([
-      { id: 'a', node_number: 'M95S-WZG8-7', image: 'alpine' },
+      { id: 'a', node_number: '7KQ4-M2XD-4', image: 'alpine' },
       { id: 1, node_number: 'ZZZZ-ZZZZ-Z', image: 'alpine', fm: true },
     ])
   })

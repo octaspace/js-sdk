@@ -69,7 +69,7 @@ describe('HttpTransport', () => {
     expect(mockFetch).not.toHaveBeenCalled()
   })
 
-  it('defaults to the next API test stand', async () => {
+  it('defaults to DEFAULT_BASE_URL', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({}))
     const client = new OctaClient({ fetch: mockFetch, retries: 0 })
     await client.network.info()
@@ -139,11 +139,11 @@ describe('HttpTransport', () => {
   it('sends JSON body with Content-Type header', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse([{ uuid: 'sess_1' }]))
     const client = makeClient(mockFetch)
-    await client.compute.start({ node_number: 'M95S-WZG8-7', image: 'alpine' })
+    await client.compute.start({ node_number: '7KQ4-M2XD-4', image: 'alpine' })
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit]
     expect(headersOf(mockFetch).get('Content-Type')).toBe('application/json')
-    expect(init.body).toBe('{"node_number":"M95S-WZG8-7","image":"alpine"}')
+    expect(init.body).toBe('{"node_number":"7KQ4-M2XD-4","image":"alpine"}')
   })
 
   it('accepts 202 and 204 responses without a body', async () => {
@@ -190,7 +190,7 @@ describe('failover', () => {
     })
 
     await expect(
-      client.compute.start({ node_number: 'M95S-WZG8-7', image: 'alpine' }),
+      client.compute.start({ node_number: '7KQ4-M2XD-4', image: 'alpine' }),
     ).rejects.toBeInstanceOf(OctaNetworkError)
     expect(mockFetch).toHaveBeenCalledOnce()
     expect(urlOf(mockFetch)).toMatch(/^https:\/\/a\.example\.com/)
