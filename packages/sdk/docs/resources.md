@@ -234,11 +234,11 @@ protocols that passed an end-to-end check on that node.
 | `awg` | AmneziaWG config file |
 | `reality` | VLESS Reality link |
 | `http_proxy` | HTTP proxy; it lets in only the IP address the `start` request came from |
-| `v2ray` | V2Ray link; `protocol` is `vless`, `vmess` or `trojan` (default). No node is checked for it |
+| `v2ray` | V2Ray link; `protocol` is `vless`, `vmess` or `trojan` (default). No node is checked for it, so it is accepted on any VPN node without a check that it works there |
 
-> [!IMPORTANT]
-> Pick a `subkind` from the node's `protocols`. A session of another protocol still starts and
-> is charged, but may not work on that node.
+Pick a `subkind` from the node's `protocols`. A protocol the node did not pass throws an
+`OctaValidationError` (`Node's VPN did not pass the connection check`); nothing is started or
+charged.
 
 - One VPN session per node: a second one on the same node throws an `OctaValidationError`
   (`You already have a VPN session on this node`).
