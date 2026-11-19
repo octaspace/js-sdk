@@ -7,7 +7,10 @@ import {
   useComputeApps,
   useComputeMachines,
   useGpuHistory,
+  useHostingNode,
   useHostingNodes,
+  useMiningStats,
+  useNetworkHistory,
   useNetworkInfo,
   useSession,
   useSessionLogs,
@@ -262,6 +265,48 @@ describe('sdk-react hooks', () => {
     })
     expect(vpnList.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
     expect(apps.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('loads network history, mining and one hosted node; skips the node without a number', async () => {
+    const history = vi.fn().mockResolvedValue({ timestamps: [1] })
+    const mining = vi.fn().mockResolvedValue({ role: 'cpu' })
+    const get = vi.fn().mockResolvedValue({ number: '7KQ4-M2XD-4' })
+    const client = {
+      network: { history },
+      stats: { mining },
+      hosting: { get },
+    } as unknown as OctaClient
+    const seen: Record<string, unknown> = {}
+
+    function Probe({ number }: { number: string | null }) {
+      seen.history = useNetworkHistory({ start: new Date(1_000_000), step: 3600 }).data
+      seen.mining = useMiningStats({ role: 'cpu', days: 7 }).data
+      seen.node = useHostingNode(number).data
+      return null
+    }
+
+    const mounted = render(
+      <OctaProvider client={client}>
+        <Probe number={null} />
+      </OctaProvider>,
+    )
+
+    await waitFor(() => {
+      expect(seen.history).toEqual({ timestamps: [1] })
+      expect(seen.mining).toEqual({ role: 'cpu' })
+    })
+    expect(history.mock.calls[0]?.[0]).toEqual({ start: 1000, end: undefined, step: 3600 })
+    expect(mining.mock.calls[0]?.[0]).toEqual({ role: 'cpu', days: 7 })
+    expect(get).not.toHaveBeenCalled()
+
+    mounted.rerender(
+      <OctaProvider client={client}>
+        <Probe number="7KQ4-M2XD-4" />
+      </OctaProvider>,
+    )
+    await waitFor(() => expect(seen.node).toEqual({ number: '7KQ4-M2XD-4' }))
+    expect(get.mock.calls[0]?.[0]).toBe('7KQ4-M2XD-4')
+    expect(history).toHaveBeenCalledOnce()
   })
 
   it('refetches GPU history only when its options change', async () => {

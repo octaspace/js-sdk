@@ -1,6 +1,7 @@
 import {
   type GpuCurrentOptions,
   type GpuHistoryOptions,
+  type MiningOptions,
   normalizeGpuHistoryOptions,
   type OctaClient,
 } from '@octaspace/sdk'
@@ -14,9 +15,11 @@ export const statsKeys = {
   gpuHistory: (options: GpuHistoryOptions = {}) =>
     [...statsKeys.all(), 'gpu', 'history', normalizeGpuHistoryOptions(options)] as const,
   gpuLocations: () => [...statsKeys.all(), 'gpu', 'locations'] as const,
+  mining: (options: MiningOptions = {}) =>
+    [...statsKeys.all(), 'mining', { role: options.role, days: options.days }] as const,
 }
 
-/** GPU market statistics; no API key needed. */
+/** GPU market and mining statistics; no API key needed. */
 export const statsQueries = {
   gpuCurrent: (client: OctaClient, options: GpuCurrentOptions = {}) =>
     queryOptions({
@@ -34,5 +37,11 @@ export const statsQueries = {
     queryOptions({
       queryKey: statsKeys.gpuLocations(),
       queryFn: (ctx: QueryContext) => client.stats.gpuLocations(requestFrom(ctx)),
+    }),
+
+  mining: (client: OctaClient, options: MiningOptions = {}) =>
+    queryOptions({
+      queryKey: statsKeys.mining(options),
+      queryFn: (ctx: QueryContext) => client.stats.mining(options, requestFrom(ctx)),
     }),
 }

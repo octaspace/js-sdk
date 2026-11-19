@@ -8,14 +8,13 @@ import type {
   GpuModelHistory,
   GpuPricePercentiles,
   GpuPriceSeries,
+  MiningOptions,
+  MiningUsage,
 } from '../types/stats.js'
 import { nullStrings } from '../utils/null-strings.js'
+import { unixSeconds } from '../utils/time.js'
 import { BaseResource } from './base.js'
 import { type RequestOverrides, withRequestOverrides } from './request-options.js'
-
-function unixSeconds(value: number | Date | undefined): number | undefined {
-  return value instanceof Date ? Math.floor(value.getTime() / 1000) : value
-}
 
 /** {@link GpuHistoryOptions} in the form the API takes: one model string, Unix seconds. */
 export interface NormalizedGpuHistoryOptions {
@@ -43,7 +42,7 @@ export function normalizeGpuHistoryOptions(
   }
 }
 
-/** GPU market statistics; no API key needed. */
+/** GPU market and mining statistics; no API key needed. */
 export class StatsResource extends BaseResource {
   /** GPU models on the market now (`GET /stats/gpu/current`). */
   async gpuCurrent(
@@ -87,6 +86,26 @@ export class StatsResource extends BaseResource {
             end,
             step,
           },
+        },
+        request,
+      ),
+    )
+    return nullStrings(res.data)
+  }
+
+  /**
+   * What mining sessions of the platform run (`GET /stats/mining`): miners, algorithms and pools,
+   * most used first, and the miners per day. `days` outside 1 … 365 throws an
+   * `OctaValidationError`.
+   */
+  async mining(options: MiningOptions = {}, request?: RequestOverrides): Promise<MiningUsage> {
+    const res = await this.request<MiningUsage>(
+      withRequestOverrides(
+        {
+          method: 'GET',
+          path: '/stats/mining',
+          auth: 'none',
+          query: { role: options.role, days: options.days },
         },
         request,
       ),

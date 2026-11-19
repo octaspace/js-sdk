@@ -143,5 +143,6 @@ throws an `OctaNotFoundError`. `waitStopped` resolves once the session is gone a
 | `duration` | Seconds since the start |
 | `started_at` | Unix milliseconds |
 | `node_hw` | The node: CPU, memory, GPUs, the rented disk in GB, network speed |
+| `volume` | The persistent volume of a compute session, `{ id, mount }`; `null` without one |
 
 While a session is starting, its prices, `started_at` and `node_hw` are `null`.

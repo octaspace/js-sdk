@@ -8,8 +8,13 @@ import {
   type GpuHistoryOptions,
   type GpuLocation,
   type HostingNode,
+  type MiningOptions,
+  type MiningUsage,
+  type NetworkHistory,
+  type NetworkHistoryOptions,
   type NetworkInfo,
   normalizeGpuHistoryOptions,
+  normalizeNetworkHistoryOptions,
   type RenderMachine,
   type Session,
   type SessionLogs,
@@ -41,10 +46,37 @@ export function useNetworkInfo(options?: UseOctaRequestOptions<NetworkInfo>) {
   return useOctaRequest((request) => client.network.info(request), [client], options)
 }
 
+/** Platform statistics over time (`client.network.history()`); no API key needed. */
+export function useNetworkHistory(
+  historyOptions?: NetworkHistoryOptions,
+  options?: UseOctaRequestOptions<NetworkHistory>,
+) {
+  const client = useOctaClient()
+  const { start, end, step } = normalizeNetworkHistoryOptions(historyOptions)
+  return useOctaRequest(
+    (request) => client.network.history({ start, end, step }, request),
+    [client, start, end, step],
+    options,
+  )
+}
+
 /** Online nodes the account hosts (`client.hosting.nodes()`). */
 export function useHostingNodes(options?: UseOctaRequestOptions<HostingNode[]>) {
   const client = useOctaClient()
   return useOctaRequest((request) => client.hosting.nodes(request), [client], options)
+}
+
+/** One online node of the account (`client.hosting.get(number)`); skipped while `number` is empty. */
+export function useHostingNode(
+  number: string | null | undefined,
+  options?: UseOctaRequestOptions<HostingNode>,
+) {
+  const client = useOctaClient()
+  return useOctaRequest(
+    number ? (request) => client.hosting.get(number, request) : null,
+    [client, number],
+    whenReady(Boolean(number), options),
+  )
 }
 
 /** GPU market now (`client.stats.gpuCurrent()`); no API key needed. */
@@ -79,6 +111,21 @@ export function useGpuHistory(
 export function useGpuLocations(options?: UseOctaRequestOptions<GpuLocation[]>) {
   const client = useOctaClient()
   return useOctaRequest((request) => client.stats.gpuLocations(request), [client], options)
+}
+
+/** Mining on the platform (`client.stats.mining()`); no API key needed. */
+export function useMiningStats(
+  miningOptions?: MiningOptions,
+  options?: UseOctaRequestOptions<MiningUsage>,
+) {
+  const client = useOctaClient()
+  const role = miningOptions?.role
+  const days = miningOptions?.days
+  return useOctaRequest(
+    (request) => client.stats.mining({ role, days }, request),
+    [client, role, days],
+    options,
+  )
 }
 
 /** Compute machines available for rent (`client.compute.list()`). */

@@ -15,6 +15,7 @@ export type {
   ComputeMachine,
   ComputeRestartParams,
   ComputeStartParams,
+  ComputeVolume,
 } from './compute.js'
 export type {
   HostingNode,
@@ -25,7 +26,12 @@ export type {
   HostingNodeUsage,
   NodePrices,
 } from './hosting.js'
-export type { NetworkInfo } from './network.js'
+export type {
+  NetworkHistory,
+  NetworkHistoryOptions,
+  NetworkHistoryPoint,
+  NetworkInfo,
+} from './network.js'
 export type { RenderBatchItem, RenderMachine, RenderStartParams } from './render.js'
 export type {
   ComputeSession,
@@ -55,5 +61,9 @@ export type {
   GpuPricePercentiles,
   GpuPriceSeries,
   GpuVerifiedFilter,
+  MiningOptions,
+  MiningRole,
+  MiningUsage,
+  MiningUsageRow,
 } from './stats.js'
 export type { V2RayProtocol, VpnMachine, VpnProtocol, VpnStartParams } from './vpn.js'

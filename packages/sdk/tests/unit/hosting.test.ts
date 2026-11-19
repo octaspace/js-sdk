@@ -111,3 +111,28 @@ describe('hosting.nodes VPN offer', () => {
     })
   })
 })
+
+describe('hosting.get', () => {
+  it('GETs one node by its number with the key', async () => {
+    const [node] = loadFixture<HostingNode[]>('hosting_nodes.json')
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(node))
+    const client = makeClient(mockFetch)
+
+    const out = await client.hosting.get('7kq4 m2xd 4')
+    expect(sentRequest(mockFetch).method).toBe('GET')
+    expect(sentRequest(mockFetch).url).toMatch(/\/hosting\/nodes\/7kq4%20m2xd%204$/)
+    expect(sentRequest(mockFetch).headers.get('Authorization')).toBe('Bearer octa_ak_test')
+    expect(out.number).toBe(node?.number)
+  })
+
+  it('throws OctaNotFoundError for a node that is not online on the account', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(makeErrorResponse({ message: 'Node not found' }, 404))
+      .mockResolvedValueOnce(makeErrorResponse({ message: 'Invalid node number' }, 400))
+    const client = makeClient(mockFetch)
+
+    await expect(client.hosting.get('7KQ4-M2XD-4')).rejects.toBeInstanceOf(OctaNotFoundError)
+    await expect(client.hosting.get('7KQ4-M2XD-5')).rejects.toBeInstanceOf(OctaValidationError)
+  })
+})

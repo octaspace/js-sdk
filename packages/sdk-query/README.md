@@ -63,10 +63,13 @@ Every `queryFn` forwards TanStack's `signal`, so a cancelled query aborts its HT
 | `sessionQueries.detail(client, uuid)` | `['@octaspace', 'sessions', 'detail', uuid]` | `client.sessions.get(uuid)` |
 | `sessionQueries.logs(client, uuid, { tail })` | `['@octaspace', 'sessions', 'logs', uuid, { tail }]` | `client.sessions.logs(uuid, { tail })` |
 | `hostingQueries.nodes(client)` | `['@octaspace', 'hosting', 'nodes']` | `client.hosting.nodes()` |
+| `hostingQueries.node(client, number)` | `['@octaspace', 'hosting', 'node', number]` | `client.hosting.get(number)` |
 | `networkQueries.info(client)` | `['@octaspace', 'network', 'info']` | `client.network.info()` |
+| `networkQueries.history(client, options)` | `['@octaspace', 'network', 'history', options]` | `client.network.history()` |
 | `statsQueries.gpuCurrent(client, { verified })` | `['@octaspace', 'stats', 'gpu', 'current', { verified }]` | `client.stats.gpuCurrent()` |
 | `statsQueries.gpuHistory(client, options)` | `['@octaspace', 'stats', 'gpu', 'history', options]` | `client.stats.gpuHistory()` |
 | `statsQueries.gpuLocations(client)` | `['@octaspace', 'stats', 'gpu', 'locations']` | `client.stats.gpuLocations()` |
+| `statsQueries.mining(client, { role, days })` | `['@octaspace', 'stats', 'mining', { role, days }]` | `client.stats.mining()` |
 
 ## Query key factories
 

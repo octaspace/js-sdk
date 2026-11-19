@@ -25,6 +25,21 @@ export class HostingResource extends BaseResource {
   }
 
   /**
+   * One online node of the account (`GET /hosting/nodes/{number}`); case, dashes and spaces in
+   * the number are ignored. Throws `OctaNotFoundError` for a node that is offline, does not exist
+   * or belongs to another account, and `OctaValidationError` for a malformed number.
+   */
+  async get(number: string, request?: RequestOverrides): Promise<HostingNode> {
+    const res = await this.request<HostingNode>(
+      withRequestOverrides(
+        { method: 'GET', path: `/hosting/nodes/${encodeURIComponent(number)}` },
+        request,
+      ),
+    )
+    return nullStrings(res.data)
+  }
+
+  /**
    * Updates some prices of a node (`PATCH /hosting/nodes/{number}/prices`). Only the fields that
    * are set are sent; at least one is required. Amounts are integer micro-USD (convert
    * dollars with `usdToMicroUsd()`); the API refuses other values with an `OctaValidationError`,

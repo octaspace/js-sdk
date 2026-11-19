@@ -75,10 +75,13 @@ Create the client with the API key of your OctaSpace account, see
 | `useSession(uuid)` | `client.sessions.get(uuid)` — skipped while `uuid` is empty |
 | `useSessionLogs(uuid, { tail })` | `client.sessions.logs(uuid, { tail })` |
 | `useHostingNodes()` | `client.hosting.nodes()` |
+| `useHostingNode(number)` | `client.hosting.get(number)` — skipped while `number` is empty |
 | `useNetworkInfo()` | `client.network.info()` (no API key needed) |
+| `useNetworkHistory(options)` | `client.network.history()` (no API key needed) |
 | `useGpuCurrent({ verified })` | `client.stats.gpuCurrent()` (no API key needed) |
 | `useGpuHistory(options)` | `client.stats.gpuHistory()` (no API key needed) |
 | `useGpuLocations()` | `client.stats.gpuLocations()` (no API key needed) |
+| `useMiningStats({ role, days })` | `client.stats.mining()` (no API key needed) |
 
 Every hook takes options as its last argument and returns the same shape:
 

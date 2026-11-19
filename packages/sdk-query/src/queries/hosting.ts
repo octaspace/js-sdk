@@ -5,6 +5,7 @@ import { queryOptions } from '../queryOptions.js'
 export const hostingKeys = {
   all: () => ['@octaspace', 'hosting'] as const,
   nodes: () => [...hostingKeys.all(), 'nodes'] as const,
+  node: (number: string) => [...hostingKeys.all(), 'node', number] as const,
 }
 
 /**
@@ -16,5 +17,11 @@ export const hostingQueries = {
     queryOptions({
       queryKey: hostingKeys.nodes(),
       queryFn: (ctx: QueryContext) => client.hosting.nodes(requestFrom(ctx)),
+    }),
+
+  node: (client: OctaClient, number: string) =>
+    queryOptions({
+      queryKey: hostingKeys.node(number),
+      queryFn: (ctx: QueryContext) => client.hosting.get(number, requestFrom(ctx)),
     }),
 }
