@@ -13,7 +13,7 @@ export interface VpnMachine {
   traffic_price: MicroUsd
   /**
    * Protocols that passed the end-to-end check on this node, at least one. Start a session with
-   * one of them: another protocol may not work on this node.
+   * one of them: a checked protocol the node did not pass is refused.
    */
   protocols: VpnProtocol[]
   city?: string
@@ -36,7 +36,7 @@ export interface VpnMachine {
  * - `wg` (WireGuard), `awg` (AmneziaWG), `reality` (VLESS Reality): what nodes are checked for.
  * - `http_proxy`: an HTTP proxy that lets in only the IP address the start request came from.
  * - `v2ray`: a V2Ray link; `protocol` defaults to `trojan`. Nodes are not checked for it, so it
- *   is never in `protocols`.
+ *   is never in `protocols` and is accepted on any VPN node, without a check that it works there.
  */
 export type VpnStartParams =
   | {

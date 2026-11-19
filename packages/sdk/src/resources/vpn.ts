@@ -22,10 +22,11 @@ export class VpnResource extends BaseResource {
    * `sessions.stop()`. Once `sessions.waitReady()` returns it, the session's `config` is what the
    * client connects with.
    *
-   * Pick a `subkind` from the node's `protocols`: a session of another protocol still starts,
-   * but may not work on that node. An account can have one VPN session per node. Validation and business
-   * errors (`Insufficient balance`, `Node not found`, `You already have a VPN session on this
-   * node`, …) throw an `OctaValidationError`. Never retried automatically.
+   * Pick a `subkind` from the node's `protocols`. An account can have one VPN session per node.
+   * Validation and business errors throw an `OctaValidationError`, for example `Insufficient
+   * balance`, `Node not found`, `You already have a VPN session on this node`, and `Node's VPN
+   * did not pass the connection check` for a protocol the node did not pass. Never retried
+   * automatically.
    */
   async start(params: VpnStartParams, request?: RequestOverrides): Promise<StartResult> {
     const body: Record<string, unknown> = {
