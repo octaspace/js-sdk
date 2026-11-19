@@ -103,36 +103,12 @@ const { uuid } = await client.compute.start({
 | `fm` | Web file manager. It has no login: anyone with its URL can read the files | the application's setting, off without one |
 | `startup_script` | Script run as root once the container is up; output goes to `/var/log/onstart.log` | none |
 | `app` | Application UUID, see [Apps](#apps) | none |
-| `volume` | A persistent volume to mount, see [Volumes](#volumes) | none |
 
 Pass `ssh: false` or `fm: false` to turn off SSH or the file manager that an application enables.
 
 `start` returns as soon as the session is created, while its container is still being set up. Wait
 for it with [`sessions.waitReady()`](sessions.md#wait-until-ready). A rejected request, for example
 for an insufficient balance, throws an `OctaValidationError` with the reason.
-
-### Volumes
-
-A volume keeps its data between sessions. You create volumes in the dashboard under
-**Marketplace → Volumes**; a session they are attached to reports them as `volume`, with the
-volume's UUID in `volume.id`. Mount one by its UUID; `mount` is `/data` by default:
-
-```ts
-await client.compute.start({
-  node_number: '7KQ4-M2XD-4',
-  image: 'ubuntu:24.04',
-  volume: { id: '8f14e45f-ceea-4e7a-9f2b-5c3d2e1a0b9c', mount: '/workspace' },
-})
-```
-
-- A volume is attached to one session at a time; in `startBatch`, give it to one item only.
-- A new volume is formatted (ext4) the first time it is attached.
-- `mount` is an absolute path of letters, digits, `.`, `_` and `-`, outside the system
-  directories (`/etc`, `/usr`, `/proc`, …).
-- If the volume cannot be attached, the session does not start and its system log says why.
-- Volumes are not available for VM apps.
-
-The session reports its volume as `volume` (`null` without one).
 
 ### Start several sessions
 
@@ -164,8 +140,7 @@ with. Follow the restart with `sessions.get()`.
 > [!WARNING]
 > Parameters you pass **replace** the session's parameters as a whole; they are not merged.
 > Every field you leave out takes its default: `disk_size` becomes 1 GB, and `envs`, ports,
-> `startup_script`, `ssh`, `fm` and `volume` are dropped; pass the session's `volume` again to
-> keep it attached. Include everything the session needs:
+> `startup_script`, `ssh` and `fm` are dropped. Include everything the session needs:
 >
 > ```ts
 > await client.compute.restart(uuid, {

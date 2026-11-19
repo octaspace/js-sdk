@@ -15,7 +15,6 @@ export type {
   ComputeMachine,
   ComputeRestartParams,
   ComputeStartParams,
-  ComputeVolume,
 } from './compute.js'
 export type {
   HostingNode,
