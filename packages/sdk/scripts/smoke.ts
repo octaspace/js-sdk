@@ -1,5 +1,5 @@
 /**
- * Smoke test — runs against the live API (default: https://api-dev.octa.space).
+ * Smoke test — runs against the live API (default: https://api.octa.space).
  *
  * Usage:
  *   pnpm smoke                                    # public endpoints only

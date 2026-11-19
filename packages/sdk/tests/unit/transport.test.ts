@@ -74,8 +74,8 @@ describe('HttpTransport', () => {
     const client = new OctaClient({ fetch: mockFetch, retries: 0 })
     await client.network.info()
 
-    expect(DEFAULT_BASE_URL).toBe('https://api-dev.octa.space')
-    expect(urlOf(mockFetch)).toBe('https://api-dev.octa.space/network')
+    expect(DEFAULT_BASE_URL).toBe('https://api.octa.space')
+    expect(urlOf(mockFetch)).toBe('https://api.octa.space/network')
   })
 
   it('builds correct URL with query params', async () => {

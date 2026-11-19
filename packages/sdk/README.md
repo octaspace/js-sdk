@@ -66,7 +66,7 @@ Create one client and reuse it.
 The SDK authenticates with an **API key** of your OctaSpace account. You create and delete API
 keys in the OctaSpace dashboard:
 
-1. Sign in to the [OctaSpace dashboard](https://cube-dev.octa.space).
+1. Sign in to the [OctaSpace dashboard](https://console.octa.space).
 2. In the sidebar, open **Account → Credentials**.
 3. In the **API Keys** section, click **New key**.
 4. Enter a **Label** that tells you where the key is used, for example `billing-service`, and

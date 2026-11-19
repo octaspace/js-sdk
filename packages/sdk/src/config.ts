@@ -1,7 +1,7 @@
 import type { RequestContext, ResponseContext } from './transport/types.js'
 
 /** Base URL of the OctaSpace API, used when `baseUrl` and `baseUrls` are not set. */
-export const DEFAULT_BASE_URL = 'https://api-dev.octa.space'
+export const DEFAULT_BASE_URL = 'https://api.octa.space'
 export const DEFAULT_TIMEOUT_MS = 30_000
 export const DEFAULT_RETRIES = 2
 declare const __SDK_VERSION__: string | undefined
