@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/@octaspace/sdk)](https://www.npmjs.com/package/@octaspace/sdk)
 
 The official JavaScript and TypeScript libraries for the [OctaSpace](https://octa.space) API. Rent
-compute machines and render nodes, manage sessions and the nodes you host, and read GPU market
+compute machines, render nodes and VPN, manage sessions and the nodes you host, and read GPU market
 statistics from your code.
 
 **Contents:** [Packages](#packages) · [Quick start](#quick-start) ·
@@ -52,7 +52,7 @@ statistics from your code.
 | --- | --- |
 | [`@octaspace/sdk` README](packages/sdk/README.md) | Installation, authentication, handling errors, API overview |
 | [Client configuration](packages/sdk/docs/configuration.md) | Options and defaults, cancellation and timeouts, logging, several hosts |
-| [Resources](packages/sdk/docs/resources.md) | Compute, render, hosting, balance, network and GPU statistics |
+| [Resources](packages/sdk/docs/resources.md) | Compute, render, VPN, hosting, balance, network and GPU statistics |
 | [Sessions](packages/sdk/docs/sessions.md) | Waiting until ready, connecting, logs, stopping |
 | [Errors, rate limits and retries](packages/sdk/docs/errors-and-reliability.md) | Error types, limits, automatic retries |
 | [Changelog](packages/sdk/CHANGELOG.md) | Changes in each release |
