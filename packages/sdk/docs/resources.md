@@ -16,7 +16,7 @@ Sessions have [their own guide](sessions.md).
 | Network speed | Whole Mbit/s in `net_down_mbps` / `net_up_mbps`; `0` if not measured. |
 | Time | `started_at` of a session and log `ts` are Unix milliseconds; statistics timestamps are Unix seconds. |
 | Optional values | Omit a field, or pass `undefined`, to leave it out of the request. `false` is sent as is. |
-| Responses | Methods return the API's JSON as plain objects. Fields that the types do not list yet are still there. |
+| Responses | Methods return the API's JSON as plain objects. Fields that the types do not list are kept as well. |
 
 ## Compute
 
