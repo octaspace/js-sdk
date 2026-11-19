@@ -1,5 +1,6 @@
 import {
   type AccountBalance,
+  type ComputeApp,
   type ComputeMachine,
   type GpuCurrent,
   type GpuCurrentOptions,
@@ -13,6 +14,7 @@ import {
   type Session,
   type SessionLogs,
   type SessionLogsOptions,
+  type VpnMachine,
 } from '@octaspace/sdk'
 import { useOctaClient } from './context.js'
 import { type UseOctaRequestOptions, useOctaRequest } from './useOctaRequest.js'
@@ -83,6 +85,18 @@ export function useGpuLocations(options?: UseOctaRequestOptions<GpuLocation[]>) 
 export function useComputeMachines(options?: UseOctaRequestOptions<ComputeMachine[]>) {
   const client = useOctaClient()
   return useOctaRequest((request) => client.compute.list(request), [client], options)
+}
+
+/** Apps to start a compute session from (`client.compute.apps()`). */
+export function useComputeApps(options?: UseOctaRequestOptions<ComputeApp[]>) {
+  const client = useOctaClient()
+  return useOctaRequest((request) => client.compute.apps(request), [client], options)
+}
+
+/** Nodes offered for VPN (`client.vpn.list()`). */
+export function useVpnMachines(options?: UseOctaRequestOptions<VpnMachine[]>) {
+  const client = useOctaClient()
+  return useOctaRequest((request) => client.vpn.list(request), [client], options)
 }
 
 /** Render nodes available for rent (`client.render.list()`). */

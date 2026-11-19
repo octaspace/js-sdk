@@ -22,6 +22,20 @@ export interface HostingNodePrices {
   min_rent_minutes: number
 }
 
+/** Whether a node is offered for a service (or a VPN protocol), and why not. */
+export interface HostingNodeOffer {
+  offered: boolean
+  /** Why not, e.g. `ports_closed`, `vpn_probe_failed` */
+  reason?: string | null
+  /** What the check found, for the owner */
+  details?: string
+}
+
+/** A service of a hosted node; `protocols` only for VPN, those with an end-to-end check. */
+export interface HostingNodeService extends HostingNodeOffer {
+  protocols?: Record<string, HostingNodeOffer>
+}
+
 /** A node of the account (`GET /hosting/nodes`). Only online nodes are listed. */
 export interface HostingNode {
   /** Node number, the one renters see and `setPrices` takes */
@@ -38,8 +52,11 @@ export interface HostingNode {
   maintenance?: boolean
   /** Passed verification; null while unknown */
   verified?: boolean | null
-  /** For which services the node is offered, and why not (e.g. `ports_closed`) */
-  services?: Record<string, { offered: boolean; reason?: string | null }> | null
+  /**
+   * For which services the node is offered, and why not (e.g. `ports_closed`). A node running
+   * only VPN sessions stays `idle`.
+   */
+  services?: Record<string, HostingNodeService> | null
   prices: HostingNodePrices
   system: {
     cpu_cores?: number | null

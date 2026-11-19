@@ -1,6 +1,7 @@
 export { OctaProvider, useOctaClient } from './context.js'
 export {
   useBalance,
+  useComputeApps,
   useComputeMachines,
   useGpuCurrent,
   useGpuHistory,
@@ -11,6 +12,7 @@ export {
   useSession,
   useSessionLogs,
   useSessions,
+  useVpnMachines,
 } from './hooks.js'
 export {
   type UseOctaRequestOptions,

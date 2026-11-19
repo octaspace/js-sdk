@@ -5,7 +5,7 @@ export type SessionStatus = 'starting' | 'ready'
 
 /** Fields every session has, whatever its service. */
 export interface SessionBase {
-  /** Service kind: `compute` or `render` */
+  /** Service kind: `compute`, `render` or `vpn` */
   service: string
   uuid: string
   status: SessionStatus
@@ -116,10 +116,40 @@ export interface RenderSession extends SessionBase {
 }
 
 /**
- * A running session. Narrow it with `isComputeSession()` / `isRenderSession()`; a session of
- * another service is returned with every field the API sent.
+ * A running VPN session (`service: "vpn"`). Billed by traffic; it does not make the node
+ * `rented`. It has no logs: `sessions.logs()` throws `OctaNotFoundError` for it.
  */
-export type Session = ComputeSession | RenderSession | (SessionBase & Record<string, unknown>)
+export interface VpnSession extends SessionBase {
+  service: 'vpn'
+  /** `wg`, `awg`, `reality`, `http_proxy` or `v2ray` */
+  subkind?: string | null
+  /**
+   * What the client connects with: a config file (WireGuard, AmneziaWG) or a link; null until
+   * `ready`. **It is a credential** (a WireGuard config holds the private key): do not log it or
+   * show it in shared output.
+   */
+  config?: string | null
+  /** Exit IP address of the VPN */
+  public_ip?: string | null
+  city?: string | null
+  country?: string | null
+  /** ISO 3166-1 alpha-2 */
+  country_iso?: string | null
+  /** Bytes received */
+  rx?: number
+  /** Bytes sent */
+  tx?: number
+}
+
+/**
+ * A running session. Narrow it with `isComputeSession()` / `isRenderSession()` /
+ * `isVpnSession()`; a session of another service is returned with every field the API sent.
+ */
+export type Session =
+  | ComputeSession
+  | RenderSession
+  | VpnSession
+  | (SessionBase & Record<string, unknown>)
 
 /** A platform event of a session. */
 export interface SystemLogEvent {
@@ -129,7 +159,7 @@ export interface SystemLogEvent {
   ts?: number | null
 }
 
-/** Logs of a running compute session (`GET /services/{uuid}/logs`). */
+/** Logs of a running compute session (`GET /services/{uuid}/logs`); render and VPN have none. */
 export interface SessionLogs {
   /** Platform events, oldest first */
   system: SystemLogEvent[]

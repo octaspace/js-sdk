@@ -24,7 +24,7 @@ export {
 // Per-request overrides and hook contexts
 export type { RequestOverrides } from './resources/request-options.js'
 // Helpers
-export { isComputeSession, isRenderSession } from './resources/sessions.js'
+export { isComputeSession, isRenderSession, isVpnSession } from './resources/sessions.js'
 export {
   gpuHistoryPoints,
   type NormalizedGpuHistoryOptions,

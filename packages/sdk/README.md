@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/@octaspace/sdk)](https://www.npmjs.com/package/@octaspace/sdk)
 
 The official JavaScript and TypeScript library for the [OctaSpace](https://octa.space) API. Rent
-compute machines and render nodes, manage sessions and the nodes you host, and read GPU market
+compute machines, render nodes and VPN, manage sessions and the nodes you host, and read GPU market
 statistics from your code.
 
 **Contents:** [Installation](#installation) · [Quick start](#quick-start) ·
@@ -103,7 +103,8 @@ anonymously:
 | --- | --- |
 | `network.info` | Same result |
 | `stats.gpuCurrent`, `stats.gpuHistory`, `stats.gpuLocations` | Same result |
-| `compute.list`, `render.list` | Refreshed about once an hour instead of every 10 seconds |
+| `compute.list`, `render.list`, `vpn.list` | Refreshed about once an hour instead of every 10 seconds |
+| `compute.apps` | Official apps only, without your own |
 
 Every other method requires an API key. Without one it throws an `OctaAuthenticationError`
 before the request is sent.
@@ -141,8 +142,9 @@ See [Errors, rate limits and retries](docs/errors-and-reliability.md).
 
 | Resource | Dashboard section | Operations | Guide |
 | --- | --- | --- | --- |
-| `client.compute` | Marketplace → Compute | List machines, start, batch start, restart | [Compute](docs/resources.md#compute) |
+| `client.compute` | Marketplace → Compute, Applications | List machines and apps, start, batch start, restart | [Compute](docs/resources.md#compute) |
 | `client.render` | Render → Launch Nodes | List render nodes, start, batch start | [Render](docs/resources.md#render) |
+| `client.vpn` | Marketplace → VPN | List VPN nodes, start | [VPN](docs/resources.md#vpn) |
 | `client.sessions` | Marketplace → Sessions, Render → Render Nodes | List, get, logs, stop, wait until ready or stopped | [Sessions](docs/sessions.md) |
 | `client.hosting` | Hosting → Nodes | Your nodes, set prices | [Hosting](docs/resources.md#hosting) |
 | `client.accounts` | Account → Billing | Balance | [Accounts](docs/resources.md#accounts) |
@@ -159,7 +161,7 @@ For TanStack Query and React, see [`@octaspace/sdk-query`](../sdk-query/README.m
 | Guide | Covers |
 | --- | --- |
 | [Client configuration](docs/configuration.md) | Options and defaults, cancellation and timeouts, logging, several hosts |
-| [Resources](docs/resources.md) | Compute, render, hosting, balance, network and GPU statistics |
+| [Resources](docs/resources.md) | Compute, render, VPN, hosting, balance, network and GPU statistics |
 | [Sessions](docs/sessions.md) | Waiting until ready, connecting, logs, stopping |
 | [Errors, rate limits and retries](docs/errors-and-reliability.md) | Error types, limits, automatic retries |
 | [Changelog](CHANGELOG.md) | Changes in each release |

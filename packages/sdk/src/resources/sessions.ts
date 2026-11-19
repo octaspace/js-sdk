@@ -6,6 +6,7 @@ import type {
   Session,
   SessionLogs,
   SessionLogsOptions,
+  VpnSession,
   WaitOptions,
   WaitReadyOptions,
 } from '../types/session.js'
@@ -22,6 +23,11 @@ export function isComputeSession(session: Session): session is ComputeSession {
 /** Narrows a session to a render session. */
 export function isRenderSession(session: Session): session is RenderSession {
   return session.service === 'render'
+}
+
+/** Narrows a session to a VPN session. */
+export function isVpnSession(session: Session): session is VpnSession {
+  return session.service === 'vpn'
 }
 
 function sessionPath(uuid: string, action: string): string {
@@ -54,7 +60,8 @@ export class SessionsResource extends BaseResource {
 
   /**
    * System log and the latest container output of a running compute session
-   * (`GET /services/{uuid}/logs`). Render sessions have no logs.
+   * (`GET /services/{uuid}/logs`). Render and VPN sessions have no logs: for them it throws
+   * `OctaNotFoundError` (`Session not found`) although they are running.
    */
   async logs(
     uuid: string,

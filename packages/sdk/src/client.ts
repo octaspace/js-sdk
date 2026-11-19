@@ -14,6 +14,7 @@ import {
   RenderResource,
   SessionsResource,
   StatsResource,
+  VpnResource,
 } from './resources/index.js'
 import { HttpTransport } from './transport/http.js'
 
@@ -31,7 +32,7 @@ import { HttpTransport } from './transport/http.js'
 export class OctaClient {
   /** Account: balance */
   readonly accounts: AccountsResource
-  /** Compute machines: list, start, startBatch, restart */
+  /** Compute machines and apps: list, apps, start, startBatch, restart */
   readonly compute: ComputeResource
   /** Account nodes and their prices: nodes, setPrices */
   readonly hosting: HostingResource
@@ -43,6 +44,8 @@ export class OctaClient {
   readonly sessions: SessionsResource
   /** GPU market statistics: gpuCurrent, gpuHistory, gpuLocations */
   readonly stats: StatsResource
+  /** VPN nodes: list, start */
+  readonly vpn: VpnResource
 
   private readonly transport: HttpTransport
 
@@ -65,6 +68,7 @@ export class OctaClient {
     this.render = new RenderResource(this.transport)
     this.sessions = new SessionsResource(this.transport)
     this.stats = new StatsResource(this.transport)
+    this.vpn = new VpnResource(this.transport)
   }
 
   /**

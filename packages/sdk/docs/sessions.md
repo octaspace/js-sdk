@@ -6,13 +6,13 @@
 [Wait until ready](#wait-until-ready) · [Connect](#connect) · [Logs](#logs) · [Stop](#stop) ·
 [Session fields](#session-fields)
 
-`client.sessions` works with your running sessions, both compute and render. `service` tells them
-apart; narrow a session with `isComputeSession()` or `isRenderSession()`.
+`client.sessions` works with your running sessions: compute, render and VPN. `service` tells them
+apart; narrow a session with `isComputeSession()`, `isRenderSession()` or `isVpnSession()`.
 
 ## Lifecycle
 
 ```text
-compute.start / render.start ──► starting ──► ready ──► sessions.stop
+compute.start / render.start / vpn.start ──► starting ──► ready ──► sessions.stop
                                     ▲           │
                                     └─ restart ─┘
 ```
@@ -116,7 +116,8 @@ for (const e of logs.system) {
 | `container_truncated` | `true` if the output was cut to its last 1 MiB |
 | `system` | Platform events of the session, oldest first |
 
-Logs are available for running compute sessions.
+Logs are available for running compute sessions. For a render or VPN session `logs` throws an
+`OctaNotFoundError`, although the session is running.
 
 ## Stop
 

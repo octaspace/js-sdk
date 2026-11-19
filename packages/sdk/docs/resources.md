@@ -3,7 +3,7 @@
 [← Back to README](../README.md)
 
 **On this page:** [Conventions](#conventions) · [Compute](#compute) · [Render](#render) ·
-[Hosting](#hosting) · [Accounts](#accounts) · [Network](#network) · [Stats](#stats)
+[VPN](#vpn) · [Hosting](#hosting) · [Accounts](#accounts) · [Network](#network) · [Stats](#stats)
 
 Sessions have [their own guide](sessions.md).
 
@@ -49,6 +49,33 @@ prices:
 
 The listing also works without an API key, but is then refreshed about once an hour; with a key it
 is at most 10 seconds old.
+
+### Apps
+
+An app is a ready-made image with its settings. `compute.apps()` lists the official apps and,
+with an API key, your own (`personal: true`):
+
+```ts
+const apps = await client.compute.apps()
+const ubuntu = apps.find((app) => app.name === 'Ubuntu 24.04 LTS')
+if (ubuntu) {
+  await client.compute.start({
+    node_number: '7KQ4-M2XD-4',
+    app: ubuntu.uuid,
+    image: ubuntu.image,
+    disk_size: ubuntu.extra?.min_disk_size ?? 10,
+  })
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `uuid` | Pass as `app` to `compute.start()`; `image` is still required |
+| `ports`, `http_ports` | Ports the app exposes |
+| `extra.min_disk_size` | Disk the app needs, GB. Not enforced: a smaller `disk_size` is accepted, and the app may run out of space |
+| `startup_script`, `envs` | Only on your own apps |
+
+The list also works without an API key, without your own apps.
 
 ### Start a session
 
@@ -152,6 +179,51 @@ node renders for your account until you stop the session.
 
 When render is temporarily unavailable, `start` throws an `OctaServiceUnavailableError`, while
 `startBatch` reports it for each item (`status: 1`).
+
+## VPN
+
+Rent a VPN on a node, billed by traffic.
+
+```ts
+import { writeFile } from 'node:fs/promises'
+import { isVpnSession } from '@octaspace/sdk'
+
+const nodes = await client.vpn.list()
+const node = nodes.find((n) => n.protocols.includes('wg'))
+if (node) {
+  const { uuid } = await client.vpn.start({ node_number: node.node_number, subkind: 'wg' })
+  const session = await client.sessions.waitReady(uuid)
+  if (isVpnSession(session)) {
+    // a WireGuard config: import it into the client
+    await writeFile('octa.conf', session.config ?? '', { mode: 0o600 })
+  }
+}
+```
+
+A `VpnMachine` has its location, network speed, `traffic_price` per GB and `protocols`: the
+protocols that passed an end-to-end check on that node.
+
+| `subkind` | Client connects with |
+| --- | --- |
+| `wg` | WireGuard config file |
+| `awg` | AmneziaWG config file |
+| `reality` | VLESS Reality link |
+| `http_proxy` | HTTP proxy; it lets in only the IP address the `start` request came from |
+| `v2ray` | V2Ray link; `protocol` is `vless`, `vmess` or `trojan` (default). No node is checked for it |
+
+> [!IMPORTANT]
+> Pick a `subkind` from the node's `protocols`. A session of another protocol still starts and
+> is charged, but may not work on that node.
+
+- One VPN session per node: a second one on the same node throws an `OctaValidationError`
+  (`You already have a VPN session on this node`).
+- `config` of a ready session is **a credential**: a WireGuard config holds the private key.
+  Do not log it.
+- VPN sessions have no logs, and a node running one stays `idle` in `hosting.nodes()`.
+- Stop the session with `client.sessions.stop(uuid)`; until then it is charged for traffic.
+
+The listing also works without an API key, but is then refreshed about once an hour; with a key it
+is at most 10 seconds old.
 
 ## Hosting
 

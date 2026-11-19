@@ -4,7 +4,7 @@ import {
   OctaRateLimitError,
   OctaValidationError,
 } from '../../src/errors/index.js'
-import type { ComputeMachine } from '../../src/types/index.js'
+import type { ComputeApp, ComputeMachine } from '../../src/types/index.js'
 import {
   loadFixture,
   makeClient,
@@ -249,5 +249,60 @@ describe('compute.restart', () => {
     expect(err).toBeInstanceOf(OctaRateLimitError)
     expect(err.retryAfter).toBe(288)
     expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('compute.apps', () => {
+  it('GETs /compute/apps anonymously when the client has no key', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse([]))
+    const client = makeClient(mockFetch, { apiKey: null })
+
+    await expect(client.compute.apps()).resolves.toEqual([])
+    expect(sentRequest(mockFetch).method).toBe('GET')
+    expect(sentRequest(mockFetch).url).toMatch(/\/compute\/apps$/)
+    expect(sentRequest(mockFetch).headers.has('Authorization')).toBe(false)
+  })
+
+  it('sends the key and decodes official and personal apps', async () => {
+    const fixture = loadFixture<ComputeApp[]>('compute_apps.json')
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(fixture))
+    const client = makeClient(mockFetch)
+
+    const apps = await client.compute.apps()
+    expect(sentRequest(mockFetch).headers.get('Authorization')).toBe('Bearer octa_ak_test')
+    expect(apps).toHaveLength(fixture.length)
+    const official = apps.find((app) => !app.personal)
+    const personal = apps.find((app) => app.personal)
+    expect(official?.uuid).toMatch(/^[0-9a-f-]{36}$/)
+    expect(typeof official?.image).toBe('string')
+    expect(typeof official?.extra?.min_disk_size).toBe('number')
+    // only the account's own apps carry envs and startup_script
+    expect(official && 'envs' in official).toBe(false)
+    expect(official && 'startup_script' in official).toBe(false)
+    expect(personal?.envs).toEqual({})
+    expect(personal?.startup_script).toBe('')
+  })
+
+  it('turns "null" in category and description into null, but keeps user data as is', async () => {
+    const app = {
+      uuid: '5b2f1c9e-8d3a-4f6b-9c1e-2a7d4e6f8b10',
+      name: 'Mine',
+      image: 'ubuntu:24.04',
+      personal: true,
+      category: 'null',
+      description: 'null',
+      entrypoint: 'null',
+      startup_script: 'null',
+      envs: { MODE: 'null' },
+    }
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse([app]))
+    const client = makeClient(mockFetch)
+
+    const [out] = await client.compute.apps()
+    expect(out?.category).toBeNull()
+    expect(out?.description).toBeNull()
+    expect(out?.entrypoint).toBe('null')
+    expect(out?.startup_script).toBe('null')
+    expect(out?.envs).toEqual({ MODE: 'null' })
   })
 })

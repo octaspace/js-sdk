@@ -1,5 +1,6 @@
 import type { BatchResult, StartResult } from '../types/common.js'
 import type {
+  ComputeApp,
   ComputeBatchItem,
   ComputeMachine,
   ComputeRestartParams,
@@ -28,7 +29,19 @@ const START_FIELDS = [
   ...RESTART_FIELDS,
 ] as const satisfies readonly (keyof ComputeStartParams)[]
 
-/** Compute machines: listing, start (single and batch) and restart. */
+/**
+ * Reads a `"null"` string in `category` or `description` as `null`. `envs`, `startup_script` and
+ * `entrypoint` are left as they are: there `"null"` can be the user's own value.
+ */
+function normalizeApps(apps: ComputeApp[]): ComputeApp[] {
+  for (const app of apps) {
+    if (app.category === 'null') app.category = null
+    if (app.description === 'null') app.description = null
+  }
+  return apps
+}
+
+/** Compute machines and apps: listing, start (single and batch) and restart. */
 export class ComputeResource extends BaseResource {
   /**
    * Machines available for rent (`GET /services/compute`). Works without an API key, but is then
@@ -39,6 +52,17 @@ export class ComputeResource extends BaseResource {
       withRequestOverrides({ method: 'GET', path: '/services/compute', auth: 'optional' }, request),
     )
     return normalizeMachines(res.data)
+  }
+
+  /**
+   * Applications to start a session from (`GET /compute/apps`): the official ones and, with an
+   * API key, the account's own (`personal: true`), which also carry `startup_script` and `envs`.
+   */
+  async apps(request?: RequestOverrides): Promise<ComputeApp[]> {
+    const res = await this.request<ComputeApp[]>(
+      withRequestOverrides({ method: 'GET', path: '/compute/apps', auth: 'optional' }, request),
+    )
+    return normalizeApps(res.data)
   }
 
   /**
