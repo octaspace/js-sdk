@@ -79,6 +79,22 @@ export interface ComputeApp {
   envs?: UserEnvs
 }
 
+/**
+ * A persistent volume of the account to mount into the container. Its data outlives the session
+ * and is there again in the next session it is attached to. A volume is attached to one session
+ * at a time; a new volume is formatted (ext4) on its first attach. If it cannot be attached, the
+ * session does not start and its system log says why. Not available for VM apps.
+ */
+export interface ComputeVolume {
+  /** The volume's UUID */
+  id: string
+  /**
+   * Where to mount it: an absolute path of letters, digits, `.`, `_` and `-`, outside the system
+   * directories (`/etc`, `/usr`, `/proc`, …). Default `/data`.
+   */
+  mount?: string | undefined
+}
+
 /** Parameters of `compute.start()`. Only fields that are set are sent. */
 export interface ComputeStartParams {
   /** Machine number from the listing */
@@ -116,6 +132,8 @@ export interface ComputeStartParams {
    * `/var/log/onstart.log`. It runs alongside the container's command, not before it.
    */
   startup_script?: string | undefined
+  /** A persistent volume to mount; in a batch, give each volume to one item only */
+  volume?: ComputeVolume | undefined
 }
 
 /** One item of a batch start: a {@link ComputeStartParams} with an optional client id. */
@@ -138,6 +156,7 @@ export interface ComputeBatchItem extends ComputeStartParams {
  * | `envs` | none |
  * | `ports`, `http_ports` | none |
  * | `ssh`, `fm` | the app's setting, off without an app |
+ * | `volume` | none: pass the session's `volume` (from `sessions.get()`) to keep it attached |
  *
  * Empty values (`''`, `[]`, `{}`) count as omitted. The session's info does not report
  * `entrypoint`, `args`, `startup_script` or `disk_size`, so pass the complete set you want. To
@@ -158,4 +177,5 @@ export interface ComputeRestartParams {
   /** Tri-state: `undefined` = the app's setting, `false` = explicitly off */
   fm?: boolean | undefined
   startup_script?: string | undefined
+  volume?: ComputeVolume | undefined
 }

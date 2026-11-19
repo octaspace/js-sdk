@@ -34,15 +34,15 @@ export class OctaClient {
   readonly accounts: AccountsResource
   /** Compute machines and apps: list, apps, start, startBatch, restart */
   readonly compute: ComputeResource
-  /** Account nodes and their prices: nodes, setPrices */
+  /** Account nodes and their prices: nodes, get, setPrices */
   readonly hosting: HostingResource
-  /** Platform statistics: info */
+  /** Platform statistics: info, history */
   readonly network: NetworkResource
   /** Render nodes: list, start, startBatch */
   readonly render: RenderResource
   /** Running sessions: list, get, logs, stop, waitReady, waitStopped */
   readonly sessions: SessionsResource
-  /** GPU market statistics: gpuCurrent, gpuHistory, gpuLocations */
+  /** GPU market and mining statistics: gpuCurrent, gpuHistory, gpuLocations, mining */
   readonly stats: StatsResource
   /** VPN nodes: list, start */
   readonly vpn: VpnResource

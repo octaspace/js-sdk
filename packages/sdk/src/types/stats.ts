@@ -101,3 +101,51 @@ export interface GpuLocation {
   rented: number
   verified: number
 }
+
+/** GPU miners or the CPU miner. */
+export type MiningRole = 'gpu' | 'cpu'
+
+/** Usage of a miner, algorithm or pool. */
+export interface MiningUsageRow {
+  /** Catalogue name, or `other` */
+  name: string
+  /** Display name, when known */
+  label: string | null
+  /** Sessions that started with it, or restarted into it */
+  started: number
+  /** Session hours */
+  hours: number
+  /** Hours times GPUs; 0 for the CPU role */
+  gpu_hours: number
+}
+
+/** `GET /stats/mining`: mining sessions of a role over the last days, most used first, `other` last. */
+export interface MiningUsage {
+  role: MiningRole
+  days: number
+  /** ISO date (`YYYY-MM-DD`) */
+  from: string
+  /** ISO date (`YYYY-MM-DD`) */
+  to: string
+  /** As of, Unix **seconds** */
+  at?: number | null
+  /** What the lists are ordered by and `daily` is in */
+  measure: 'gpu_hours' | 'hours'
+  total: { started: number; hours: number; gpu_hours: number }
+  miners: MiningUsageRow[]
+  algorithms: MiningUsageRow[]
+  pools: Array<MiningUsageRow & { coins: string[] }>
+  daily: {
+    /** ISO dates, one per day */
+    dates: string[]
+    /** A value of `measure` per date, by miner name */
+    miners: Record<string, number[]>
+  }
+}
+
+export interface MiningOptions {
+  /** `gpu` (default) or `cpu` */
+  role?: MiningRole | undefined
+  /** Days back, today included: 1 … 365 (default 30) */
+  days?: number | undefined
+}

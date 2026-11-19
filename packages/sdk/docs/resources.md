@@ -95,20 +95,44 @@ const { uuid } = await client.compute.start({
 | Field | Meaning | Default |
 | --- | --- | --- |
 | `disk_size` | Disk size, GB | `1` |
-| `envs` | Environment variables: up to 64, values up to 4 KiB | none |
+| `envs` | Environment variables: up to 64; names of letters, digits and `_`, not starting with a digit; values up to 4 KiB | none |
 | `ports` | TCP/UDP container ports to expose | none |
 | `http_ports` | HTTP container ports to expose with a public URL, up to 10 | none |
 | `entrypoint`, `args` | Replace the image's `ENTRYPOINT` and `CMD`. Nothing is expanded: use `sh -c '…'` for `$VAR`, `*` or `&&` | the image's own |
 | `ssh` | Web terminal and SSH access | the application's setting, off without one |
 | `fm` | Web file manager. It has no login: anyone with its URL can read the files | the application's setting, off without one |
 | `startup_script` | Script run as root once the container is up; output goes to `/var/log/onstart.log` | none |
-| `app` | Application UUID | none |
+| `app` | Application UUID, see [Apps](#apps) | none |
+| `volume` | A persistent volume to mount, see [Volumes](#volumes) | none |
 
 Pass `ssh: false` or `fm: false` to turn off SSH or the file manager that an application enables.
 
 `start` returns as soon as the session is created, while its container is still being set up. Wait
 for it with [`sessions.waitReady()`](sessions.md#wait-until-ready). A rejected request, for example
 for an insufficient balance, throws an `OctaValidationError` with the reason.
+
+### Volumes
+
+A volume keeps its data between sessions. You create volumes in the dashboard under
+**Marketplace → Volumes**; a session they are attached to reports them as `volume`, with the
+volume's UUID in `volume.id`. Mount one by its UUID; `mount` is `/data` by default:
+
+```ts
+await client.compute.start({
+  node_number: '7KQ4-M2XD-4',
+  image: 'ubuntu:24.04',
+  volume: { id: '8f14e45f-ceea-4e7a-9f2b-5c3d2e1a0b9c', mount: '/workspace' },
+})
+```
+
+- A volume is attached to one session at a time; in `startBatch`, give it to one item only.
+- A new volume is formatted (ext4) the first time it is attached.
+- `mount` is an absolute path of letters, digits, `.`, `_` and `-`, outside the system
+  directories (`/etc`, `/usr`, `/proc`, …).
+- If the volume cannot be attached, the session does not start and its system log says why.
+- Volumes are not available for VM apps.
+
+The session reports its volume as `volume` (`null` without one).
 
 ### Start several sessions
 
@@ -140,7 +164,8 @@ with. Follow the restart with `sessions.get()`.
 > [!WARNING]
 > Parameters you pass **replace** the session's parameters as a whole; they are not merged.
 > Every field you leave out takes its default: `disk_size` becomes 1 GB, and `envs`, ports,
-> `startup_script`, `ssh` and `fm` are dropped. Include everything the session needs:
+> `startup_script`, `ssh`, `fm` and `volume` are dropped; pass the session's `volume` again to
+> keep it attached. Include everything the session needs:
 >
 > ```ts
 > await client.compute.restart(uuid, {
@@ -237,7 +262,15 @@ for (const n of nodes) {
 ```
 
 `nodes` lists your nodes that are online, with their status (`idle`, `rented`, `verification`,
-`benchmark`), the services they are offered for, prices, hardware, location and uptime.
+`benchmark`), the services they are offered for, prices, hardware, location and uptime. A node
+that runs only VPN sessions stays `idle`.
+
+```ts
+const node = await client.hosting.get('7KQ4-M2XD-4')
+```
+
+`get` returns one of your online nodes. It throws an `OctaNotFoundError` for a node that is
+offline, does not exist or is not yours.
 
 ### Set prices
 
@@ -276,18 +309,31 @@ more than the account has. A recent charge or deposit can take a moment to appea
 
 ## Network
 
-Platform statistics, updated every few minutes. No API key is needed.
+Platform statistics. No API key is needed.
 
 ```ts
+import { networkHistoryPoints } from '@octaspace/sdk'
+
 const info = await client.network.info()
 console.log(info.nodes.online, info.sessions.running, new Date(info.at * 1000))
+
+const history = await client.network.history({
+  start: new Date(Date.now() - 7 * 24 * 3600 * 1000),
+  step: 6 * 3600, // seconds
+})
+for (const p of networkHistoryPoints(history)) {
+  console.log(new Date(p.ts * 1000), p.nodesOnline, p.gpusRented)
+}
 ```
 
-`NetworkInfo` counts nodes, capacity, sessions, users, rendered frames and VPN relays.
+| Method | Returns |
+| --- | --- |
+| `info` | Nodes, capacity, sessions, users, rendered frames and VPN nodes now |
+| `history` | Nodes, GPUs, TFLOPS, users and sessions over time; the last day with hourly points by default. Each value is the average over its step, so it can be fractional. `step` is at least 300 seconds; a range has at most 2000 points. `networkHistoryPoints()` turns it into one object per point. |
 
 ## Stats
 
-GPU market statistics. No API key is needed.
+GPU market and mining statistics. No API key is needed.
 
 ```ts
 import { gpuHistoryPoints } from '@octaspace/sdk'
@@ -307,6 +353,11 @@ for (const p of gpuHistoryPoints(history['NVIDIA GeForce RTX 4090'])) {
 }
 
 const locations = await client.stats.gpuLocations()
+
+const mining = await client.stats.mining({ role: 'gpu', days: 30 })
+for (const m of mining.miners) {
+  console.log(m.label ?? m.name, m.gpu_hours)
+}
 ```
 
 | Method | Returns |
@@ -314,5 +365,6 @@ const locations = await client.stats.gpuLocations()
 | `gpuCurrent` | Per GPU model: the number of GPUs (not nodes), how many are rented, performance, and price percentiles in micro-USD per GPU-hour. A percentile is `null` when there is no price. |
 | `gpuHistory` | The same over time, by model; the last day with hourly points by default. `step` is at least 300 seconds; a range has at most 2000 points. `gpuHistoryPoints()` turns one model's history into one object per point. |
 | `gpuLocations` | The number of GPUs by city and model |
+| `mining` | Miners, algorithms and pools of the platform's mining sessions, most used first, and the miners per day. `role` is `gpu` (default) or `cpu`; `days` is 1 – 365 (default 30). |
 
 `verified` selects the nodes the statistics cover: `'all'`, `'yes'` (verified only) or `'no'`.

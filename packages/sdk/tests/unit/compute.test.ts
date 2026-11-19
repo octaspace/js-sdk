@@ -306,3 +306,42 @@ describe('compute.apps', () => {
     expect(out?.envs).toEqual({ MODE: 'null' })
   })
 })
+
+describe('compute volume', () => {
+  const volume = { id: '8f14e45f-ceea-4e7a-9f2b-5c3d2e1a0b9c', mount: '/workspace' }
+
+  it('sends a volume on start, without an unset mount', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(makeResponse({ uuid: 'u-1' }, 201))
+      .mockResolvedValueOnce(makeResponse({ uuid: 'u-2' }, 201))
+    const client = makeClient(mockFetch)
+
+    await client.compute.start({ node_number: '7KQ4-M2XD-4', image: 'ubuntu:24.04', volume })
+    await client.compute.start({
+      node_number: '7KQ4-M2XD-4',
+      image: 'ubuntu:24.04',
+      volume: { id: volume.id, mount: undefined },
+    })
+    expect(sentBody(mockFetch, 0)).toMatchObject({ volume })
+    expect(sentBody(mockFetch, 1)).toMatchObject({ volume: { id: volume.id } })
+    expect((sentBody(mockFetch, 1) as { volume: object }).volume).not.toHaveProperty('mount')
+  })
+
+  it('sends a volume on restart', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({ uuid: 'u-1' }, 202))
+    const client = makeClient(mockFetch)
+
+    await client.compute.restart('u-1', { disk_size: 20, volume })
+    expect(sentBody(mockFetch)).toEqual({ disk_size: 20, volume })
+  })
+
+  it('reads the attached volume of a session', async () => {
+    const session = { service: 'compute', uuid: 'u-1', status: 'ready', duration: 1, volume }
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(session))
+    const client = makeClient(mockFetch)
+
+    const out = await client.sessions.get('u-1')
+    expect(out.service === 'compute' && out.volume).toEqual(volume)
+  })
+})

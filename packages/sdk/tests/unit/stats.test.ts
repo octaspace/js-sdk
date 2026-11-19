@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { OctaValidationError } from '../../src/errors/index.js'
 import { gpuHistoryPoints, normalizeGpuHistoryOptions } from '../../src/resources/stats.js'
-import type { GpuCurrent, GpuHistory, GpuLocation } from '../../src/types/index.js'
+import type { GpuCurrent, GpuHistory, GpuLocation, MiningUsage } from '../../src/types/index.js'
 import { loadFixture, makeClient, makeErrorResponse, makeResponse, sentRequest } from './helpers.js'
 
 describe('stats.gpuCurrent', () => {
@@ -104,5 +104,31 @@ describe('normalizeGpuHistoryOptions', () => {
     expect(a).toEqual(b)
     expect(a).toEqual({ gpuName: 'A,B', verified: undefined, start: 10, end: undefined, step: 300 })
     expect(normalizeGpuHistoryOptions()).toEqual(normalizeGpuHistoryOptions({}))
+  })
+})
+
+describe('stats.mining', () => {
+  it('GETs /stats/mining anonymously with role and days, and normalizes "null" labels', async () => {
+    const fixture = loadFixture<MiningUsage>('stats_mining.json')
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(fixture))
+    const client = makeClient(mockFetch)
+
+    const mining = await client.stats.mining({ role: 'gpu', days: 30 })
+    const url = new URL(sentRequest(mockFetch).url)
+    expect(url.pathname).toBe('/stats/mining')
+    expect(Object.fromEntries(url.searchParams)).toEqual({ role: 'gpu', days: '30' })
+    expect(sentRequest(mockFetch).headers.has('Authorization')).toBe(false)
+    expect(mining.role).toBe('gpu')
+    expect(mining.miners[0]?.label).toBeNull()
+    expect(Array.isArray(mining.pools[0]?.coins)).toBe(true)
+    expect(mining.daily.dates).toHaveLength(mining.daily.miners.other?.length ?? 0)
+  })
+
+  it('sends no query without options', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse({}))
+    const client = makeClient(mockFetch)
+
+    await client.stats.mining()
+    expect(sentRequest(mockFetch).url).toMatch(/\/stats\/mining$/)
   })
 })

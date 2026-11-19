@@ -20,6 +20,7 @@ const RESTART_FIELDS = [
   'ssh',
   'fm',
   'startup_script',
+  'volume',
 ] as const satisfies readonly (keyof ComputeRestartParams)[]
 
 const START_FIELDS = [

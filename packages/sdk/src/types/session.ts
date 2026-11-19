@@ -91,6 +91,8 @@ export interface ComputeSession extends SessionBase {
    */
   fm?: string | null
   envs?: UserEnvs
+  /** The persistent volume attached to the session; null when it has none */
+  volume?: { id: string; mount: string } | null
   /** Bytes received */
   rx?: number
   /** Bytes sent */

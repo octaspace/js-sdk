@@ -20,7 +20,11 @@ export {
   OctaValidationError,
   type RateLimit,
 } from './errors/index.js'
-
+export {
+  type NormalizedNetworkHistoryOptions,
+  networkHistoryPoints,
+  normalizeNetworkHistoryOptions,
+} from './resources/network.js'
 // Per-request overrides and hook contexts
 export type { RequestOverrides } from './resources/request-options.js'
 // Helpers
