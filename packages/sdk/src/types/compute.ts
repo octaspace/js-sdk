@@ -43,6 +43,42 @@ export interface ComputeMachine {
   reliability: Reliability
 }
 
+/**
+ * An application to start a compute session from (`GET /compute/apps`): an official one, or one
+ * of the account's own (`personal`). Pass its `uuid` as `app` and its `image` as `image` to
+ * `compute.start()`.
+ */
+export interface ComputeApp {
+  /** Pass as `app` to `compute.start()` */
+  uuid: string
+  name: string
+  /** Docker image, e.g. `ubuntu:24.04` */
+  image: string
+  /** The account's own app, not an official one */
+  personal: boolean
+  /** e.g. `Machine Learning` */
+  category?: string | null
+  description?: string | null
+  entrypoint?: string
+  /** TCP/UDP ports the app exposes */
+  ports?: number[]
+  /** HTTP ports the app exposes */
+  http_ports?: number[]
+  extra?: {
+    logo?: string
+    /**
+     * Disk the app needs, GB. Advice only: the API starts a session with a smaller `disk_size`,
+     * and the app may then run out of space.
+     */
+    min_disk_size?: number
+    [key: string]: unknown
+  }
+  /** The account's own apps only: absent on official ones */
+  startup_script?: string | null
+  /** The account's own apps only: absent on official ones */
+  envs?: UserEnvs
+}
+
 /** Parameters of `compute.start()`. Only fields that are set are sent. */
 export interface ComputeStartParams {
   /** Machine number from the listing */

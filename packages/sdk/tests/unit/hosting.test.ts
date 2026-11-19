@@ -77,3 +77,37 @@ describe('hosting.setPrices', () => {
     )
   })
 })
+
+describe('hosting.nodes VPN offer', () => {
+  it('keeps the per-protocol offer of a VPN node', async () => {
+    const node = {
+      number: '7KQ4-M2XD-4',
+      status: 'idle',
+      services: {
+        vpn: {
+          offered: true,
+          reason: null,
+          protocols: {
+            wg: { offered: true, reason: null },
+            awg: { offered: false, reason: 'vpn_probe_failed', details: 'handshake timed out' },
+          },
+        },
+      },
+      prices: { base: 100, storage: 10000, traffic: 100, min_rent_minutes: 0 },
+      system: {},
+      location: {},
+    }
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse([node]))
+    const client = makeClient(mockFetch)
+
+    const [out] = await client.hosting.nodes()
+    const vpn = out?.services?.vpn
+    expect(vpn?.offered).toBe(true)
+    expect(vpn?.protocols?.wg?.offered).toBe(true)
+    expect(vpn?.protocols?.awg).toEqual({
+      offered: false,
+      reason: 'vpn_probe_failed',
+      details: 'handshake timed out',
+    })
+  })
+})

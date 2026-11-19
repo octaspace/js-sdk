@@ -1,0 +1,20 @@
+{
+  "status": "ready",
+  "progress": "Service configured",
+  "config": "[Interface]\nPrivateKey = <redacted>\nAddress = 10.8.0.2/32\n\n[Peer]\nPublicKey = <redacted>\nEndpoint = 203.0.113.7:51820\nAllowedIPs = 0.0.0.0/0\n",
+  "service": "vpn",
+  "started_at": 1795087961672,
+  "duration": 374,
+  "city": "Frankfurt am Main",
+  "country": "Germany",
+  "tx": 0,
+  "rx": 0,
+  "uuid": "96e33710-ec12-11ed-8588-fa163e49e8aa",
+  "node_number": "7KQ4-M2XD-4",
+  "public_ip": "203.0.113.7",
+  "country_iso": "DE",
+  "charge_amount": 0,
+  "app_name": "Wireguard",
+  "app_logo": "https://files.octa.space/apps-logo/wireguard.svg",
+  "subkind": "wg"
+}

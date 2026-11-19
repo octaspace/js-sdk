@@ -56,7 +56,9 @@ Every `queryFn` forwards TanStack's `signal`, so a cancelled query aborts its HT
 |---|---|---|
 | `accountQueries.balance(client)` | `['@octaspace', 'accounts', 'balance']` | `client.accounts.balance()` |
 | `computeQueries.list(client)` | `['@octaspace', 'compute', 'list']` | `client.compute.list()` |
+| `computeQueries.apps(client)` | `['@octaspace', 'compute', 'apps']` | `client.compute.apps()` |
 | `renderQueries.list(client)` | `['@octaspace', 'render', 'list']` | `client.render.list()` |
+| `vpnQueries.list(client)` | `['@octaspace', 'vpn', 'list']` | `client.vpn.list()` |
 | `sessionQueries.list(client)` | `['@octaspace', 'sessions', 'list']` | `client.sessions.list()` |
 | `sessionQueries.detail(client, uuid)` | `['@octaspace', 'sessions', 'detail', uuid]` | `client.sessions.get(uuid)` |
 | `sessionQueries.logs(client, uuid, { tail })` | `['@octaspace', 'sessions', 'logs', uuid, { tail }]` | `client.sessions.logs(uuid, { tail })` |
@@ -93,7 +95,7 @@ const stop = useMutation({
 
 | Mutation | Invalidate |
 |---|---|
-| `client.compute.start()` / `startBatch()` / `restart()`, `client.render.start()` / `startBatch()`, `client.sessions.stop()` | `sessionKeys.all()` |
+| `client.compute.start()` / `startBatch()` / `restart()`, `client.render.start()` / `startBatch()`, `client.vpn.start()`, `client.sessions.stop()` | `sessionKeys.all()` |
 | `client.hosting.setPrices()` | `hostingKeys.all()`, `computeKeys.all()` (new prices appear within a few seconds) |
 
 Starts and restarts cost money and are never retried by the SDK; keep TanStack's mutation

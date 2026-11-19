@@ -6,7 +6,7 @@ import {
   OctaTimeoutError,
   OctaValidationError,
 } from '../../src/errors/index.js'
-import { isComputeSession, isRenderSession } from '../../src/resources/sessions.js'
+import { isComputeSession, isRenderSession, isVpnSession } from '../../src/resources/sessions.js'
 import type { ComputeSession, Session, SessionLogs } from '../../src/types/index.js'
 import { loadFixture, makeClient, makeErrorResponse, makeResponse, sentRequest } from './helpers.js'
 
@@ -71,15 +71,33 @@ describe('sessions.get', () => {
     expect(typeof withSpeed.node_hw?.net_down_mbps).toBe('number')
   })
 
+  it('decodes a VPN session and narrows it with isVpnSession', async () => {
+    const fixture = loadFixture<Session>('session_vpn_ready.json')
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(fixture))
+    const client = makeClient(mockFetch)
+
+    const session = await client.sessions.get(fixture.uuid)
+    expect(isComputeSession(session)).toBe(false)
+    expect(isRenderSession(session)).toBe(false)
+    expect(isVpnSession(session)).toBe(true)
+    if (!isVpnSession(session)) return
+    expect(session.status).toBe('ready')
+    expect(session.subkind).toBe('wg')
+    expect(session.config).toMatch(/^\[Interface\]/)
+    expect(typeof session.started_at).toBe('number')
+    expect(typeof session.rx).toBe('number')
+  })
+
   it('returns an unknown service as is', async () => {
-    const vpn = { service: 'vpn', uuid: UUID, status: 'ready', duration: 1, config: 'x' }
-    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(vpn))
+    const other = { service: 'storage', uuid: UUID, status: 'ready', duration: 1, size: 10 }
+    const mockFetch = vi.fn().mockResolvedValueOnce(makeResponse(other))
     const client = makeClient(mockFetch)
 
     const session: Session = await client.sessions.get(UUID)
     expect(isComputeSession(session)).toBe(false)
     expect(isRenderSession(session)).toBe(false)
-    expect(session).toEqual(vpn)
+    expect(isVpnSession(session)).toBe(false)
+    expect(session).toEqual(other)
   })
 
   it('throws OctaNotFoundError for a stopped session and 400 for a bad uuid', async () => {

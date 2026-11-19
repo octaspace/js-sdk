@@ -10,6 +10,7 @@ export type {
   UserEnvs,
 } from './common.js'
 export type {
+  ComputeApp,
   ComputeBatchItem,
   ComputeMachine,
   ComputeRestartParams,
@@ -17,7 +18,9 @@ export type {
 } from './compute.js'
 export type {
   HostingNode,
+  HostingNodeOffer,
   HostingNodePrices,
+  HostingNodeService,
   HostingNodeStatus,
   HostingNodeUsage,
   NodePrices,
@@ -36,6 +39,7 @@ export type {
   SessionStatus,
   SshEndpoint,
   SystemLogEvent,
+  VpnSession,
   WaitOptions,
   WaitReadyOptions,
 } from './session.js'
@@ -52,3 +56,4 @@ export type {
   GpuPriceSeries,
   GpuVerifiedFilter,
 } from './stats.js'
+export type { V2RayProtocol, VpnMachine, VpnProtocol, VpnStartParams } from './vpn.js'

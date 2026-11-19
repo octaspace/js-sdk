@@ -1,0 +1,49 @@
+[
+  {
+    "category": "Operation System",
+    "description": "The latest LTS version of Ubuntu, for desktop PCs and laptops.",
+    "entrypoint": "",
+    "extra": {
+      "logo": "https://assets.ubuntu.com/v1/29985a98-ubuntu-logo32.png",
+      "min_disk_size": 5
+    },
+    "http_ports": [],
+    "image": "ubuntu:24.04",
+    "name": "Ubuntu 24.04 LTS",
+    "personal": false,
+    "ports": [],
+    "uuid": "406c0b3f-6726-4169-a3b4-6322995cd755"
+  },
+  {
+    "category": "null",
+    "description": "",
+    "entrypoint": "",
+    "envs": {},
+    "extra": {
+      "logo": "https://files.octa.space/apps-logo/docker.svg",
+      "min_disk_size": 10
+    },
+    "http_ports": [],
+    "image": "ubuntu:24.04",
+    "name": "Ubuntu 24",
+    "personal": true,
+    "ports": [],
+    "startup_script": "",
+    "uuid": "5b2f1c9e-8d3a-4f6b-9c1e-2a7d4e6f8b10"
+  },
+  {
+    "category": "Operation Systems",
+    "description": "null",
+    "entrypoint": "",
+    "extra": {
+      "logo": "https://assets.ubuntu.com/v1/29985a98-ubuntu-logo32.png",
+      "min_disk_size": 150
+    },
+    "http_ports": [],
+    "image": "octaspace/ubuntu:24.04-vm",
+    "name": "Ubuntu VM",
+    "personal": false,
+    "ports": [],
+    "uuid": "067c0a85-6418-407e-86bc-72f6f8d4f560"
+  }
+]

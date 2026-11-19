@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   OctaProvider,
   useBalance,
+  useComputeApps,
   useComputeMachines,
   useGpuHistory,
   useHostingNodes,
@@ -11,6 +12,7 @@ import {
   useSession,
   useSessionLogs,
   useSessions,
+  useVpnMachines,
 } from '../../src/index.js'
 
 function deferred<T>() {
@@ -233,6 +235,33 @@ describe('sdk-react hooks', () => {
 
     await waitFor(() => expect(data).toEqual([{ node_number: '7KQ4-M2XD-4' }]))
     expect(list.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('loads VPN nodes and compute apps and passes the abort signal', async () => {
+    const vpnList = vi.fn().mockResolvedValue([{ node_number: '7KQ4-M2XD-4', protocols: ['wg'] }])
+    const apps = vi.fn().mockResolvedValue([{ uuid: 'a', name: 'Ubuntu', personal: false }])
+    const client = { vpn: { list: vpnList }, compute: { apps } } as unknown as OctaClient
+    let nodes: unknown
+    let appList: unknown
+
+    function Probe() {
+      nodes = useVpnMachines().data
+      appList = useComputeApps().data
+      return null
+    }
+
+    render(
+      <OctaProvider client={client}>
+        <Probe />
+      </OctaProvider>,
+    )
+
+    await waitFor(() => {
+      expect(nodes).toEqual([{ node_number: '7KQ4-M2XD-4', protocols: ['wg'] }])
+      expect(appList).toEqual([{ uuid: 'a', name: 'Ubuntu', personal: false }])
+    })
+    expect(vpnList.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
+    expect(apps.mock.calls[0]?.[0]?.signal).toBeInstanceOf(AbortSignal)
   })
 
   it('refetches GPU history only when its options change', async () => {

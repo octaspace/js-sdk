@@ -68,7 +68,9 @@ Create the client with the API key of your OctaSpace account, see
 |---|---|
 | `useBalance()` | `client.accounts.balance()` |
 | `useComputeMachines()` | `client.compute.list()` |
+| `useComputeApps()` | `client.compute.apps()` |
 | `useRenderMachines()` | `client.render.list()` |
+| `useVpnMachines()` | `client.vpn.list()` |
 | `useSessions()` | `client.sessions.list()` |
 | `useSession(uuid)` | `client.sessions.get(uuid)` — skipped while `uuid` is empty |
 | `useSessionLogs(uuid, { tail })` | `client.sessions.logs(uuid, { tail })` |

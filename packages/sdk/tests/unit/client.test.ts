@@ -19,6 +19,7 @@ describe('OctaClient', () => {
       'render',
       'sessions',
       'stats',
+      'vpn',
     ])
   })
 
@@ -33,7 +34,13 @@ describe('OctaClient', () => {
       expect(names).not.toContain(removed)
     }
     expect(names).toEqual(
-      expect.arrayContaining(['OctaClient', 'DEFAULT_BASE_URL', 'formatUsd', 'gpuHistoryPoints']),
+      expect.arrayContaining([
+        'OctaClient',
+        'DEFAULT_BASE_URL',
+        'formatUsd',
+        'gpuHistoryPoints',
+        'isVpnSession',
+      ]),
     )
   })
 })

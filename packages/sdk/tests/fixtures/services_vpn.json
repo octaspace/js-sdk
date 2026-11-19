@@ -1,0 +1,15 @@
+[
+  {
+    "protocols": ["http_proxy", "wg", "awg", "reality"],
+    "city": "Frankfurt am Main",
+    "country": "Germany",
+    "traffic_price": 100,
+    "node_number": "7KQ4-M2XD-4",
+    "net_up_mbps": 488,
+    "net_down_mbps": 489,
+    "country_iso": "DE",
+    "longitude": 8.6821,
+    "latitude": 50.1109,
+    "residential": false
+  }
+]
