@@ -1,4 +1,5 @@
 import type { MicroUsd, NodeNumber, UserEnvs } from './common.js'
+import type { HttpProxyConfig } from './vpn.js'
 
 /** `starting` while the session is being configured, then `ready`. */
 export type SessionStatus = 'starting' | 'ready'
@@ -121,14 +122,15 @@ export interface RenderSession extends SessionBase {
  */
 export interface VpnSession extends SessionBase {
   service: 'vpn'
-  /** `wg`, `awg`, `reality`, `http_proxy` or `v2ray` */
+  /** `wg`, `awg`, `reality` or `http_proxy` */
   subkind?: string | null
   /**
-   * What the client connects with: a config file (WireGuard, AmneziaWG) or a link; null until
-   * `ready`. **It is a credential** (a WireGuard config holds the private key): do not log it or
-   * show it in shared output.
+   * What the client connects with: a config file (WireGuard, AmneziaWG), a link (Reality), or for
+   * `http_proxy` the proxy's address and login; null until `ready`. **It is a credential** (a
+   * WireGuard config holds the private key, a proxy's has its password): do not log it or show it
+   * in shared output.
    */
-  config?: string | null
+  config?: string | HttpProxyConfig | null
   /** Exit IP address of the VPN */
   public_ip?: string | null
   city?: string | null

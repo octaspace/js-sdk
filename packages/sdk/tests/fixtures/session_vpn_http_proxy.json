@@ -1,0 +1,25 @@
+{
+  "status": "ready",
+  "progress": "Service configured",
+  "config": {
+    "ip": "203.0.113.7",
+    "port": 40000,
+    "username": "a1b2c3d4",
+    "password": "tt1f70D8qUUknMdlHoIUyp3Q"
+  },
+  "service": "vpn",
+  "started_at": 1795087961672,
+  "duration": 374,
+  "city": "Frankfurt am Main",
+  "country": "Germany",
+  "tx": 0,
+  "rx": 0,
+  "uuid": "96e33710-ec12-11ed-8588-fa163e49e8aa",
+  "node_number": "7KQ4-M2XD-4",
+  "public_ip": "203.0.113.7",
+  "country_iso": "DE",
+  "charge_amount": 0,
+  "app_name": "HTTP Proxy",
+  "app_logo": null,
+  "subkind": "http_proxy"
+}

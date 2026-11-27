@@ -70,4 +70,25 @@ export class HostingResource extends BaseResource {
       ),
     )
   }
+
+  /**
+   * Puts a node of the account in maintenance (`on = true`) or takes it out (`on = false`)
+   * (`PUT` / `DELETE /hosting/nodes/{number}/maintenance`). In maintenance the node is not offered
+   * for new rentals; sessions already running go on and their renters are notified. It works for a
+   * node that is offline too, and setting the state the node already has changes nothing, so the
+   * call is retried on transient errors like a GET. A maintenance period or description set in the
+   * OctaSpace dashboard is dropped either way. Throws `OctaNotFoundError` for an unknown node.
+   */
+  async setMaintenance(number: string, on: boolean, request?: RequestOverrides): Promise<void> {
+    await this.request<void>(
+      withRequestOverrides(
+        {
+          method: on ? 'PUT' : 'DELETE',
+          path: `/hosting/nodes/${encodeURIComponent(number)}/maintenance`,
+          idempotent: true,
+        },
+        request,
+      ),
+    )
+  }
 }

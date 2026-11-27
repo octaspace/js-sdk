@@ -24,7 +24,8 @@
       },
       "tflops": 35.6,
       "tflops_per_dollar": 1078787.88,
-      "usage_30d": 11.9
+      "usage_30d": 11.9,
+      "memory_mb": 24576
     },
     {
       "total": 2,
@@ -49,7 +50,8 @@
       },
       "tflops": "null",
       "tflops_per_dollar": "null",
-      "usage_30d": 31.39
+      "usage_30d": 31.39,
+      "memory_mb": null
     }
   ]
 }

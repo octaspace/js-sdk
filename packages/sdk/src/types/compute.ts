@@ -40,6 +40,18 @@ export interface ComputeMachine {
   blender_score: number
   city: string
   country: string | null
+  /** ISO 3166-1 alpha-2 */
+  country_iso?: string | null
+  /** Operating system of the node, e.g. `Ubuntu 24.04`; null if unknown */
+  os_version?: string | null
+  /** Virtualization the node runs in; `none` on bare metal */
+  virt?: string
+  /** The node runs in WSL */
+  is_wsl?: boolean
+  /** The node runs HiveOS */
+  is_hive_os?: boolean
+  /** GPU passthrough is available */
+  gpu_pt?: boolean
   reliability: Reliability
 }
 

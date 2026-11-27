@@ -8,6 +8,10 @@ declare const __SDK_VERSION__: string | undefined
 /** SDK version — injected by tsup at build time, falls back to '0.0.0-dev' */
 export const SDK_VERSION = typeof __SDK_VERSION__ !== 'undefined' ? __SDK_VERSION__ : '0.0.0-dev'
 export const DEFAULT_USER_AGENT = `@octaspace/sdk/${SDK_VERSION} (js)`
+/** Header that names the application calling the API. */
+export const APP_HEADER = 'X-OCTA-APP'
+/** {@link APP_HEADER} value of a client without the `app` option. */
+export const DEFAULT_APP = 'js-sdk'
 
 export interface OctaClientOptions {
   /**
@@ -33,6 +37,11 @@ export interface OctaClientOptions {
   fetch?: typeof globalThis.fetch
   /** Custom User-Agent string */
   userAgent?: string
+  /**
+   * Name of your application, sent in the `X-OCTA-APP` header of every request
+   * (default: {@link DEFAULT_APP}). An empty name keeps the default.
+   */
+  app?: string
   /** Hook called before each request */
   onRequest?: (ctx: RequestContext) => void | Promise<void>
   /** Hook called after each response */

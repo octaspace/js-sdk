@@ -65,4 +65,4 @@ export type {
   MiningUsage,
   MiningUsageRow,
 } from './stats.js'
-export type { V2RayProtocol, VpnMachine, VpnProtocol, VpnStartParams } from './vpn.js'
+export type { HttpProxyConfig, VpnMachine, VpnProtocol, VpnStartParams } from './vpn.js'

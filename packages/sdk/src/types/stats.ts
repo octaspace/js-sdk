@@ -23,6 +23,8 @@ export interface GpuModelStats {
   /** Rented share over 30 days */
   usage_30d?: number | null
   ai_score: number
+  /** Memory of one GPU, MiB: the size most GPUs of the model have; null when unknown */
+  memory_mb?: number | null
   tflops?: number | null
   tflops_per_dollar?: number | null
   /** Prices only from nodes with identical GPUs */
