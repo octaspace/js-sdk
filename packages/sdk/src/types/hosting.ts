@@ -48,7 +48,7 @@ export interface HostingNode {
     /** Unix **seconds** */
     started_at: number | null
   } | null
-  /** Under maintenance: not offered for rent */
+  /** In maintenance: not offered for rent; see `hosting.setMaintenance()` */
   maintenance?: boolean
   /** Passed verification; null while unknown */
   verified?: boolean | null

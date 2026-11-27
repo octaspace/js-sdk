@@ -146,7 +146,7 @@ See [Errors, rate limits and retries](docs/errors-and-reliability.md).
 | `client.render` | Render → Launch Nodes | List render nodes, start, batch start | [Render](docs/resources.md#render) |
 | `client.vpn` | Marketplace → VPN | List VPN nodes, start | [VPN](docs/resources.md#vpn) |
 | `client.sessions` | Marketplace → Sessions, Render → Render Nodes | List, get, logs, stop, wait until ready or stopped | [Sessions](docs/sessions.md) |
-| `client.hosting` | Hosting → Nodes | Your nodes, one node, set prices | [Hosting](docs/resources.md#hosting) |
+| `client.hosting` | Hosting → Nodes | Your nodes, one node, set prices, maintenance | [Hosting](docs/resources.md#hosting) |
 | `client.accounts` | Account → Billing | Balance | [Accounts](docs/resources.md#accounts) |
 | `client.network` | — | Platform statistics now and over time | [Network](docs/resources.md#network) |
 | `client.stats` | — | GPU market: current, history, locations; mining | [Stats](docs/resources.md#stats) |

@@ -29,13 +29,7 @@ export class VpnResource extends BaseResource {
    * automatically.
    */
   async start(params: VpnStartParams, request?: RequestOverrides): Promise<StartResult> {
-    const body: Record<string, unknown> = {
-      node_number: params.node_number,
-      subkind: params.subkind,
-    }
-    if (params.subkind === 'v2ray' && params.protocol !== undefined) {
-      body.protocol = params.protocol
-    }
+    const body = { node_number: params.node_number, subkind: params.subkind }
     const res = await this.request<StartResult>(
       withRequestOverrides({ method: 'POST', path: '/services/vpn', body }, request),
     )

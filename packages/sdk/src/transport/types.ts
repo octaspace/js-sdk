@@ -1,6 +1,6 @@
 import type { RateLimit } from '../errors/api.js'
 
-export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE'
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 /**
  * How a request authenticates:

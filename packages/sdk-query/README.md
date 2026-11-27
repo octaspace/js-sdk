@@ -100,6 +100,7 @@ const stop = useMutation({
 |---|---|
 | `client.compute.start()` / `startBatch()` / `restart()`, `client.render.start()` / `startBatch()`, `client.vpn.start()`, `client.sessions.stop()` | `sessionKeys.all()` |
 | `client.hosting.setPrices()` | `hostingKeys.all()`, `computeKeys.all()` (new prices appear within a few seconds) |
+| `client.hosting.setMaintenance()` | `hostingKeys.all()`, `computeKeys.all()` |
 
 Starts and restarts cost money and are never retried by the SDK; keep TanStack's mutation
 `retry` at its default `0` for them.

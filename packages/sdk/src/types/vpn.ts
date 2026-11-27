@@ -3,9 +3,6 @@ import type { MicroUsd, NodeNumber } from './common.js'
 /** VPN protocol a node can pass the end-to-end check for. */
 export type VpnProtocol = 'wg' | 'reality' | 'awg' | 'http_proxy'
 
-/** Protocols of a `v2ray` session. */
-export type V2RayProtocol = 'vless' | 'vmess' | 'trojan'
-
 /** Node offered for VPN (`GET /services/vpn`). */
 export interface VpnMachine {
   node_number: NodeNumber
@@ -31,20 +28,22 @@ export interface VpnMachine {
 }
 
 /**
- * Parameters of `vpn.start()`.
- *
- * - `wg` (WireGuard), `awg` (AmneziaWG), `reality` (VLESS Reality): what nodes are checked for.
- * - `http_proxy`: an HTTP proxy that lets in only the IP address the start request came from.
- * - `v2ray`: a V2Ray link; `protocol` defaults to `trojan`. Nodes are not checked for it, so it
- *   is never in `protocols` and is accepted on any VPN node, without a check that it works there.
+ * Parameters of `vpn.start()`: `wg` (WireGuard), `awg` (AmneziaWG), `reality` (VLESS Reality) or
+ * `http_proxy`, an HTTP proxy with a login that lets in only the IP address the start request came
+ * from. Pick one of the node's `protocols`.
  */
-export type VpnStartParams =
-  | {
-      node_number: NodeNumber
-      subkind: VpnProtocol
-    }
-  | {
-      node_number: NodeNumber
-      subkind: 'v2ray'
-      protocol?: V2RayProtocol | undefined
-    }
+export interface VpnStartParams {
+  node_number: NodeNumber
+  subkind: VpnProtocol
+}
+
+/**
+ * What an `http_proxy` session connects with: the proxy's address and its login (HTTP Basic,
+ * letters and digits, valid for this session).
+ */
+export interface HttpProxyConfig {
+  ip: string
+  port: number
+  username: string | null
+  password: string | null
+}

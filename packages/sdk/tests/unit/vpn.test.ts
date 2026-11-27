@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { OctaValidationError } from '../../src/errors/index.js'
-import type { VpnMachine } from '../../src/types/index.js'
+import { isVpnSession } from '../../src/resources/sessions.js'
+import type { VpnMachine, VpnSession } from '../../src/types/index.js'
 import {
   loadFixture,
   makeClient,
@@ -55,28 +56,30 @@ describe('vpn.start', () => {
     const client = makeClient(mockFetch)
 
     const params = { node_number: '7KQ4-M2XD-4', subkind: 'wg', protocol: 'vless', x: 1 }
-    // @ts-expect-error -- `protocol` is for v2ray only; extra fields are dropped at runtime too
+    // @ts-expect-error -- extra fields are not part of the params and are not sent
     await expect(client.vpn.start(params)).resolves.toEqual({ uuid: 'v-1' })
     expect(sentRequest(mockFetch).method).toBe('POST')
     expect(sentRequest(mockFetch).url).toMatch(/\/services\/vpn$/)
     expect(sentBody(mockFetch)).toEqual({ node_number: '7KQ4-M2XD-4', subkind: 'wg' })
   })
 
-  it('sends protocol with v2ray, and omits it when not set', async () => {
+  it('starts an HTTP proxy, whose session config is its address and login', async () => {
+    const ready = { ...loadFixture<VpnSession>('session_vpn_http_proxy.json') }
     const mockFetch = vi
       .fn()
-      .mockResolvedValueOnce(makeResponse({ uuid: 'v-1' }, 201))
-      .mockResolvedValueOnce(makeResponse({ uuid: 'v-2' }, 201))
+      .mockResolvedValueOnce(makeResponse({ uuid: ready.uuid }, 201))
+      .mockResolvedValueOnce(makeResponse(ready))
     const client = makeClient(mockFetch)
 
-    await client.vpn.start({ node_number: 'N', subkind: 'v2ray', protocol: 'vless' })
-    await client.vpn.start({ node_number: 'N', subkind: 'v2ray' })
-    expect(sentBody(mockFetch, 0)).toEqual({
-      node_number: 'N',
-      subkind: 'v2ray',
-      protocol: 'vless',
+    const { uuid } = await client.vpn.start({ node_number: 'N', subkind: 'http_proxy' })
+    const session = await client.sessions.get(uuid)
+    expect(sentBody(mockFetch, 0)).toEqual({ node_number: 'N', subkind: 'http_proxy' })
+    expect(isVpnSession(session) && session.config).toEqual({
+      ip: '203.0.113.7',
+      port: 40000,
+      username: 'a1b2c3d4',
+      password: 'tt1f70D8qUUknMdlHoIUyp3Q',
     })
-    expect(sentBody(mockFetch, 1)).toEqual({ node_number: 'N', subkind: 'v2ray' })
   })
 
   it('fails before fetch without a key', async () => {

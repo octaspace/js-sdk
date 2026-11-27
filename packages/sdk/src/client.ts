@@ -1,4 +1,5 @@
 import {
+  DEFAULT_APP,
   DEFAULT_BASE_URL,
   DEFAULT_RETRIES,
   DEFAULT_TIMEOUT_MS,
@@ -34,7 +35,7 @@ export class OctaClient {
   readonly accounts: AccountsResource
   /** Compute machines and apps: list, apps, start, startBatch, restart */
   readonly compute: ComputeResource
-  /** Account nodes and their prices: nodes, get, setPrices */
+  /** Account nodes, their prices and maintenance: nodes, get, setPrices, setMaintenance */
   readonly hosting: HostingResource
   /** Platform statistics: info, history */
   readonly network: NetworkResource
@@ -55,6 +56,7 @@ export class OctaClient {
       timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
       retries: options.retries ?? DEFAULT_RETRIES,
       userAgent: options.userAgent ?? DEFAULT_USER_AGENT,
+      app: options.app?.trim() || DEFAULT_APP,
       ...(options.apiKey !== undefined && { apiKey: options.apiKey }),
       ...(options.fetch !== undefined && { fetch: options.fetch }),
       ...(options.onRequest !== undefined && { onRequest: options.onRequest }),

@@ -136,3 +136,44 @@ describe('hosting.get', () => {
     await expect(client.hosting.get('7KQ4-M2XD-5')).rejects.toBeInstanceOf(OctaValidationError)
   })
 })
+
+describe('hosting.setMaintenance', () => {
+  it('PUTs to turn maintenance on and DELETEs to turn it off, accepting 204', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+    const client = makeClient(mockFetch)
+
+    await expect(client.hosting.setMaintenance('7KQ4-M2XD-4', true)).resolves.toBeUndefined()
+    await expect(client.hosting.setMaintenance('7KQ4-M2XD-4', false)).resolves.toBeUndefined()
+    expect(sentRequest(mockFetch, 0).method).toBe('PUT')
+    expect(sentRequest(mockFetch, 1).method).toBe('DELETE')
+    expect(sentRequest(mockFetch, 0).url).toMatch(/\/hosting\/nodes\/7KQ4-M2XD-4\/maintenance$/)
+    expect(sentBody(mockFetch, 0)).toBeUndefined()
+  })
+
+  it('is retried on a transient error: repeating it changes nothing', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        makeErrorResponse({ message: 'Service is temporarily unavailable' }, 503),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+    const client = makeClient(mockFetch, { retries: 1 })
+
+    await client.hosting.setMaintenance('7KQ4-M2XD-4', true)
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('throws OctaNotFoundError for a node that is not on the account', async () => {
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce(makeErrorResponse({ message: 'Node not found' }, 404))
+    const client = makeClient(mockFetch)
+
+    await expect(client.hosting.setMaintenance('7KQ4-M2XD-4', true)).rejects.toBeInstanceOf(
+      OctaNotFoundError,
+    )
+  })
+})

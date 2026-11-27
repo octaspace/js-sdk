@@ -53,6 +53,17 @@ describe('HttpTransport', () => {
     expect(headersOf(mockFetch).get('User-Agent')).toMatch(/@octaspace\/sdk/)
   })
 
+  it('names the application in X-OCTA-APP: js-sdk by default, or the app option', async () => {
+    const mockFetch = vi.fn().mockImplementation(async () => makeResponse({}))
+    await makeClient(mockFetch).network.info()
+    await makeClient(mockFetch, { app: 'my-dashboard' }).network.info()
+    await makeClient(mockFetch, { app: '  ' }).network.info()
+
+    expect(headersOf(mockFetch, 0).get('X-OCTA-APP')).toBe('js-sdk')
+    expect(headersOf(mockFetch, 1).get('X-OCTA-APP')).toBe('my-dashboard')
+    expect(headersOf(mockFetch, 2).get('X-OCTA-APP')).toBe('js-sdk')
+  })
+
   it('throws before request when apiKey is missing for authenticated endpoint', async () => {
     const mockFetch = vi.fn()
     const client = makeClient(mockFetch, { apiKey: null })

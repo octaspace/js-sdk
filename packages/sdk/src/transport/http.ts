@@ -1,3 +1,4 @@
+import { APP_HEADER } from '../config.js'
 import {
   OctaApiError,
   type OctaApiErrorDetails,
@@ -23,6 +24,8 @@ export interface HttpTransportOptions {
   timeoutMs: number
   retries: number
   userAgent: string
+  /** Value of the `X-OCTA-APP` header */
+  app: string
   fetch?: typeof globalThis.fetch
   onRequest?: (ctx: RequestContext) => void | Promise<void>
   onResponse?: (ctx: ResponseContext) => void | Promise<void>
@@ -254,6 +257,7 @@ export class HttpTransport {
   private buildHeaders(options: RequestOptions): Headers {
     const headers = new Headers()
     headers.set('User-Agent', this.opts.userAgent)
+    headers.set(APP_HEADER, this.opts.app)
     headers.set('Accept', 'application/json')
 
     const auth = options.auth ?? 'required'

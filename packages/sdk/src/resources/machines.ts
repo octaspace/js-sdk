@@ -35,7 +35,7 @@ export function normalizeMachines<T extends { gpus?: MachineGpu[] }>(machines: T
 
 /**
  * Copies only the listed keys whose value is not `undefined`, so the request body never carries
- * fields the caller did not set (the API silently ignores unknown fields, and treats some
+ * fields the caller did not set (the API refuses unknown fields, and treats some
  * absences, like `ssh`/`fm`, differently from `false`).
  */
 export function pickDefined<T extends object, K extends keyof T>(
