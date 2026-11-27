@@ -193,9 +193,9 @@ const node = nodes.find((n) => n.protocols.includes('wg'))
 if (node) {
   const { uuid } = await client.vpn.start({ node_number: node.node_number, subkind: 'wg' })
   const session = await client.sessions.waitReady(uuid)
-  if (isVpnSession(session)) {
+  if (isVpnSession(session) && typeof session.config === 'string') {
     // a WireGuard config: import it into the client
-    await writeFile('octa.conf', session.config ?? '', { mode: 0o600 })
+    await writeFile('octa.conf', session.config, { mode: 0o600 })
   }
 }
 ```
@@ -203,13 +203,12 @@ if (node) {
 A `VpnMachine` has its location, network speed, `traffic_price` per GB and `protocols`: the
 protocols that passed an end-to-end check on that node.
 
-| `subkind` | Client connects with |
+| `subkind` | The session's `config` |
 | --- | --- |
 | `wg` | WireGuard config file |
 | `awg` | AmneziaWG config file |
 | `reality` | VLESS Reality link |
-| `http_proxy` | HTTP proxy; it lets in only the IP address the `start` request came from |
-| `v2ray` | V2Ray link; `protocol` is `vless`, `vmess` or `trojan` (default). No node is checked for it, so it is accepted on any VPN node without a check that it works there |
+| `http_proxy` | An `HttpProxyConfig`: the proxy's `ip` and `port` and its login (`username`, `password`, HTTP Basic). The proxy lets in only the IP address the `start` request came from |
 
 Pick a `subkind` from the node's `protocols`. A protocol the node did not pass throws an
 `OctaValidationError` (`Node's VPN did not pass the connection check`); nothing is started or
@@ -217,8 +216,8 @@ charged.
 
 - One VPN session per node: a second one on the same node throws an `OctaValidationError`
   (`You already have a VPN session on this node`).
-- `config` of a ready session is **a credential**: a WireGuard config holds the private key.
-  Do not log it.
+- `config` of a ready session is **a credential**: a WireGuard config holds the private key,
+  and a proxy's has its password. Do not log it.
 - VPN sessions have no logs, and a node running one stays `idle` in `hosting.nodes()`.
 - Stop the session with `client.sessions.stop(uuid)`; until then it is charged for traffic.
 
@@ -227,7 +226,7 @@ is at most 10 seconds old.
 
 ## Hosting
 
-The nodes you host and their prices.
+The nodes you host, their prices and maintenance mode.
 
 ```ts
 const nodes = await client.hosting.nodes()
@@ -271,6 +270,19 @@ a few seconds.
 Prices are integer micro-USD; a value that is not an integer throws a `TypeError` before the
 request is sent. A value out of range throws an `OctaValidationError`, an unknown node an
 `OctaNotFoundError`.
+
+### Maintenance mode
+
+```ts
+await client.hosting.setMaintenance('7KQ4-M2XD-4', true)
+// ... work on the node ...
+await client.hosting.setMaintenance('7KQ4-M2XD-4', false)
+```
+
+A node in maintenance mode is not offered for new rentals; running sessions go on and their
+renters are notified. It works for a node that is offline too, and setting the state the node
+already has changes nothing. A maintenance period or description set in the OctaSpace dashboard
+is dropped either way. `maintenance` of a hosted node tells whether it is on.
 
 ## Accounts
 

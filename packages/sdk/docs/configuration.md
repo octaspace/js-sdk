@@ -30,6 +30,7 @@ const client = new OctaClient({
 | `timeoutMs` | `30000` | Time limit of one HTTP request, in milliseconds; each retry gets its own |
 | `retries` | `2` | Retries of failed GET requests; `0` turns them off |
 | `userAgent` | `@octaspace/sdk/<version> (js)` | Value of the `User-Agent` header |
+| `app` | `js-sdk` (`DEFAULT_APP`) | Name of your application, sent in the `X-OCTA-APP` header of every request |
 | `onRequest` | none | Called before each request, see [Logging](#logging) |
 | `onResponse` | none | Called after each response, see [Logging](#logging) |
 | `fetch` | `globalThis.fetch` | Your own `fetch`, for example for a proxy or tests |
